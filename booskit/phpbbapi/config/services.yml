@@ -1,0 +1,8 @@
+services:
+  booskit.phpbbapi.controller.api:
+    class: booskit\phpbbapi\controller\api
+    arguments:
+      - '@config'
+      - '@dbal.conn'
+      - '@request'
+      - '@user'

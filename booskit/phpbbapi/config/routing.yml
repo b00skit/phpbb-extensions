@@ -1,0 +1,19 @@
+booskit_phpbbapi_groups:
+  path: /booskit/phpbbapi/groups
+  defaults: { _controller: booskit.phpbbapi.controller.api:groups }
+  requirements: { _method: GET }
+
+booskit_phpbbapi_group:
+  path: /booskit/phpbbapi/group/{id}
+  defaults: { _controller: booskit.phpbbapi.controller.api:group }
+  requirements: { id: "\\d+", _method: GET }
+
+booskit_phpbbapi_user:
+  path: /booskit/phpbbapi/user/{id}
+  defaults: { _controller: booskit.phpbbapi.controller.api:user }
+  requirements: { id: "\\d+", _method: GET }
+
+booskit_phpbbapi_forum:
+  path: /booskit/phpbbapi/forum/{id}
+  defaults: { _controller: booskit.phpbbapi.controller.api:forum }
+  requirements: { id: "\\d+", _method: GET }
