@@ -10,7 +10,8 @@ class main_module
         global $config, $request, $template, $user;
 
         $user->add_lang_ext('booskit/phpbbapi', 'acp_phpbbapi');
-        $this->tpl_name = 'acp_phpbbapi_body';
+        // Load the template from this extension's directory
+        $this->tpl_name = '@booskit_phpbbapi/acp_phpbbapi_body';
         $this->page_title = $user->lang('ACP_BOOSKIT_PHPBBAPI_TITLE');
 
         $submit = $request->is_set_post('submit');
