@@ -1,19 +1,30 @@
 {
-    "name": "booskit/phpbbapi",
-    "type": "phpbb-extension",
-    "description": "Lightweight read-only JSON API endpoints for phpBB guarded by a global API key.",
-    "version": "1.0.0",
-    "time": "2025-09-02",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "booskit"
-        }
-    ],
-    "extra": {
-        "display-name": "booskit / phpbbapi",
-        "soft-require": {
-            "phpbb/phpbb": ">=3.3.0"
-        }
-    }
+	"name": "booskit/phpbbapi",
+	"type": "phpbb-extension",
+	"description": "An API extension for phpbb.",
+	"homepage": "https://www.booskit.dev/",
+	"version": "1.0",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Booskit",
+			"email": "direct@booskit.dev",
+			"homepage": "https://github.com/b00skit/",
+			"role": "Developer"
+		}
+	],
+	"require": {
+		"php": ">=7.1",
+		"composer/installers": "~1.0",
+		"ext-zip": "*"
+	},
+	"require-dev": {
+		"phing/phing": "~2.4"
+	},
+	"extra": {
+		"display-name": "booskit's api extension",
+		"soft-require": {
+			"phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+		}
+	}
 }
