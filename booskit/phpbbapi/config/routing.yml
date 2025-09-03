@@ -13,6 +13,11 @@ booskit_phpbbapi_user:
   defaults: { _controller: booskit.phpbbapi.controller.api:user }
   requirements: { id: "\\d+", _method: GET }
 
+booskit_phpbbapi_username:
+  path: /booskit/phpbbapi/user/username/{username}
+  defaults: { _controller: booskit.phpbbapi.controller.api:user_by_username }
+  requirements: { username: ".+", _method: GET }
+
 booskit_phpbbapi_forum:
   path: /booskit/phpbbapi/forum/{id}
   defaults: { _controller: booskit.phpbbapi.controller.api:forum }

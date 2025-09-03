@@ -196,6 +196,27 @@ class api
         ]);
     }
 
+    // GET /user/username/{username} : user with groups (lookup by username)
+    public function user_by_username($username)
+    {
+        if ($resp = $this->require_key()) { return $resp; }
+
+        $username_clean = $this->db->sql_escape(utf8_clean_string($username));
+
+        $sql = 'SELECT user_id
+                FROM ' . $this->table('users') . "
+                WHERE username_clean = '" . $username_clean . "' AND user_type <> 2"; // exclude anonymous
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$row) {
+            return $this->json([ 'error' => 'User not found' ], 404);
+        }
+
+        return $this->user((int) $row['user_id']);
+    }
+
     // GET /forum/{id} : forum with topics & authors
     public function forum($id)
     {
