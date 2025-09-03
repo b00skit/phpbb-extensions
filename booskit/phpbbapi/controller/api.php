@@ -20,12 +20,16 @@ class api
     /** @var user */
     protected $user;
 
-    public function __construct(config $config, driver_interface $db, request_interface $request, user $user)
+    /** @var string */
+    protected $table_prefix;
+
+    public function __construct(config $config, driver_interface $db, request_interface $request, user $user, $table_prefix)
     {
         $this->config = $config;
         $this->db = $db;
         $this->request = $request;
         $this->user = $user;
+        $this->table_prefix = $table_prefix;
     }
 
     /* -------------------- Utility -------------------- */
@@ -61,7 +65,7 @@ class api
 
     protected function table($name)
     {
-        return $this->db->get_table_prefix() . $name;
+        return $this->table_prefix . $name;
     }
 
     /* -------------------- Endpoints -------------------- */
