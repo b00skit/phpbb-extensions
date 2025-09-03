@@ -6,3 +6,4 @@ services:
       - '@dbal.conn'
       - '@request'
       - '@user'
+      - '%core.table_prefix%'
