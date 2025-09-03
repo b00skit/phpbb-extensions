@@ -7,13 +7,13 @@ class main_info
     {
         return [
             'filename'  => '\\booskit\\phpbbapi\\acp\\main_module',
-            'title'     => 'ACP_BOOSKIT_PHPBBAPI_TITLE',
+            'title'     => 'booskit phpbbapi',
             'version'   => '1.0.0',
             'modes'     => [
                 'settings' => [
-                    'title' => 'ACP_BOOSKIT_PHPBBAPI_SETTINGS',
+                    'title' => 'phpbbapi settings',
                     'auth'  => 'ext_booskit/phpbbapi && acl_a_board',
-                    'cat'   => ['ACP_BOOSKIT_PHPBBAPI_TITLE'],
+                    'cat'   => ['booskit phpbbapi'],
                 ],
             ],
         ];
