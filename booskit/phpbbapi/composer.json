@@ -3,7 +3,7 @@
 	"type": "phpbb-extension",
 	"description": "An API extension for phpbb.",
 	"homepage": "https://www.booskit.dev/",
-	"version": "1.0",
+	"version": "1.0.1",
 	"license": "MIT",
 	"authors": [
 		{
