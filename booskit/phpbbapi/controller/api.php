@@ -227,6 +227,11 @@ class api
         if ($resp = $this->require_key()) { return $resp; }
         $forum_id = (int) $id;
 
+        $allowed = array_filter(array_map('intval', explode(',', (string) $this->config['booskit_phpbbapi_allowed_forum_ids'])));
+        if (!empty($allowed) && !in_array($forum_id, $allowed, true)) {
+            return $this->json([ 'error' => 'Forbidden: forum not allowed' ], 403);
+        }
+
         // Forum basic info
         $sql = 'SELECT forum_id, forum_name, forum_desc
                 FROM ' . $this->table('forums') . '
