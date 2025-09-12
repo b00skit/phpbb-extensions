@@ -23,14 +23,18 @@ class main_module
             $key = (string) $request->variable('booskit_phpbbapi_key', '', true);
             set_config('booskit_phpbbapi_key', $key);
 
+            $allowed_forums = (string) $request->variable('booskit_phpbbapi_allowed_forum_ids', '', true);
+            set_config('booskit_phpbbapi_allowed_forum_ids', $allowed_forums);
+
             trigger_error($user->lang('ACP_BOOSKIT_PHPBBAPI_SAVED') . adm_back_link($this->u_action));
         }
 
         add_form_key('booskit_phpbbapi');
 
         $template->assign_vars([
-            'U_ACTION'               => $this->u_action,
-            'BOOSKIT_PHPBBAPI_KEY'   => $config['booskit_phpbbapi_key'],
+            'U_ACTION'                         => $this->u_action,
+            'BOOSKIT_PHPBBAPI_KEY'             => $config['booskit_phpbbapi_key'],
+            'BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS' => $config['booskit_phpbbapi_allowed_forum_ids'],
         ]);
     }
 }

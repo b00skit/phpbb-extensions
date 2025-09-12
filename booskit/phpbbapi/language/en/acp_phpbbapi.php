@@ -14,4 +14,6 @@ $lang = array_merge($lang, [
 
     'ACP_BOOSKIT_PHPBBAPI_KEY_LABEL'       => 'Global API key',
     'ACP_BOOSKIT_PHPBBAPI_KEY_EXPLAIN'     => 'Provide this key in the header <code>X-API-Key</code> or as a <code>?key=</code> query parameter to access the JSON endpoints.',
+    'ACP_BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS_LABEL'   => 'Allowed forum IDs',
+    'ACP_BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS_EXPLAIN' => 'Comma-separated list of forum IDs that the API may access. Leave blank to allow all forums.',
 ]);

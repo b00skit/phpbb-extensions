@@ -6,12 +6,16 @@
 <p>{L_ACP_BOOSKIT_PHPBBAPI_SETTINGS}</p>
 
 <form id="acp_phpbbapi" method="post" action="{U_ACTION}">
-	<fieldset>
-		<dl>
-			<dt><label for="booskit_phpbbapi_key">{L_ACP_BOOSKIT_PHPBBAPI_KEY_LABEL}:</label><br /><span>{L_ACP_BOOSKIT_PHPBBAPI_KEY_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_phpbbapi_key" name="booskit_phpbbapi_key" value="{BOOSKIT_PHPBBAPI_KEY}" size="60" /></dd>
-		</dl>
-	</fieldset>
+        <fieldset>
+                <dl>
+                        <dt><label for="booskit_phpbbapi_key">{L_ACP_BOOSKIT_PHPBBAPI_KEY_LABEL}:</label><br /><span>{L_ACP_BOOSKIT_PHPBBAPI_KEY_EXPLAIN}</span></dt>
+                        <dd><input type="text" id="booskit_phpbbapi_key" name="booskit_phpbbapi_key" value="{BOOSKIT_PHPBBAPI_KEY}" size="60" /></dd>
+                </dl>
+                <dl>
+                        <dt><label for="booskit_phpbbapi_allowed_forum_ids">{L_ACP_BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS_LABEL}:</label><br /><span>{L_ACP_BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS_EXPLAIN}</span></dt>
+                        <dd><input type="text" id="booskit_phpbbapi_allowed_forum_ids" name="booskit_phpbbapi_allowed_forum_ids" value="{BOOSKIT_PHPBBAPI_ALLOWED_FORUM_IDS}" size="60" /></dd>
+                </dl>
+        </fieldset>
 
 	<fieldset class="submit-buttons">
 		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
