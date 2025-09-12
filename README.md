@@ -13,3 +13,6 @@ This repository contains a phpBB extension that exposes a small JSON API. Every 
 | GET | `/booskit/phpbbapi/forum/{id}?limit=50` | Forum information with recent topics. `limit` is optional (default 50). |
 
 Replace placeholders such as `{id}` and `{username}` with actual values when making requests.
+
+The API Endpoint should be
+https://domain.com/app.php/booskit/phpbbapi
