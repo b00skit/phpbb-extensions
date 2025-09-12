@@ -114,7 +114,7 @@ class api
         }
 
         // Members
-        $sql = 'SELECT ug.user_id, ug.group_leader, u.username, u.user_email
+        $sql = 'SELECT ug.user_id, ug.group_leader, u.username
                 FROM ' . $this->table('user_group') . ' ug
                 JOIN ' . $this->table('users') . ' u ON u.user_id = ug.user_id
                 WHERE ug.group_id = ' . $group_id . ' AND ug.user_pending = 0
@@ -127,7 +127,6 @@ class api
             $user = [
                 'id'       => (int) $row['user_id'],
                 'username' => (string) $row['username'],
-                'email'    => (string) $row['user_email'],
             ];
             if ((int) $row['group_leader'] === 1) {
                 $leaders[] = $user;
@@ -161,7 +160,7 @@ class api
         $user_id = (int) $id;
 
         // User basic info
-        $sql = 'SELECT user_id, username, user_email
+        $sql = 'SELECT user_id, username
                 FROM ' . $this->table('users') . '
                 WHERE user_id = ' . $user_id . ' AND user_type <> 2'; // exclude anonymous
         $result = $this->db->sql_query($sql);
@@ -193,7 +192,6 @@ class api
             'user' => [
                 'id'       => (int) $user['user_id'],
                 'username' => (string) $user['username'],
-                'email'    => (string) $user['user_email'],
                 'groups'   => $groups,
                 'counts'   => [ 'groups' => count($groups) ],
             ],
