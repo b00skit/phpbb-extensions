@@ -1,0 +1,3 @@
+booskit_datacollector_send:
+    path: /datacollector/send
+    defaults: { _controller: 'booskit.datacollector.controller.collector:send' }

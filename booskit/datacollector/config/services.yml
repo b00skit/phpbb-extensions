@@ -1,0 +1,19 @@
+services:
+    booskit.datacollector.controller.acp.settings:
+        class: booskit\datacollector\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+
+    booskit.datacollector.controller.collector:
+        class: booskit\datacollector\controller\collector
+        arguments:
+            - '@config'
+            - '@request'
+            - '@dbal.conn'
+            - '@user'
+            - '@controller.helper'
+            - '@auth'
