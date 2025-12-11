@@ -6,6 +6,7 @@ services:
             - '@config'
             - '@request'
             - '@controller.helper'
+            - '@auth.provider.oauth.token_storage.session'
         tags:
             - { name: auth.provider.oauth }
 

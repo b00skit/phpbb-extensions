@@ -1,6 +1,8 @@
 <?php
 namespace booskit\gtawoauth\auth\provider;
 
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
 class gtaw extends \phpbb\auth\provider\oauth\service\base
 {
     /** @var \phpbb\config\config */
@@ -20,12 +22,14 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
      * @param \phpbb\config\config                  $config     Config object
      * @param \phpbb\request\request_interface      $request    Request object
      * @param \phpbb\controller\helper              $helper     Controller helper object
+     * @param \phpbb\auth\provider\oauth\token_storage\state_manager_interface $state_manager State manager
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper)
+    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper, \phpbb\auth\provider\oauth\token_storage\state_manager_interface $state_manager)
     {
         $this->config   = $config;
         $this->request  = $request;
         $this->helper   = $helper;
+        $this->state_manager = $state_manager;
     }
 
     public function set_redirect_uri($uri)
@@ -41,8 +45,8 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
             return $this->custom_redirect_uri;
         }
 
-        // Use the unified callback URL
-        $uri = $this->helper->route('booskit_gtawoauth_callback', [], true);
+        // Use the unified callback URL with ABSOLUTE_URL type to ensure scheme and host are present
+        $uri = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
         // Ensure parent property is synced
         $this->redirect_uri = $uri;
@@ -196,6 +200,10 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     public function perform_auth_login()
     {
         $code = $this->request->variable('code', '');
+        $state = $this->request->variable('state', '');
+
+        // CSRF Protection: Validate state
+        $this->state_manager->check_state($state);
 
         $access_token = $this->request_access_token($code);
         if (!$access_token) {
