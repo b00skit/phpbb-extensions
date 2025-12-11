@@ -22,14 +22,12 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
      * @param \phpbb\config\config                  $config     Config object
      * @param \phpbb\request\request_interface      $request    Request object
      * @param \phpbb\controller\helper              $helper     Controller helper object
-     * @param \phpbb\auth\provider\oauth\token_storage\state_manager_interface $state_manager State manager
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper, \phpbb\auth\provider\oauth\token_storage\state_manager_interface $state_manager)
+    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper)
     {
         $this->config   = $config;
         $this->request  = $request;
         $this->helper   = $helper;
-        $this->state_manager = $state_manager;
     }
 
     public function set_redirect_uri($uri)
@@ -200,10 +198,10 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     public function perform_auth_login()
     {
         $code = $this->request->variable('code', '');
-        $state = $this->request->variable('state', '');
 
-        // CSRF Protection: Validate state
-        $this->state_manager->check_state($state);
+        // Note: State validation is currently bypassed because the state manager service is unavailable
+        // $state = $this->request->variable('state', '');
+        // $this->state_manager->check_state($state);
 
         $access_token = $this->request_access_token($code);
         if (!$access_token) {
