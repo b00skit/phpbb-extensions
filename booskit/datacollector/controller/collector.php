@@ -27,7 +27,8 @@ class collector
 	public function send()
 	{
 		// Check for admin permissions
-		if (!$this->auth->acl_get('acl_a_board'))
+		// We use m_warn as a proxy for generic moderator access since 'm_' is not a valid permission option
+		if (!$this->auth->acl_get('m_warn') && !$this->auth->acl_get('a_'))
 		{
 			return new Response('Access Denied. You do not have permission to access this page.', 403);
 		}
