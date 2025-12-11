@@ -19,10 +19,10 @@ class settings
         $this->log = $log;
     }
 
-    public function handle($id, $mode)
+    public function handle($id, $mode, $u_action)
     {
         // Setup the action URL
-        $this->u_action = $this->user->data['session_admin_path'] . "index.php?i={$id}&mode={$mode}";
+        $this->u_action = $u_action;
 
         if ($this->request->is_set_post('submit')) {
             if (!check_link_hash($this->request->variable('token', ''), 'acp_gtaw_oauth')) {
