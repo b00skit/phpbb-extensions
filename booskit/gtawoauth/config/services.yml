@@ -13,8 +13,10 @@ services:
     booskit.gtawoauth.listener:
         class: booskit\gtawoauth\event\listener
         arguments:
+            - '@config'
             - '@template'
             - '@user'
+            - '@booskit.gtawoauth.auth.provider'
         tags:
             - { name: event.listener }
 

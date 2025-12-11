@@ -32,6 +32,7 @@ class settings
             $client_id = $this->request->variable('gtaw_client_id', '');
             $client_secret = $this->request->variable('gtaw_client_secret', '');
             $base_url = $this->request->variable('gtaw_base_url', '');
+            $login_enable = $this->request->variable('gtaw_login_enable', 0);
 
             // Ensure base URL doesn't have trailing slash
             $base_url = rtrim($base_url, '/');
@@ -39,6 +40,7 @@ class settings
             $this->config->set('auth_oauth_gtaw_key', $client_id);
             $this->config->set('auth_oauth_gtaw_secret', $client_secret);
             $this->config->set('auth_oauth_gtaw_base_url', $base_url);
+            $this->config->set('auth_oauth_gtaw_login_enable', $login_enable);
 
             $this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_CONFIG_GTAW_OAUTH');
             trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
@@ -50,6 +52,7 @@ class settings
             'GTAW_CLIENT_ID'     => $this->config['auth_oauth_gtaw_key'],
             'GTAW_CLIENT_SECRET' => $this->config['auth_oauth_gtaw_secret'],
             'GTAW_BASE_URL'      => isset($this->config['auth_oauth_gtaw_base_url']) ? $this->config['auth_oauth_gtaw_base_url'] : '',
+            'GTAW_LOGIN_ENABLE'  => isset($this->config['auth_oauth_gtaw_login_enable']) ? $this->config['auth_oauth_gtaw_login_enable'] : 0,
             'U_ACTION'           => $this->u_action,
         ));
     }

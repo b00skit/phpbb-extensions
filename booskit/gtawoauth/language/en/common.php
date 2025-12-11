@@ -18,6 +18,8 @@ $lang = array_merge($lang, array(
     'GTAW_CLIENT_SECRET_EXPLAIN'       => 'Enter the Client Secret provided by GTA: World UCP.',
     'GTAW_BASE_URL'                    => 'Base Website URL',
     'GTAW_BASE_URL_EXPLAIN'            => 'Enter the base URL of your forum (e.g., https://your-domain.com/phpbb). Required to construct the absolute callback URL correctly.',
+    'GTAW_LOGIN_ENABLE'                => 'Enable GTA: World Login',
+    'GTAW_LOGIN_ENABLE_EXPLAIN'        => 'If enabled, a "Login with GTAW" button will be displayed on the login page and quick login bar.',
     'LOG_CONFIG_GTAW_OAUTH'            => '<strong>Updated GTA: World OAuth settings</strong>',
 
     // UCP
@@ -34,4 +36,6 @@ $lang = array_merge($lang, array(
     'GTAW_LINK_FAILED_USER'            => 'Failed to retrieve user info from GTA: World.',
     'GTAW_ALREADY_LINKED'              => 'This GTA: World account is already linked to your forum account.',
     'GTAW_LINKED_TO_OTHER'             => 'This GTA: World account is already linked to another forum account.',
+    'GTAW_NO_LINKED_ACCOUNT'           => 'No linked account found. Please login normally and link your account in the UCP first.',
+    'LOGIN_WITH_GTAW'                  => 'Login with GTAW',
 ));
