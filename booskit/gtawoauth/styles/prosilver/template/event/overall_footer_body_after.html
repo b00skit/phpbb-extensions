@@ -8,6 +8,13 @@
 (function($) {
     'use strict';
     $(function() {
+        // --- SECURITY CHECK: ACP ---
+        // If we are in the /adm/ directory (Admin Control Panel), do not show the button.
+        // OAuth login usually cannot grant Admin Session access anyway.
+        if (window.location.href.indexOf('/adm/') > -1) {
+            return;
+        }
+
         var $buttonTemplate = $('#gtaw-login-injection').children();
 
         // --- CASE A: Main Login Page Form (#login) ---
@@ -23,7 +30,6 @@
         }
 
         // --- CASE B: Quick Login Hotbar (.quick-login) ---
-        // This targets the bar you see on the index page or navbar dropdowns
         var $quickLoginForm = $('fieldset.quick-login');
         if ($quickLoginForm.length) {
             $quickLoginForm.each(function() {
@@ -38,7 +44,7 @@
                     // Insert our GTAW button directly before the standard Login button
                     $quickBtn.insertBefore($submitBtn);
                 } else {
-                    // Fallback: just append to the end if no submit button found
+                    // Fallback: just append to the end
                     $thisForm.append($quickBtn);
                 }
             });
