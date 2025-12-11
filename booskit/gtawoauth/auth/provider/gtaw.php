@@ -47,7 +47,7 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
         $base_url = isset($this->config['auth_oauth_gtaw_base_url']) ? trim($this->config['auth_oauth_gtaw_base_url'], '/') : '';
 
         if (!empty($base_url)) {
-            $uri = $base_url . '/gtaw/callback';
+            $uri = $base_url . '/app.php/gtaw/callback';
         } else {
             // Fallback to auto-detection
             $uri = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
