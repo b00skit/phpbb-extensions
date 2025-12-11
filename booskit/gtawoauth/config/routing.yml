@@ -1,0 +1,3 @@
+booskit_gtawoauth_callback:
+    path: /gtaw/callback
+    defaults: { _controller: 'booskit.gtawoauth.controller.callback:handle' }

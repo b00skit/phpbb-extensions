@@ -9,6 +9,9 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     /** @var \phpbb\request\request_interface */
     protected $request;
 
+    /** @var \phpbb\controller\helper */
+    protected $helper;
+
     private $custom_redirect_uri;
 
     /**
@@ -16,16 +19,20 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
      *
      * @param \phpbb\config\config                  $config     Config object
      * @param \phpbb\request\request_interface      $request    Request object
+     * @param \phpbb\controller\helper              $helper     Controller helper object
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request)
+    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper)
     {
         $this->config   = $config;
         $this->request  = $request;
+        $this->helper   = $helper;
     }
 
     public function set_redirect_uri($uri)
     {
         $this->custom_redirect_uri = $uri;
+        // Also update parent property if it exists or is used
+        $this->redirect_uri = $uri;
     }
 
     public function get_redirect_uri()
@@ -34,8 +41,13 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
             return $this->custom_redirect_uri;
         }
 
-        // Default redirect URI for login
-        return generate_board_url() . '/ucp.php?mode=login&login=external&oauth_service=gtaw';
+        // Use the unified callback URL
+        $uri = $this->helper->route('booskit_gtawoauth_callback', [], true);
+
+        // Ensure parent property is synced
+        $this->redirect_uri = $uri;
+
+        return $uri;
     }
 
     public function perform_token_exchange($code)
