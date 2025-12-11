@@ -1,8 +1,10 @@
-# phpBB API Extension
+# phpBB Extensions
+
+## API
 
 This repository contains a phpBB extension that exposes a small JSON API. Every endpoint requires an API key which can be supplied either as the `X-API-Key` header or as a `key` query parameter. Administrators may also restrict forum access by specifying a comma-separated list of allowed forum IDs in the extension's ACP settings.
 
-## Endpoints
+### Endpoints
 
 | Method | Path | Description |
 | ------ | ---- | ----------- |
