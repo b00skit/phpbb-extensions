@@ -15,6 +15,7 @@ services:
         arguments:
             - '@template'
             - '@user'
+            - '@booskit.gtawoauth.auth.provider'
         tags:
             - { name: event.listener }
 

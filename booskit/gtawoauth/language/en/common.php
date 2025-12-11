@@ -34,4 +34,6 @@ $lang = array_merge($lang, array(
     'GTAW_LINK_FAILED_USER'            => 'Failed to retrieve user info from GTA: World.',
     'GTAW_ALREADY_LINKED'              => 'This GTA: World account is already linked to your forum account.',
     'GTAW_LINKED_TO_OTHER'             => 'This GTA: World account is already linked to another forum account.',
+    'GTAW_NO_LINKED_ACCOUNT'           => 'No linked account found. Please login normally and link your account in the UCP first.',
+    'LOGIN_WITH_GTAW'                  => 'Login with GTAW',
 ));
