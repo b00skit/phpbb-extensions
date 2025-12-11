@@ -18,6 +18,13 @@
 		<dt><label for="gtaw_base_url">{L_GTAW_BASE_URL}{L_COLON}</label><br /><span>{L_GTAW_BASE_URL_EXPLAIN}</span></dt>
 		<dd><input type="text" id="gtaw_base_url" name="gtaw_base_url" value="{GTAW_BASE_URL}" size="50" /></dd>
 	</dl>
+	<dl>
+		<dt><label for="gtaw_login_enable">{L_GTAW_LOGIN_ENABLE}{L_COLON}</label><br /><span>{L_GTAW_LOGIN_ENABLE_EXPLAIN}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="gtaw_login_enable" value="1" <!-- IF GTAW_LOGIN_ENABLE -->checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+			<label><input type="radio" class="radio" name="gtaw_login_enable" value="0" <!-- IF not GTAW_LOGIN_ENABLE -->checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+		</dd>
+	</dl>
 </fieldset>
 
 <fieldset class="submit-buttons">

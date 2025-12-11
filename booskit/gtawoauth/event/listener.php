@@ -5,12 +5,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class listener implements EventSubscriberInterface
 {
+    protected $config;
     protected $template;
     protected $user;
     protected $provider;
 
-    public function __construct(\phpbb\template\template $template, \phpbb\user $user, \booskit\gtawoauth\auth\provider\gtaw $provider)
+    public function __construct(\phpbb\config\config $config, \phpbb\template\template $template, \phpbb\user $user, \booskit\gtawoauth\auth\provider\gtaw $provider)
     {
+        $this->config = $config;
         $this->template = $template;
         $this->user = $user;
         $this->provider = $provider;
@@ -36,6 +38,11 @@ class listener implements EventSubscriberInterface
 
     public function inject_login_link($event)
     {
+        // Check if login is enabled in ACP
+        if (empty($this->config['auth_oauth_gtaw_login_enable'])) {
+            return;
+        }
+
         if ($this->user->data['user_id'] != ANONYMOUS) {
             return;
         }
