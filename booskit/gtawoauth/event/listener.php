@@ -63,7 +63,6 @@ class listener implements EventSubscriberInterface
             'response_type' => 'code',
             'client_id' => $client_id,
             'redirect_uri' => $redirect_uri,
-            'state' => 'login', // We use 'login' to distinguish from 'link' (which uses a hash)
             // 'scope' => '', // Add scope if needed
         ];
 
