@@ -5,6 +5,7 @@ services:
         arguments:
             - '@config'
             - '@request'
+            - '@controller.helper'
         tags:
             - { name: auth.provider.oauth }
 
@@ -35,6 +36,20 @@ services:
             - '@request'
             - '@template'
             - '@user'
+            - '@booskit.gtawoauth.auth.provider'
+            - '@dbal.conn'
+            - '@controller.helper'
+            - '@language'
+            - '%core.table_prefix%'
+
+    # 5. Callback Controller
+    booskit.gtawoauth.controller.callback:
+        class: booskit\gtawoauth\controller\callback
+        arguments:
+            - '@config'
+            - '@request'
+            - '@user'
+            - '@auth'
             - '@booskit.gtawoauth.auth.provider'
             - '@dbal.conn'
             - '@controller.helper'

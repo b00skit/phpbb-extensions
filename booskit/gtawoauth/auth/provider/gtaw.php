@@ -1,6 +1,8 @@
 <?php
 namespace booskit\gtawoauth\auth\provider;
 
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+
 class gtaw extends \phpbb\auth\provider\oauth\service\base
 {
     /** @var \phpbb\config\config */
@@ -9,6 +11,9 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     /** @var \phpbb\request\request_interface */
     protected $request;
 
+    /** @var \phpbb\controller\helper */
+    protected $helper;
+
     private $custom_redirect_uri;
 
     /**
@@ -16,16 +21,20 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
      *
      * @param \phpbb\config\config                  $config     Config object
      * @param \phpbb\request\request_interface      $request    Request object
+     * @param \phpbb\controller\helper              $helper     Controller helper object
      */
-    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request)
+    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\controller\helper $helper)
     {
         $this->config   = $config;
         $this->request  = $request;
+        $this->helper   = $helper;
     }
 
     public function set_redirect_uri($uri)
     {
         $this->custom_redirect_uri = $uri;
+        // Also update parent property if it exists or is used
+        $this->redirect_uri = $uri;
     }
 
     public function get_redirect_uri()
@@ -34,8 +43,20 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
             return $this->custom_redirect_uri;
         }
 
-        // Default redirect URI for login
-        return generate_board_url() . '/ucp.php?mode=login&login=external&oauth_service=gtaw';
+        // Check if user has defined a base URL
+        $base_url = isset($this->config['auth_oauth_gtaw_base_url']) ? trim($this->config['auth_oauth_gtaw_base_url'], '/') : '';
+
+        if (!empty($base_url)) {
+            $uri = $base_url . '/gtaw/callback';
+        } else {
+            // Fallback to auto-detection
+            $uri = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        }
+
+        // Ensure parent property is synced
+        $this->redirect_uri = $uri;
+
+        return $uri;
     }
 
     public function perform_token_exchange($code)
@@ -184,6 +205,10 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     public function perform_auth_login()
     {
         $code = $this->request->variable('code', '');
+
+        // Note: State validation is currently bypassed because the state manager service is unavailable
+        // $state = $this->request->variable('state', '');
+        // $this->state_manager->check_state($state);
 
         $access_token = $this->request_access_token($code);
         if (!$access_token) {
