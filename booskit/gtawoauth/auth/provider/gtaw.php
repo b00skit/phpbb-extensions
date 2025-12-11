@@ -3,7 +3,25 @@ namespace booskit\gtawoauth\auth\provider;
 
 class gtaw extends \phpbb\auth\provider\oauth\service\base
 {
+    /** @var \phpbb\config\config */
+    protected $config;
+
+    /** @var \phpbb\request\request_interface */
+    protected $request;
+
     private $custom_redirect_uri;
+
+    /**
+     * Constructor.
+     *
+     * @param \phpbb\config\config                  $config     Config object
+     * @param \phpbb\request\request_interface      $request    Request object
+     */
+    public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request)
+    {
+        $this->config   = $config;
+        $this->request  = $request;
+    }
 
     public function set_redirect_uri($uri)
     {
@@ -16,7 +34,8 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
             return $this->custom_redirect_uri;
         }
 
-        return parent::get_redirect_uri();
+        // Default redirect URI for login
+        return generate_board_url() . '/ucp.php?mode=login&login=external&oauth_service=gtaw';
     }
 
     public function perform_token_exchange($code)
@@ -146,5 +165,55 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     public function get_avatar($data)
     {
         return '';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function get_service_credentials()
+    {
+        return [
+            'key'    => $this->config['auth_oauth_gtaw_key'],
+            'secret' => $this->config['auth_oauth_gtaw_secret'],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function perform_auth_login()
+    {
+        $code = $this->request->variable('code', '');
+
+        $access_token = $this->request_access_token($code);
+        if (!$access_token) {
+            throw new \phpbb\auth\provider\oauth\service\exception('AUTH_PROVIDER_OAUTH_ERROR_REQUEST');
+        }
+
+        $user_info = $this->request_user_details($access_token);
+        if (!$user_info) {
+             throw new \phpbb\auth\provider\oauth\service\exception('AUTH_PROVIDER_OAUTH_ERROR_REQUEST');
+        }
+
+        $user_details = $this->get_user_details($user_info);
+        if (!$user_details || !isset($user_details['user_id'])) {
+             throw new \phpbb\auth\provider\oauth\service\exception('AUTH_PROVIDER_OAUTH_ERROR_REQUEST');
+        }
+
+        return $user_details['user_id'];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function perform_token_auth()
+    {
+        // Token auth typically implies we already have the token in the service provider
+        // But since we manage state manually in this custom implementation, we might not support this
+        // OR we can just return null, or throw exception.
+        // For standard phpBB OAuth flow, perform_auth_login is the main entry point for code exchange.
+        // perform_token_auth seems used when re-verifying or obtaining info if token is known.
+
+        throw new \phpbb\auth\provider\oauth\service\exception('NOT_IMPLEMENTED');
     }
 }
