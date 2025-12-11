@@ -25,7 +25,7 @@ class settings
         $this->u_action = $u_action;
 
         if ($this->request->is_set_post('submit')) {
-            if (!check_link_hash($this->request->variable('token', ''), 'acp_gtaw_oauth')) {
+            if (!check_form_key('acp_gtaw_oauth')) {
                 trigger_error($this->user->lang['FORM_INVALID'] . adm_back_link($this->u_action), E_USER_WARNING);
             }
 
@@ -38,6 +38,8 @@ class settings
             $this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_CONFIG_GTAW_OAUTH');
             trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
         }
+
+        add_form_key('acp_gtaw_oauth');
 
         $this->template->assign_vars(array(
             'GTAW_CLIENT_ID'     => $this->config['auth_oauth_gtaw_key'],
