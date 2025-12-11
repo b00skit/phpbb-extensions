@@ -3,6 +3,32 @@ namespace booskit\gtawoauth\auth\provider;
 
 class gtaw extends \phpbb\auth\provider\oauth\service\base
 {
+    private $custom_redirect_uri;
+
+    public function set_redirect_uri($uri)
+    {
+        $this->custom_redirect_uri = $uri;
+    }
+
+    public function get_redirect_uri()
+    {
+        if ($this->custom_redirect_uri) {
+            return $this->custom_redirect_uri;
+        }
+
+        return parent::get_redirect_uri();
+    }
+
+    public function perform_token_exchange($code)
+    {
+        return $this->request_access_token($code);
+    }
+
+    public function fetch_user_info($token)
+    {
+        return $this->request_user_details($token);
+    }
+
     /**
      * {@inheritdoc}
      */
