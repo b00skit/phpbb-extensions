@@ -39,3 +39,4 @@ services:
             - '@dbal.conn'
             - '@controller.helper'
             - '@language'
+            - '%core.table_prefix%'

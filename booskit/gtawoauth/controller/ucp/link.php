@@ -11,8 +11,9 @@ class link
     protected $db;
     protected $helper;
     protected $language;
+    protected $table_prefix;
 
-    public function __construct($config, $request, $template, $user, $provider, $db, $helper, $language)
+    public function __construct($config, $request, $template, $user, $provider, $db, $helper, $language, $table_prefix)
     {
         $this->config = $config;
         $this->request = $request;
@@ -22,6 +23,7 @@ class link
         $this->db = $db;
         $this->helper = $helper;
         $this->language = $language;
+        $this->table_prefix = $table_prefix;
     }
 
     public function handle($id, $mode, $u_action)
@@ -83,7 +85,7 @@ class link
         $external_id = $user_details['user_id'];
 
         // Check if this external ID is already linked
-        $sql = 'SELECT user_id FROM ' . $this->db->get_table_prefix() . 'oauth_accounts
+        $sql = 'SELECT user_id FROM ' . $this->table_prefix . 'oauth_accounts
                 WHERE provider = \'gtaw\' AND oauth_provider_id = \'' . $this->db->sql_escape($external_id) . '\'';
         $result = $this->db->sql_query($sql);
         $existing = $this->db->sql_fetchrow($result);
@@ -100,7 +102,7 @@ class link
         } else {
             // Check if user is already linked to ANY gtaw account (limit one link per user?)
             // Usually one user can have one link to a specific provider.
-            $sql = 'SELECT oauth_provider_id FROM ' . $this->db->get_table_prefix() . 'oauth_accounts
+            $sql = 'SELECT oauth_provider_id FROM ' . $this->table_prefix . 'oauth_accounts
                 WHERE user_id = ' . (int) $this->user->data['user_id'] . '
                 AND provider = \'gtaw\'';
             $result = $this->db->sql_query($sql);
@@ -112,7 +114,7 @@ class link
                  // Let's assume we replace it or error.
                  // "Link your GTA:W account" implies one.
                  // Let's delete old one and insert new one to be safe/easy.
-                 $sql = 'DELETE FROM ' . $this->db->get_table_prefix() . 'oauth_accounts
+                 $sql = 'DELETE FROM ' . $this->table_prefix . 'oauth_accounts
                     WHERE user_id = ' . (int) $this->user->data['user_id'] . '
                     AND provider = \'gtaw\'';
                  $this->db->sql_query($sql);
@@ -124,7 +126,7 @@ class link
                 'provider' => 'gtaw',
                 'oauth_provider_id' => (string) $external_id,
             ];
-            $sql = 'INSERT INTO ' . $this->db->get_table_prefix() . 'oauth_accounts ' . $this->db->sql_build_array('INSERT', $sql_ary);
+            $sql = 'INSERT INTO ' . $this->table_prefix . 'oauth_accounts ' . $this->db->sql_build_array('INSERT', $sql_ary);
             $this->db->sql_query($sql);
 
             // Success message handled by redirect and displaying status?
@@ -136,7 +138,7 @@ class link
 
     protected function unlink_account()
     {
-        $sql = 'DELETE FROM ' . $this->db->get_table_prefix() . 'oauth_accounts
+        $sql = 'DELETE FROM ' . $this->table_prefix . 'oauth_accounts
                 WHERE user_id = ' . (int) $this->user->data['user_id'] . '
                 AND provider = \'gtaw\'';
         $this->db->sql_query($sql);
@@ -145,7 +147,7 @@ class link
     protected function show_status($u_action, $redirect_uri)
     {
         // Check if linked
-        $sql = 'SELECT oauth_provider_id FROM ' . $this->db->get_table_prefix() . 'oauth_accounts
+        $sql = 'SELECT oauth_provider_id FROM ' . $this->table_prefix . 'oauth_accounts
                 WHERE user_id = ' . (int) $this->user->data['user_id'] . '
                 AND provider = \'gtaw\'';
         $result = $this->db->sql_query($sql);
