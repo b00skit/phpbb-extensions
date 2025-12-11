@@ -16,6 +16,8 @@ $lang = array_merge($lang, array(
     'GTAW_CLIENT_ID_EXPLAIN'           => 'Enter the Client ID provided by GTA: World UCP.',
     'GTAW_CLIENT_SECRET'               => 'Client Secret',
     'GTAW_CLIENT_SECRET_EXPLAIN'       => 'Enter the Client Secret provided by GTA: World UCP.',
+    'GTAW_BASE_URL'                    => 'Base Website URL',
+    'GTAW_BASE_URL_EXPLAIN'            => 'Enter the base URL of your forum (e.g., https://your-domain.com/phpbb). Required to construct the absolute callback URL correctly.',
     'LOG_CONFIG_GTAW_OAUTH'            => '<strong>Updated GTA: World OAuth settings</strong>',
 
     // UCP
