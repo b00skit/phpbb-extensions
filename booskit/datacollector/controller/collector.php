@@ -55,6 +55,10 @@ class collector
 			    return new Response('Forum ID is not configured.', 500);
 			}
 		}
+		elseif ($type === 'groups')
+		{
+			$data = $this->get_all_groups();
+		}
 		else
 		{
 			$group_id = (int) $this->config['booskit_datacollector_group_id'];
@@ -142,6 +146,75 @@ class collector
 		$this->db->sql_freeresult($result);
 
 		return $threads;
+	}
+
+	protected function get_all_groups()
+	{
+		// Fetch basic group info
+		$sql = 'SELECT group_id, group_name
+			FROM ' . GROUPS_TABLE . '
+			ORDER BY group_id ASC';
+		$result = $this->db->sql_query($sql);
+
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$groups[$row['group_id']] = [
+				'group_id' => (int) $row['group_id'],
+				'group_name' => $row['group_name'],
+				'member_count' => 0,
+				'leaders' => [],
+			];
+		}
+		$this->db->sql_freeresult($result);
+
+		if (empty($groups))
+		{
+			return [];
+		}
+
+		$group_ids = array_keys($groups);
+
+		// Count members
+		// Exclude pending members and potentially inactive users if required,
+		// but typically member count includes all approved members.
+		$sql = 'SELECT group_id, COUNT(user_id) as total_members
+			FROM ' . USER_GROUP_TABLE . '
+			WHERE user_pending = 0
+			AND ' . $this->db->sql_in_set('group_id', $group_ids) . '
+			GROUP BY group_id';
+
+		$result = $this->db->sql_query($sql);
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			if (isset($groups[$row['group_id']]))
+			{
+				$groups[$row['group_id']]['member_count'] = (int) $row['total_members'];
+			}
+		}
+		$this->db->sql_freeresult($result);
+
+		// Get Leaders
+		$sql = 'SELECT ug.group_id, ug.user_id, u.username
+			FROM ' . USER_GROUP_TABLE . ' ug
+			JOIN ' . USERS_TABLE . ' u ON (ug.user_id = u.user_id)
+			WHERE ug.group_leader = 1
+			AND ' . $this->db->sql_in_set('ug.group_id', $group_ids);
+
+		$result = $this->db->sql_query($sql);
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			if (isset($groups[$row['group_id']]))
+			{
+				$groups[$row['group_id']]['leaders'][] = [
+					'user_id' => (int) $row['user_id'],
+					'username' => $row['username'],
+				];
+			}
+		}
+		$this->db->sql_freeresult($result);
+
+		return array_values($groups);
 	}
 
 	protected function send_data($url, $data)
