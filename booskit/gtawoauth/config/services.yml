@@ -3,7 +3,6 @@ services:
     booskit.gtawoauth.auth.provider:
         class: booskit\gtawoauth\auth\provider\gtaw
         arguments:
-            - '@auth.provider.oauth.service.base'
             - '@config'
             - '@request'
             - '@user'
