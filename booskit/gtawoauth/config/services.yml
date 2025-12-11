@@ -1,0 +1,24 @@
+services:
+    # 1. The OAuth Provider Logic
+    booskit.gtawoauth.auth.provider:
+        class: booskit\gtawoauth\auth\provider\gtaw
+        arguments:
+            - '@auth.provider.oauth.service.base'
+            - '@config'
+            - '@request'
+            - '@user'
+            - '@template'
+            - '@dbal.conn'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: auth.provider.oauth }
+
+    # 2. Listener to load CSS and Language
+    booskit.gtawoauth.listener:
+        class: booskit\gtawoauth\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+        tags:
+            - { name: event.listener }

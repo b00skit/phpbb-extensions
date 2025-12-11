@@ -1,0 +1,18 @@
+/* Style the generic OAuth button for GTAW */
+.oauth-service-gtaw {
+    background-color: #000000; /* GTA Theme Black */
+    color: #FFFFFF;
+    border: 1px solid #333;
+}
+
+.oauth-service-gtaw:hover {
+    background-color: #333333; /* Darker Grey hover */
+    color: #FFFFFF;
+}
+
+/* Optional: Add a FontAwesome icon if you have FA loaded */
+.oauth-service-gtaw::before {
+    content: "\f1b9"; /* FA Car icon or similar */
+    font-family: FontAwesome;
+    margin-right: 5px;
+}
