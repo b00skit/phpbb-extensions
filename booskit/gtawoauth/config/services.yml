@@ -26,3 +26,17 @@ services:
             - '@template'
             - '@user'
             - '@log'
+
+    # 4. UCP Controller
+    booskit.gtawoauth.controller.ucp:
+        class: booskit\gtawoauth\controller\ucp\link
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@booskit.gtawoauth.auth.provider'
+            - '@dbal.conn'
+            - '@controller.helper'
+            - '@language'
+            - '%core.table_prefix%'

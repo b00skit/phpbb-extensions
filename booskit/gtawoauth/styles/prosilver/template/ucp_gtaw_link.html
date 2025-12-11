@@ -1,0 +1,24 @@
+<!-- INCLUDE ucp_header.html -->
+
+<h2>{L_UCP_GTAW_TITLE}</h2>
+
+<div class="panel">
+	<div class="inner">
+	<p>{L_UCP_GTAW_LINK_EXPLAIN}</p>
+
+	{% if GTAW_IS_LINKED %}
+		<p>{L_GTAW_LINKED_STATUS} <strong>{GTAW_EXTERNAL_ID}</strong></p>
+		<fieldset class="submit-buttons">
+			<a href="{U_UNLINK}" class="button2">{L_GTAW_UNLINK_ACCOUNT}</a>
+		</fieldset>
+	{% else %}
+		<p>{L_GTAW_NOT_LINKED_STATUS}</p>
+		<fieldset class="submit-buttons">
+			<a href="{U_LINK}" class="button1">{L_GTAW_LINK_ACCOUNT}</a>
+		</fieldset>
+	{% endif %}
+
+	</div>
+</div>
+
+<!-- INCLUDE ucp_footer.html -->
