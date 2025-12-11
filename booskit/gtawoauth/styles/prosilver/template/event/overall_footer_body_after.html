@@ -1,0 +1,48 @@
+<div id="gtaw-login-injection" style="display:none;">
+    <a href="{U_GTAW_LOGIN}" class="button2 gtaw-login-btn" title="{L_LOGIN_WITH_GTAW}" style="margin-right: 5px;">
+        <i class="icon fa-gamepad fa-fw" aria-hidden="true"></i><span>{L_LOGIN_WITH_GTAW}</span>
+    </a>
+</div>
+
+<script>
+(function($) {
+    'use strict';
+    $(function() {
+        var $buttonTemplate = $('#gtaw-login-injection').children();
+
+        // --- CASE A: Main Login Page Form (#login) ---
+        var $mainLoginForm = $('#login fieldset');
+        if ($mainLoginForm.length) {
+            // For the main form, we wrap it in DL/DD tags to match the list layout
+            var $mainBtn = $buttonTemplate.clone();
+            var $wrapper = $('<dl><dt>&nbsp;</dt><dd></dd></dl>');
+            $wrapper.find('dd').append($mainBtn);
+            
+            // Insert before the last row (usually the submit button)
+            $wrapper.insertBefore($mainLoginForm.find('dl:last-child'));
+        }
+
+        // --- CASE B: Quick Login Hotbar (.quick-login) ---
+        // This targets the bar you see on the index page or navbar dropdowns
+        var $quickLoginForm = $('fieldset.quick-login');
+        if ($quickLoginForm.length) {
+            $quickLoginForm.each(function() {
+                var $thisForm = $(this);
+                // Clone the button for this specific bar
+                var $quickBtn = $buttonTemplate.clone();
+                
+                // Find the existing "Login" submit button
+                var $submitBtn = $thisForm.find('input[type="submit"]');
+                
+                if ($submitBtn.length) {
+                    // Insert our GTAW button directly before the standard Login button
+                    $quickBtn.insertBefore($submitBtn);
+                } else {
+                    // Fallback: just append to the end if no submit button found
+                    $thisForm.append($quickBtn);
+                }
+            });
+        }
+    });
+})(jQuery);
+</script>
