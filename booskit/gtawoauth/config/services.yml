@@ -3,14 +3,8 @@ services:
     booskit.gtawoauth.auth.provider:
         class: booskit\gtawoauth\auth\provider\gtaw
         arguments:
-            - '@auth.provider.oauth.service.base'
             - '@config'
             - '@request'
-            - '@user'
-            - '@template'
-            - '@dbal.conn'
-            - '%core.root_path%'
-            - '%core.php_ext%'
         tags:
             - { name: auth.provider.oauth }
 
@@ -22,3 +16,13 @@ services:
             - '@user'
         tags:
             - { name: event.listener }
+
+    # 3. ACP Controller
+    booskit.gtawoauth.controller.acp:
+        class: booskit\gtawoauth\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'

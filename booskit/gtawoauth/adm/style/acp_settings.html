@@ -1,0 +1,26 @@
+<!-- INCLUDE overall_header.html -->
+
+<h1>{L_ACP_GTAW_OAUTH_SETTINGS}</h1>
+
+<form id="acp_gtaw_oauth" method="post" action="{U_ACTION}">
+
+<fieldset>
+	<legend>{L_ACP_GTAW_OAUTH_SETTINGS}</legend>
+	<dl>
+		<dt><label for="gtaw_client_id">{L_GTAW_CLIENT_ID}{L_COLON}</label><br /><span>{L_GTAW_CLIENT_ID_EXPLAIN}</span></dt>
+		<dd><input type="text" id="gtaw_client_id" name="gtaw_client_id" value="{GTAW_CLIENT_ID}" size="50" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="gtaw_client_secret">{L_GTAW_CLIENT_SECRET}{L_COLON}</label><br /><span>{L_GTAW_CLIENT_SECRET_EXPLAIN}</span></dt>
+		<dd><input type="text" id="gtaw_client_secret" name="gtaw_client_secret" value="{GTAW_CLIENT_SECRET}" size="50" /></dd>
+	</dl>
+</fieldset>
+
+<fieldset class="submit-buttons">
+	<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+	<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+	{S_FORM_TOKEN}
+</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->
