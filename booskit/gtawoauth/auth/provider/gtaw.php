@@ -47,10 +47,7 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
         $base_url = isset($this->config['auth_oauth_gtaw_base_url']) ? trim($this->config['auth_oauth_gtaw_base_url'], '/') : '';
 
         if (!empty($base_url)) {
-            // Append the relative callback path to the custom base URL
-            // We use ABSOLUTE_PATH (which is the default when third arg is false/omitted in route) and strip leading slash
-            $path = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_PATH);
-            $uri = $base_url . '/' . ltrim($path, '/');
+            $uri = $base_url . '/gtaw/callback';
         } else {
             // Fallback to auto-detection
             $uri = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
