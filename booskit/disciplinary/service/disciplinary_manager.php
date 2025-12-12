@@ -193,6 +193,18 @@ class disciplinary_manager
 
 	public function is_user_staff($user_id)
 	{
+		// 1. Check User Type (Founders are always staff)
+		$sql = 'SELECT user_type FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $user_id;
+		$result = $this->db->sql_query($sql);
+		$user_type = (int) $this->db->sql_fetchfield('user_type');
+		$this->db->sql_freeresult($result);
+
+		if ($user_type === 3) // USER_FOUNDER
+		{
+			return true;
+		}
+
+		// 2. Check Permissions
 		$is_staff = false;
 		$perms = $this->auth->acl_get_list(array($user_id), false, false);
 
@@ -202,10 +214,14 @@ class disciplinary_manager
 			{
 				foreach ($options as $opt => $setting)
 				{
-					if ($setting == 1 && (strpos($opt, 'm_') === 0 || strpos($opt, 'a_') === 0))
+					if ($setting == 1)
 					{
-						$is_staff = true;
-						break 2;
+						$opt_str = (string) $opt;
+						if (strpos($opt_str, 'm_') === 0 || strpos($opt_str, 'a_') === 0)
+						{
+							$is_staff = true;
+							break 2;
+						}
 					}
 				}
 			}
