@@ -46,8 +46,29 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
-		// If viewer is not admin, they cannot view/manage staff profiles
-		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		// Determine Viewer Level
+		$viewer_level = 0;
+		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
+		{
+			$viewer_level = 3;
+		}
+		elseif ($this->auth->acl_get('a_'))
+		{
+			$viewer_level = 2;
+		}
+		elseif ($this->auth->acl_get('m_warn'))
+		{
+			$viewer_level = 1;
+		}
+
+		// Determine Target Level
+		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
+
+		// Hierarchical Access Check: Viewer must be higher level than Target
+		// Exception: Admins (2) can manage Moderators (1) - 2 > 1 (OK)
+		// Moderators (1) cannot manage Moderators (1) - 1 > 1 (False)
+		// Admins (2) cannot manage Admins (2) - 2 > 2 (False)
+		if ($viewer_level <= $target_level)
 		{
 			return;
 		}

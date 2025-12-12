@@ -45,8 +45,25 @@ class main
 	{
 		$this->check_auth();
 
-		// If viewer is not admin, they cannot view/manage staff profiles
-		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		// Determine Viewer Level
+		$viewer_level = 0;
+		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
+		{
+			$viewer_level = 3;
+		}
+		elseif ($this->auth->acl_get('a_'))
+		{
+			$viewer_level = 2;
+		}
+		elseif ($this->auth->acl_get('m_warn'))
+		{
+			$viewer_level = 1;
+		}
+
+		// Determine Target Level
+		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
+
+		if ($viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -106,8 +123,25 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		// If viewer is not admin, they cannot view/manage staff profiles
-		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		// Determine Viewer Level
+		$viewer_level = 0;
+		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
+		{
+			$viewer_level = 3;
+		}
+		elseif ($this->auth->acl_get('a_'))
+		{
+			$viewer_level = 2;
+		}
+		elseif ($this->auth->acl_get('m_warn'))
+		{
+			$viewer_level = 1;
+		}
+
+		// Determine Target Level
+		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
+
+		if ($viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -163,8 +197,25 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		// If viewer is not admin, they cannot view/manage staff profiles
-		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		// Determine Viewer Level
+		$viewer_level = 0;
+		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
+		{
+			$viewer_level = 3;
+		}
+		elseif ($this->auth->acl_get('a_'))
+		{
+			$viewer_level = 2;
+		}
+		elseif ($this->auth->acl_get('m_warn'))
+		{
+			$viewer_level = 1;
+		}
+
+		// Determine Target Level
+		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
+
+		if ($viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}

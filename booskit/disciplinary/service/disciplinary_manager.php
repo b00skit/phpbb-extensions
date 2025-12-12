@@ -191,9 +191,11 @@ class disciplinary_manager
 		return $usernames;
 	}
 
-	public function is_user_staff($user_id)
+	public function get_user_role_level($user_id)
 	{
-		// 1. Check User Type (Founders are always staff)
+		// 0 = User, 1 = Moderator, 2 = Administrator, 3 = Founder
+
+		// 1. Check User Type (Founder is level 3)
 		$sql = 'SELECT user_type FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $user_id;
 		$result = $this->db->sql_query($sql);
 		$user_type = (int) $this->db->sql_fetchfield('user_type');
@@ -201,11 +203,13 @@ class disciplinary_manager
 
 		if ($user_type === 3) // USER_FOUNDER
 		{
-			return true;
+			return 3;
 		}
 
 		// 2. Check Permissions
-		$is_staff = false;
+		$has_admin = false;
+		$has_mod = false;
+
 		$perms = $this->auth->acl_get_list(array($user_id), false, false);
 
 		if (isset($perms[$user_id]))
@@ -217,16 +221,27 @@ class disciplinary_manager
 					if ($setting == 1)
 					{
 						$opt_str = (string) $opt;
-						if (strpos($opt_str, 'm_') === 0 || strpos($opt_str, 'a_') === 0)
+						if (strpos($opt_str, 'a_') === 0)
 						{
-							$is_staff = true;
-							break 2;
+							$has_admin = true;
+						}
+						elseif (strpos($opt_str, 'm_') === 0)
+						{
+							$has_mod = true;
 						}
 					}
 				}
 			}
 		}
 
-		return $is_staff;
+		if ($has_admin)
+		{
+			return 2;
+		}
+		if ($has_mod)
+		{
+			return 1;
+		}
+		return 0;
 	}
 }
