@@ -76,6 +76,9 @@ class listener implements EventSubscriberInterface
 
 			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
+			// Edit/Delete Permission Check: Founder (3) can edit all; others only their own
+			$can_modify = ($viewer_level == 3 || $this->user->data['user_id'] == $record['issuer_user_id']);
+
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
 				'TYPE' => utf8_htmlspecialchars($type_name),
@@ -85,8 +88,8 @@ class listener implements EventSubscriberInterface
 				'ISSUER_ID' => $record['issuer_user_id'],
 				'ISSUER_NAME' => $issuer_name,
 				'COLOR' => $color,
-				'U_EDIT' => $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])),
-				'U_DELETE' => $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])),
+				'U_EDIT' => $can_modify ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
+				'U_DELETE' => $can_modify ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
 			));
 		}
 

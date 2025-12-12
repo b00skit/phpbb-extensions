@@ -122,6 +122,12 @@ class main
 			trigger_error('NOT_AUTHORISED');
 		}
 
+		// Ownership check: Founders (3) can edit all; others only their own
+		if ($viewer_level < 3 && $this->user->data['user_id'] != $record['issuer_user_id'])
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
 		if ($this->request->is_set_post('submit'))
 		{
 			if (!check_form_key('edit_disciplinary'))
@@ -180,6 +186,12 @@ class main
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
 		if ($viewer_level <= $target_level)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		// Ownership check: Founders (3) can delete all; others only their own
+		if ($viewer_level < 3 && $this->user->data['user_id'] != $record['issuer_user_id'])
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
