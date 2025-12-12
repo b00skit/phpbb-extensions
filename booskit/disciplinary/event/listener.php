@@ -90,7 +90,7 @@ class listener implements EventSubscriberInterface
 
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
-				'TYPE' => $type_name,
+				'TYPE' => utf8_htmlspecialchars($type_name),
 				'DATE' => $this->user->format_date($record['issue_date']),
 				'REASON' => utf8_htmlspecialchars($record['reason']),
 				'EVIDENCE' => utf8_htmlspecialchars($record['evidence']),
