@@ -17,7 +17,7 @@ class v100_initial extends \phpbb\db\migration\migration
 
 	static public function depends_on()
 	{
-		return array('\phpbb\db\migration\data\v33x\v330');
+		return array('\phpbb\db\migration\data\v330\v330');
 	}
 
 	public function update_data()
