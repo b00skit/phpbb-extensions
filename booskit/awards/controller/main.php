@@ -15,23 +15,24 @@ class main
 	protected $template;
 	protected $user;
 	protected $helper;
+	protected $auth;
 	protected $award_manager;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \booskit\awards\service\award_manager $award_manager)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \booskit\awards\service\award_manager $award_manager)
 	{
 		$this->config = $config;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
 		$this->helper = $helper;
+		$this->auth = $auth;
 		$this->award_manager = $award_manager;
 	}
 
 	public function add_award($user_id)
 	{
 		// Permission check: m_ or a_
-		$auth = $this->user->get_auth();
-		if (!$auth->acl_get('m_') && !$auth->acl_get('a_'))
+		if (!$this->auth->acl_get('m_') && !$this->auth->acl_get('a_'))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}

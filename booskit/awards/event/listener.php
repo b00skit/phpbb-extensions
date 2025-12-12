@@ -36,6 +36,8 @@ class listener implements EventSubscriberInterface
 
 	public function memberlist_view_profile($event)
 	{
+		$this->user->add_lang_ext('booskit/awards', 'awards');
+
 		$member_id = $event['member']['user_id'];
 
 		// Load awards for this user

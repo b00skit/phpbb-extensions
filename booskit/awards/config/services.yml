@@ -24,6 +24,7 @@ services:
             - '@template'
             - '@user'
             - '@controller.helper'
+            - '@auth'
             - '@booskit.awards.service.award_manager'
 
     booskit.awards.listener:
