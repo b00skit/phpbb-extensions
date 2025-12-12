@@ -26,6 +26,8 @@ services:
             - '@controller.helper'
             - '@auth'
             - '@booskit.awards.service.award_manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
 
     booskit.awards.listener:
         class: booskit\awards\event\listener

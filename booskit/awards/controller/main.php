@@ -17,8 +17,10 @@ class main
 	protected $helper;
 	protected $auth;
 	protected $award_manager;
+	protected $root_path;
+	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \booskit\awards\service\award_manager $award_manager)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->request = $request;
@@ -27,6 +29,8 @@ class main
 		$this->helper = $helper;
 		$this->auth = $auth;
 		$this->award_manager = $award_manager;
+		$this->root_path = $root_path;
+		$this->php_ext = $php_ext;
 	}
 
 	public function add_award($user_id)
@@ -66,8 +70,10 @@ class main
 
 			$this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id']);
 
-			meta_refresh(3, $this->helper->route('phpbb_memberlist_view_profile', array('u' => $user_id)));
-			trigger_error($this->user->lang['AWARD_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $this->helper->route('phpbb_memberlist_view_profile', array('u' => $user_id)) . '">', '</a>'));
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
+
+			meta_refresh(3, $u_profile);
+			trigger_error($this->user->lang['AWARD_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
 		$definitions = $this->award_manager->get_definitions();
