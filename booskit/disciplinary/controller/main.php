@@ -46,19 +46,7 @@ class main
 		$this->check_auth();
 
 		// Determine Viewer Level
-		$viewer_level = 0;
-		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
-		{
-			$viewer_level = 3;
-		}
-		elseif ($this->auth->acl_get('a_'))
-		{
-			$viewer_level = 2;
-		}
-		elseif ($this->auth->acl_get('m_warn'))
-		{
-			$viewer_level = 1;
-		}
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
@@ -124,19 +112,7 @@ class main
 		$user_id = $record['user_id'];
 
 		// Determine Viewer Level
-		$viewer_level = 0;
-		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
-		{
-			$viewer_level = 3;
-		}
-		elseif ($this->auth->acl_get('a_'))
-		{
-			$viewer_level = 2;
-		}
-		elseif ($this->auth->acl_get('m_warn'))
-		{
-			$viewer_level = 1;
-		}
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
@@ -198,19 +174,7 @@ class main
 		$user_id = $record['user_id'];
 
 		// Determine Viewer Level
-		$viewer_level = 0;
-		if ($this->user->data['user_type'] == 3) // USER_FOUNDER
-		{
-			$viewer_level = 3;
-		}
-		elseif ($this->auth->acl_get('a_'))
-		{
-			$viewer_level = 2;
-		}
-		elseif ($this->auth->acl_get('m_warn'))
-		{
-			$viewer_level = 1;
-		}
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
