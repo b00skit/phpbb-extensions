@@ -35,7 +35,7 @@ class main
 
 	protected function check_auth()
 	{
-		if (!$this->auth->acl_get('m_') && !$this->auth->acl_get('a_'))
+		if (!$this->auth->acl_get('m_warn') && !$this->auth->acl_get('a_'))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}

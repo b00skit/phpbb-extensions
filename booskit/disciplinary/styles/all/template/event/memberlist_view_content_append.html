@@ -2,16 +2,6 @@
 <div class="panel">
 	<div class="inner">
 		<h3>{L_DISCIPLINARY_ACTIONS}</h3>
-		<!-- IF U_ADD_DISCIPLINARY -->
-		<ul class="linklist">
-			<li class="rightside">
-				<a href="{U_ADD_DISCIPLINARY}" class="button button-icon-only" title="{L_ADD_DISCIPLINARY}">
-					<i class="icon fa-plus fa-fw" aria-hidden="true"></i><span class="sr-only">{L_ADD_DISCIPLINARY}</span>
-				</a>
-			</li>
-		</ul>
-		<!-- ENDIF -->
-
 		<ul class="topiclist">
 			<li class="header">
 				<dl class="row-item">
@@ -55,18 +45,16 @@
 		</ul>
 	</div>
 </div>
-<!-- ELSEIF U_ADD_DISCIPLINARY -->
+<!-- ENDIF -->
+
+<!-- IF U_ADD_DISCIPLINARY -->
 <div class="panel">
 	<div class="inner">
-		<h3>{L_DISCIPLINARY_ACTIONS}</h3>
 		<ul class="linklist">
-			<li class="rightside">
-				<a href="{U_ADD_DISCIPLINARY}" class="button button-icon-only" title="{L_ADD_DISCIPLINARY}">
-					<i class="icon fa-plus fa-fw" aria-hidden="true"></i><span class="sr-only">{L_ADD_DISCIPLINARY}</span>
-				</a>
+			<li>
+				<a href="{U_ADD_DISCIPLINARY}" style="font-weight: bold;">{L_ADD_DISCIPLINARY}</a>
 			</li>
 		</ul>
-		<p>{L_NO_DISCIPLINARY_ACTIONS}</p>
 	</div>
 </div>
 <!-- ENDIF -->

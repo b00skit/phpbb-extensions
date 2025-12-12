@@ -5,6 +5,7 @@ services:
             - '@config'
             - '@dbal.conn'
             - '@user'
+            - '@cache.driver'
             - '%booskit.disciplinary.table%'
 
     booskit.disciplinary.controller.main:

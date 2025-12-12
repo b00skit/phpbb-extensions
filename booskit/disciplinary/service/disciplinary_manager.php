@@ -19,16 +19,20 @@ class disciplinary_manager
 	/** @var \phpbb\user */
 	protected $user;
 
+	/** @var \phpbb\cache\driver\driver_interface */
+	protected $cache;
+
 	/** @var string */
 	protected $table;
 
 	protected $cached_definitions = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, $table)
 	{
 		$this->config = $config;
 		$this->db = $db;
 		$this->user = $user;
+		$this->cache = $cache;
 		$this->table = $table;
 	}
 
@@ -39,41 +43,50 @@ class disciplinary_manager
 			return $this->cached_definitions;
 		}
 
-		$json_url = $this->config['booskit_disciplinary_json_url'];
-		$definitions = [];
+		$cache_key = 'booskit_disciplinary_definitions';
+		$definitions = $this->cache->get($cache_key);
 
-		if (!empty($json_url))
+		if ($definitions === false)
 		{
-			// Suppress errors and try to fetch
-			$context = stream_context_create(['http' => ['timeout' => 5]]);
-			$content = @file_get_contents($json_url, false, $context);
-			if ($content !== false)
+			$json_url = $this->config['booskit_disciplinary_json_url'];
+			$definitions = [];
+
+			if (!empty($json_url))
 			{
-				$data = json_decode($content, true);
-				if (is_array($data))
+				// Suppress errors and try to fetch
+				$context = stream_context_create(['http' => ['timeout' => 5]]);
+				$content = @file_get_contents($json_url, false, $context);
+				if ($content !== false)
 				{
-					$definitions = $data;
+					$data = json_decode($content, true);
+					if (is_array($data))
+					{
+						$definitions = $data;
+					}
 				}
 			}
-		}
 
-		if (empty($definitions))
-		{
-			// Fallback example
-			$definitions = [
-				[
-					'id' => 'warning',
-					'name' => 'Warning',
-					'description' => 'A formal warning.',
-					'color' => '#f1c40f',
-				],
-				[
-					'id' => 'ban',
-					'name' => 'Ban',
-					'description' => 'Account suspension.',
-					'color' => '#e74c3c',
-				]
-			];
+			if (empty($definitions))
+			{
+				// Fallback example
+				$definitions = [
+					[
+						'id' => 'warning',
+						'name' => 'Warning',
+						'description' => 'A formal warning.',
+						'color' => '#f1c40f',
+					],
+					[
+						'id' => 'ban',
+						'name' => 'Ban',
+						'description' => 'Account suspension.',
+						'color' => '#e74c3c',
+					]
+				];
+			}
+
+			// Cache for 1 hour
+			$this->cache->put($cache_key, $definitions, 3600);
 		}
 
 		$this->cached_definitions = $definitions;

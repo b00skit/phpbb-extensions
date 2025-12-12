@@ -42,7 +42,7 @@ class listener implements EventSubscriberInterface
 		$records = $this->disciplinary_manager->get_user_records($user_id);
 		$definitions = $this->disciplinary_manager->get_definitions();
 
-		$can_manage = ($this->auth->acl_get('m_') || $this->auth->acl_get('a_'));
+		$can_manage = ($this->auth->acl_get('m_warn') || $this->auth->acl_get('a_'));
 
 		// Gather all issuer IDs to fetch usernames in bulk (optimization)
 		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
@@ -60,8 +60,8 @@ class listener implements EventSubscriberInterface
 				'ID' => $record['record_id'],
 				'TYPE' => $type_name,
 				'DATE' => $this->user->format_date($record['issue_date']),
-				'REASON' => $record['reason'],
-				'EVIDENCE' => $record['evidence'],
+				'REASON' => utf8_htmlspecialchars($record['reason']),
+				'EVIDENCE' => utf8_htmlspecialchars($record['evidence']),
 				'ISSUER_ID' => $record['issuer_user_id'],
 				'ISSUER_NAME' => $issuer_name,
 				'COLOR' => $color,
