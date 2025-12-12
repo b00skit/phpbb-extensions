@@ -1,0 +1,35 @@
+services:
+    booskit.disciplinary.service.disciplinary_manager:
+        class: booskit\disciplinary\service\disciplinary_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '%booskit.disciplinary.table%'
+
+    booskit.disciplinary.controller.main:
+        class: booskit\disciplinary\controller\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@auth'
+            - '@booskit.disciplinary.service.disciplinary_manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    booskit.disciplinary.listener:
+        class: booskit\disciplinary\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@booskit.disciplinary.service.disciplinary_manager'
+            - '@controller.helper'
+            - '@auth'
+        tags:
+            - { name: event.listener }
+
+parameters:
+    booskit.disciplinary.table: '%core.table_prefix%booskit_disciplinary_users'
