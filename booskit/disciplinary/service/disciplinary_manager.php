@@ -22,17 +22,21 @@ class disciplinary_manager
 	/** @var \phpbb\cache\driver\driver_interface */
 	protected $cache;
 
+	/** @var \phpbb\auth\auth */
+	protected $auth;
+
 	/** @var string */
 	protected $table;
 
 	protected $cached_definitions = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, $table)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table)
 	{
 		$this->config = $config;
 		$this->db = $db;
 		$this->user = $user;
 		$this->cache = $cache;
+		$this->auth = $auth;
 		$this->table = $table;
 	}
 
@@ -185,5 +189,28 @@ class disciplinary_manager
 		$this->db->sql_freeresult($result);
 
 		return $usernames;
+	}
+
+	public function is_user_staff($user_id)
+	{
+		$is_staff = false;
+		$perms = $this->auth->acl_get_list(array($user_id), false, false);
+
+		if (isset($perms[$user_id]))
+		{
+			foreach ($perms[$user_id] as $forum_id => $options)
+			{
+				foreach ($options as $opt => $setting)
+				{
+					if ($setting == 1 && (strpos($opt, 'm_') === 0 || strpos($opt, 'a_') === 0))
+					{
+						$is_staff = true;
+						break 2;
+					}
+				}
+			}
+		}
+
+		return $is_staff;
 	}
 }

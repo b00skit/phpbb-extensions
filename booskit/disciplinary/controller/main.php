@@ -45,6 +45,12 @@ class main
 	{
 		$this->check_auth();
 
+		// If viewer is not admin, they cannot view/manage staff profiles
+		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 		$this->user->add_lang('common');
 
@@ -100,6 +106,12 @@ class main
 		}
 		$user_id = $record['user_id'];
 
+		// If viewer is not admin, they cannot view/manage staff profiles
+		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
 		if ($this->request->is_set_post('submit'))
 		{
 			if (!check_form_key('edit_disciplinary'))
@@ -150,6 +162,12 @@ class main
 			trigger_error('NO_DISCIPLINARY_RECORD');
 		}
 		$user_id = $record['user_id'];
+
+		// If viewer is not admin, they cannot view/manage staff profiles
+		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
 
 		if (confirm_box(true))
 		{

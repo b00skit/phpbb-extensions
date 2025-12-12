@@ -46,6 +46,12 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
+		// If viewer is not admin, they cannot view/manage staff profiles
+		if (!$this->auth->acl_get('a_') && $this->disciplinary_manager->is_user_staff($user_id))
+		{
+			return;
+		}
+
 		$records = $this->disciplinary_manager->get_user_records($user_id);
 		$definitions = $this->disciplinary_manager->get_definitions();
 
