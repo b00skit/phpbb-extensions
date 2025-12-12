@@ -1,0 +1,41 @@
+services:
+    booskit.awards.service.award_manager:
+        class: booskit\awards\service\award_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '%booskit.awards.tables.users%'
+
+    booskit.awards.controller.acp.settings:
+        class: booskit\awards\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+
+    booskit.awards.controller.main:
+        class: booskit\awards\controller\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.awards.service.award_manager'
+
+    booskit.awards.listener:
+        class: booskit\awards\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@auth'
+            - '@booskit.awards.service.award_manager'
+        tags:
+            - { name: event.listener }
+
+parameters:
+    booskit.awards.tables.users: %core.table_prefix%booskit_awards_users
