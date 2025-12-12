@@ -39,10 +39,15 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
+		$can_manage = ($this->auth->acl_get('m_warn') || $this->auth->acl_get('a_'));
+
+		if (!$can_manage)
+		{
+			return;
+		}
+
 		$records = $this->disciplinary_manager->get_user_records($user_id);
 		$definitions = $this->disciplinary_manager->get_definitions();
-
-		$can_manage = ($this->auth->acl_get('m_warn') || $this->auth->acl_get('a_'));
 
 		// Gather all issuer IDs to fetch usernames in bulk (optimization)
 		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
@@ -65,16 +70,13 @@ class listener implements EventSubscriberInterface
 				'ISSUER_ID' => $record['issuer_user_id'],
 				'ISSUER_NAME' => $issuer_name,
 				'COLOR' => $color,
-				'U_EDIT' => $can_manage ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
-				'U_DELETE' => $can_manage ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
+				'U_EDIT' => $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])),
+				'U_DELETE' => $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])),
 			));
 		}
 
-		if ($can_manage)
-		{
-			$this->template->assign_vars(array(
-				'U_ADD_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
-			));
-		}
+		$this->template->assign_vars(array(
+			'U_ADD_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
+		));
 	}
 }
