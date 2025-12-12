@@ -1,0 +1,33 @@
+<!-- IF .user_awards -->
+<div class="panel">
+	<div class="inner">
+		<h3>{{ lang('USER_AWARDS') }}</h3>
+		<div style="display: flex; flex-wrap: wrap; gap: 20px;">
+			<!-- BEGIN user_awards -->
+			<div style="text-align: center; border: 1px solid #ccc; padding: 10px; border-radius: 5px; max-width: 200px;">
+				<div style="font-weight: bold; margin-bottom: 5px;">{{ user_awards.NAME }}</div>
+				<div style="margin-bottom: 5px; font-size: 0.9em; color: #666;">{{ user_awards.DATE }}</div>
+				<div style="margin-bottom: 5px;">
+					<img src="{{ user_awards.IMAGE }}" alt="{{ user_awards.NAME }}" style="<!-- IF user_awards.MAX_WIDTH -->max-width: {{ user_awards.MAX_WIDTH }};<!-- ENDIF --> <!-- IF user_awards.MAX_HEIGHT -->max-height: {{ user_awards.MAX_HEIGHT }};<!-- ENDIF -->">
+				</div>
+				<!-- IF user_awards.COMMENT -->
+				<div style="font-style: italic; font-size: 0.9em;">{{ user_awards.COMMENT }}</div>
+				<!-- ENDIF -->
+			</div>
+			<!-- END user_awards -->
+		</div>
+	</div>
+</div>
+<!-- ENDIF -->
+
+<!-- IF U_ADD_AWARD -->
+<div class="panel">
+	<div class="inner">
+		<ul class="linklist">
+			<li>
+				<a href="{{ U_ADD_AWARD }}" style="font-weight: bold;">{{ lang('ADD_AWARD') }}</a>
+			</li>
+		</ul>
+	</div>
+</div>
+<!-- ENDIF -->

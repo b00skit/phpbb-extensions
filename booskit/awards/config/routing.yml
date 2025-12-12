@@ -1,0 +1,5 @@
+booskit_awards_add_award:
+    path: /awards/add/{user_id}
+    defaults: { _controller: 'booskit.awards.controller.main:add_award' }
+    requirements:
+        user_id: \d+

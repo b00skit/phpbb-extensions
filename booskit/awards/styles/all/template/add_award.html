@@ -1,0 +1,86 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2 class="solo">{{ lang('ADD_AWARD') }}</h2>
+
+<form action="{{ U_ACTION }}" method="post" id="add_award_form">
+	<div class="panel">
+		<div class="inner">
+			<fieldset>
+				<dl>
+					<dt><label for="award_definition_id">{{ lang('AWARD_SELECT') }}{{ lang('COLON') }}</label></dt>
+					<dd>
+						<select name="award_definition_id" id="award_definition_id" onchange="updatePreview()">
+							<option value="">{{ lang('SELECT_OPTION') }}</option>
+							<!-- BEGIN awards -->
+							<option value="{{ awards.ID }}">{{ awards.NAME }}</option>
+							<!-- END awards -->
+						</select>
+					</dd>
+				</dl>
+
+                <dl id="preview_container" style="display:none;">
+                    <dt><label>Preview:</label></dt>
+                    <dd>
+                        <div id="award_preview" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; max-width: 200px; text-align: center;">
+                            <div id="preview_name" style="font-weight: bold; margin-bottom: 5px;"></div>
+                            <img id="preview_image" src="" alt="" style="margin-bottom: 5px;">
+                            <div id="preview_desc" style="font-size: 0.9em;"></div>
+                        </div>
+                    </dd>
+                </dl>
+
+				<dl>
+					<dt><label for="issue_date">{{ lang('AWARD_DATE') }}{{ lang('COLON') }}</label></dt>
+					<dd><input type="date" name="issue_date" id="issue_date" value="{{ S_ISSUE_DATE }}"></dd>
+				</dl>
+				<dl>
+					<dt><label for="comment">{{ lang('AWARD_COMMENT') }}{{ lang('COLON') }}</label></dt>
+					<dd><textarea name="comment" id="comment" rows="3" cols="30" class="inputbox"></textarea></dd>
+				</dl>
+			</fieldset>
+		</div>
+	</div>
+
+	<div class="submit-buttons">
+		<input type="submit" name="submit" value="{{ lang('SUBMIT') }}" class="button1" />
+		{{ S_FORM_TOKEN }}
+	</div>
+</form>
+
+<script>
+var awardsData = {{ AWARDS_JSON | raw }};
+
+function updatePreview() {
+    var select = document.getElementById('award_definition_id');
+    var selectedId = select.value;
+    var container = document.getElementById('preview_container');
+
+    if (!selectedId) {
+        container.style.display = 'none';
+        return;
+    }
+
+    var award = awardsData.find(function(a) { return a.id == selectedId; });
+
+    if (award) {
+        document.getElementById('preview_name').textContent = award.name;
+        var img = document.getElementById('preview_image');
+        img.src = award.image;
+        img.alt = award.name;
+
+        if (award['max-width']) img.style.maxWidth = award['max-width'];
+        else img.style.maxWidth = '';
+
+        if (award['max-height']) img.style.maxHeight = award['max-height'];
+        else img.style.maxHeight = '';
+
+        document.getElementById('preview_desc').textContent = award.description || '';
+
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+    }
+}
+</script>
+
+<!-- INCLUDE overall_footer.html -->

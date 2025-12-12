@@ -1,0 +1,20 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_AWARDS_TITLE') }}</h1>
+
+<form id="acp_booskit_awards" method="post" action="{{ U_ACTION }}">
+	<fieldset>
+		<legend>{{ lang('ACP_BOOSKIT_AWARDS_SETTINGS') }}</legend>
+		<dl>
+			<dt><label for="booskit_awards_json_url">{{ lang('BOOSKIT_AWARDS_JSON_URL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_JSON_URL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_awards_json_url" name="booskit_awards_json_url" value="{{ BOOSKIT_AWARDS_JSON_URL }}" size="50"></dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+		{{ S_FORM_TOKEN }}
+	</fieldset>
+</form>
+
+{% INCLUDE 'overall_footer.html' %}
