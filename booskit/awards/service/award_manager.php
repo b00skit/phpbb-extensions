@@ -65,17 +65,17 @@ class award_manager
 					'id' => 'example_award',
 					'name' => 'Example Award',
 					'description' => 'This is an internal example award.',
-					'image' => 'https://i.booskit.dev/u/OHa3zF.png',
-					'max-height' => '150px',
-					'max-width' => '150px',
+					'image' => 'https://via.placeholder.com/150',
+					'max-height' => '50px',
+					'max-width' => '50px',
 				],
 				[
 					'id' => 'another_award',
 					'name' => 'Another Award',
 					'description' => 'Another internal example.',
-					'image' => 'https://i.booskit.dev/u/uzGJ77.png',
-					'max-height' => '150px',
-					'max-width' => '150px',
+					'image' => 'https://via.placeholder.com/150/0000FF/808080',
+					'max-height' => '50px',
+					'max-width' => '50px',
 				]
 			];
 		}

@@ -31,4 +31,5 @@ $lang = array_merge($lang, array(
 	'USER_AWARDS' => 'User Awards',
     'AWARD_SELECT' => 'Select Award',
     'NO_AWARD_SELECTED' => 'Please select an award.',
+    'SELECT_OPTION' => 'Select option',
 ));
