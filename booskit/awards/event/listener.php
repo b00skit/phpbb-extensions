@@ -53,7 +53,7 @@ class listener implements EventSubscriberInterface
 					'IMAGE' => $definition['image'],
 					'MAX_WIDTH' => isset($definition['max-width']) ? $definition['max-width'] : '',
 					'MAX_HEIGHT' => isset($definition['max-height']) ? $definition['max-height'] : '',
-					'DATE' => $this->user->format_date($award['issue_date']),
+					'DATE' => $this->user->format_date($award['issue_date'], 'D M d, Y'),
 					'COMMENT' => $award['comment'],
 				));
 			}
