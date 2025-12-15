@@ -84,6 +84,13 @@ class main
 				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
+			// Validation: Check if user has access to issue this type
+			$def = $this->disciplinary_manager->get_definition($type_id);
+			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			{
+				trigger_error('NOT_AUTHORISED');
+			}
+
 			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id']);
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
@@ -92,7 +99,7 @@ class main
 			trigger_error($this->user->lang['DISCIPLINARY_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($user_id);
+		$this->assign_form_vars($user_id, null, false, $viewer_level);
 
 		add_form_key('add_disciplinary');
 
@@ -152,6 +159,13 @@ class main
 				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
+			// Validation: Check if user has access to issue this type
+			$def = $this->disciplinary_manager->get_definition($type_id);
+			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			{
+				trigger_error('NOT_AUTHORISED');
+			}
+
 			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence);
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
@@ -160,7 +174,7 @@ class main
 			trigger_error($this->user->lang['DISCIPLINARY_UPDATED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($user_id, $record, true);
+		$this->assign_form_vars($user_id, $record, true, $viewer_level);
 
 		add_form_key('edit_disciplinary');
 
@@ -211,7 +225,7 @@ class main
 		}
 	}
 
-	protected function assign_form_vars($user_id, $record = null, $is_edit = false)
+	protected function assign_form_vars($user_id, $record = null, $is_edit = false, $viewer_level = 0)
 	{
 		$definitions = $this->disciplinary_manager->get_definitions();
 
@@ -240,6 +254,20 @@ class main
 		));
 
 		foreach ($definitions as $def) {
+			// Filter by access level
+			if (isset($def['access_level']) && $viewer_level < $def['access_level'])
+			{
+				// If editing and this is the current type, we might want to show it but maybe disable it?
+				// But user requirement is "to be able to ISSUE it".
+				// If simply viewing an edit form for a record we can't issue, it's safer to hide it from the selection list.
+				// However, if it's the *current* selection, hiding it might break the form (empty selection on submit).
+				// If it is the current type, we allow it in the list so the form remains valid (unless changed).
+				if ($def['id'] != $current_type)
+				{
+					continue;
+				}
+			}
+
 			$this->template->assign_block_vars('types', array(
 				'ID' 		=> $def['id'],
 				'NAME' 		=> $def['name'],
