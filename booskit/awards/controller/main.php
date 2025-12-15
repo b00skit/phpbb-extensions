@@ -94,13 +94,11 @@ class main
 			$award_name = ($award_def) ? $award_def['name'] : 'Unknown Award';
 
 			$this->notification_manager->add_notifications('booskit.awards.notification.type.award_issued', array(
-				array(
-					'item_type' 	=> 'award',
-					'item_id' 		=> $award_id,
-					'item_parent_id'=> $user_id, // The recipient
-					'user_id'		=> $this->user->data['user_id'], // The issuer
-					'award_name'	=> $award_name,
-				),
+				'item_type' 	=> 'award',
+				'item_id' 		=> $award_id,
+				'item_parent_id'=> $user_id, // The recipient
+				'user_id'		=> $this->user->data['user_id'], // The issuer
+				'award_name'	=> $award_name,
 			));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
