@@ -80,7 +80,7 @@ class award_issued extends \phpbb\notification\type\base
 	 */
 	public static function get_item_id($data)
 	{
-		return (int) $data['item_id'];
+		return isset($data['item_id']) ? (int) $data['item_id'] : 0;
 	}
 
 	/**
@@ -92,7 +92,7 @@ class award_issued extends \phpbb\notification\type\base
 	 */
 	public static function get_item_parent_id($data)
 	{
-		return (int) $data['item_parent_id'];
+		return isset($data['item_parent_id']) ? (int) $data['item_parent_id'] : 0;
 	}
 
 	/**
@@ -145,12 +145,15 @@ class award_issued extends \phpbb\notification\type\base
 	 */
 	public function create_insert_array($data, $options = array())
 	{
+		// Debug logging to inspect incoming data
+		// error_log('booskit/awards create_insert_array input: ' . print_r($data, true));
+
 		$input_data = $data;
 		$data = parent::create_insert_array($data, $options);
 
 		// Store award name in data so we can display it without fetching again
 		$data['notification_data'] = serialize(array(
-			'award_name' => $input_data['award_name'],
+			'award_name' => isset($input_data['award_name']) ? $input_data['award_name'] : 'Unknown Award',
 		));
 
 		return $data;
@@ -167,7 +170,7 @@ class award_issued extends \phpbb\notification\type\base
 	public function find_users_for_notification($data, $options = array())
 	{
 		// Notify the user who received the award (item_parent_id)
-		return array((int) $data['item_parent_id']);
+		return array(isset($data['item_parent_id']) ? (int) $data['item_parent_id'] : 0);
 	}
 
 	/**
