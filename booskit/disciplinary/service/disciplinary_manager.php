@@ -80,12 +80,14 @@ class disciplinary_manager
 						'name' => 'Warning',
 						'description' => 'A formal warning.',
 						'color' => '#f1c40f',
+						'access_level' => 1,
 					],
 					[
 						'id' => 'ban',
 						'name' => 'Ban',
 						'description' => 'Account suspension.',
 						'color' => '#e74c3c',
+						'access_level' => 4,
 					]
 				];
 			}
