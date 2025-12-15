@@ -1,0 +1,60 @@
+<!-- IF .disciplinary -->
+<div class="panel">
+	<div class="inner">
+		<h3>{L_DISCIPLINARY_ACTIONS}</h3>
+		<ul class="topiclist">
+			<li class="header">
+				<dl class="row-item" style="color: #333333;">
+					<dt><div class="list-inner">{L_DISCIPLINARY_TYPE}</div></dt>
+					<dd class="posts">{L_DATE}</dd>
+					<dd class="lastpost">{L_REASON}</dd>
+					<!-- IF U_ADD_DISCIPLINARY --><dd class="mark">{L_ACTION}</dd><!-- ENDIF -->
+				</dl>
+			</li>
+		</ul>
+		<ul class="topiclist forums">
+			<!-- BEGIN disciplinary -->
+			<li class="row">
+				<dl class="row-item">
+					<dt>
+						<div class="list-inner">
+							<strong style="color: {disciplinary.COLOR}">{disciplinary.TYPE}</strong>
+							<br />
+							<!-- IF disciplinary.EVIDENCE -->
+							<span class="responsive-hide">{L_EVIDENCE}: {disciplinary.EVIDENCE}</span>
+							<br />
+							<!-- ENDIF -->
+							<span class="responsive-hide">{L_ISSUED_BY}: {disciplinary.ISSUER_NAME}</span>
+						</div>
+					</dt>
+					<dd class="posts">{disciplinary.DATE}</dd>
+					<dd class="lastpost"><span>{disciplinary.REASON}</span></dd>
+					<!-- IF disciplinary.U_EDIT -->
+					<dd class="mark">
+						<a href="{disciplinary.U_EDIT}" class="button button-icon-only" title="{L_EDIT}">
+							<i class="icon fa-pencil fa-fw" aria-hidden="true"></i><span class="sr-only">{L_EDIT}</span>
+						</a>
+						<a href="{disciplinary.U_DELETE}" class="button button-icon-only" title="{L_DELETE}">
+							<i class="icon fa-trash fa-fw" aria-hidden="true"></i><span class="sr-only">{L_DELETE}</span>
+						</a>
+					</dd>
+					<!-- ENDIF -->
+				</dl>
+			</li>
+			<!-- END disciplinary -->
+		</ul>
+	</div>
+</div>
+<!-- ENDIF -->
+
+<!-- IF U_ADD_DISCIPLINARY -->
+<div class="panel">
+	<div class="inner">
+		<ul class="linklist">
+			<li>
+				<a href="{U_ADD_DISCIPLINARY}" style="font-weight: bold;">{L_ADD_DISCIPLINARY}</a>
+			</li>
+		</ul>
+	</div>
+</div>
+<!-- ENDIF -->

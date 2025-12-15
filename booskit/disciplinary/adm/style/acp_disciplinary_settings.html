@@ -1,0 +1,22 @@
+<!-- INCLUDE overall_header.html -->
+
+<h1>{L_ACP_BOOSKIT_DISCIPLINARY_SETTINGS}</h1>
+
+<form id="acp_disciplinary_settings" method="post" action="{U_ACTION}">
+
+	<fieldset>
+		<legend>{L_ACP_BOOSKIT_DISCIPLINARY_SETTINGS}</legend>
+		<dl>
+			<dt><label for="booskit_disciplinary_json_url">{L_BOOSKIT_DISCIPLINARY_JSON_URL}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_JSON_URL_EXPLAIN}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_json_url" name="booskit_disciplinary_json_url" value="{BOOSKIT_DISCIPLINARY_JSON_URL}" maxlength="255" size="50" /></dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

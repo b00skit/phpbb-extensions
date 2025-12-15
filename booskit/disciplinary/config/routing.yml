@@ -1,0 +1,17 @@
+booskit_disciplinary_add_record:
+    path: /disciplinary/add/{user_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:add_record' }
+    requirements:
+        user_id: \d+
+
+booskit_disciplinary_edit_record:
+    path: /disciplinary/edit/{record_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:edit_record' }
+    requirements:
+        record_id: \d+
+
+booskit_disciplinary_delete_record:
+    path: /disciplinary/delete/{record_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:delete_record' }
+    requirements:
+        record_id: \d+
