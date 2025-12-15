@@ -16,11 +16,12 @@ class main
 	protected $user;
 	protected $helper;
 	protected $auth;
+	protected $log;
 	protected $award_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->request = $request;
@@ -28,6 +29,7 @@ class main
 		$this->user = $user;
 		$this->helper = $helper;
 		$this->auth = $auth;
+		$this->log = $log;
 		$this->award_manager = $award_manager;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
@@ -80,7 +82,10 @@ class main
 				trigger_error($this->user->lang['NO_AWARD_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
-			$this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id']);
+			$award_id = $this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id']);
+
+			$user_row = $this->award_manager->get_username_string($user_id);
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_ADDED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -135,6 +140,9 @@ class main
 		if (confirm_box(true))
 		{
 			$this->award_manager->remove_award($award_id);
+
+			$user_row = $this->award_manager->get_username_string($target_user_id);
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_REMOVED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id);
 			meta_refresh(3, $u_profile);

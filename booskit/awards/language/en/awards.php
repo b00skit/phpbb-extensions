@@ -41,4 +41,7 @@ $lang = array_merge($lang, array(
 	'REMOVE' => 'Remove',
 	'AWARD_REMOVED' => 'Award successfully removed.',
 	'CONFIRM_OPERATION' => 'Are you sure you want to carry out this operation?',
+
+	'LOG_AWARD_ADDED' => '<strong>Added award to user</strong><br>» %s',
+	'LOG_AWARD_REMOVED' => '<strong>Removed award from user</strong><br>» %s',
 ));

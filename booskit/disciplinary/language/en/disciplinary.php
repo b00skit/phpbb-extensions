@@ -35,4 +35,8 @@ $lang = array_merge($lang, array(
 	'ACTION'						=> 'Action',
 	'DATE'							=> 'Date',
 	'ISSUED_BY'						=> 'Issued by',
+
+	'LOG_DISCIPLINARY_ADDED'		=> '<strong>Added disciplinary action to user</strong><br>» %s',
+	'LOG_DISCIPLINARY_EDITED'		=> '<strong>Edited disciplinary action for user</strong><br>» %s',
+	'LOG_DISCIPLINARY_DELETED'		=> '<strong>Deleted disciplinary action for user</strong><br>» %s',
 ));
