@@ -72,6 +72,26 @@ class award_issued extends \phpbb\notification\type\base
 	}
 
 	/**
+	 * Get item id
+	 *
+	 * @return int
+	 */
+	public function get_item_id()
+	{
+		return (int) $this->data['item_id'];
+	}
+
+	/**
+	 * Get item parent id
+	 *
+	 * @return int
+	 */
+	public function get_item_parent_id()
+	{
+		return (int) $this->data['item_parent_id'];
+	}
+
+	/**
 	 * Is this notification available to the user?
 	 *
 	 * @return bool

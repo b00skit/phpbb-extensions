@@ -30,8 +30,14 @@ class listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return array(
+			'core.user_setup' => 'load_language_on_setup',
 			'core.memberlist_view_profile' => 'memberlist_view_profile',
 		);
+	}
+
+	public function load_language_on_setup($event)
+	{
+		$this->user->add_lang_ext('booskit/awards', 'awards');
 	}
 
 	public function memberlist_view_profile($event)
