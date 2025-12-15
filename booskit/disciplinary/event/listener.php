@@ -39,15 +39,13 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
-		$can_manage = ($this->auth->acl_get('m_warn') || $this->auth->acl_get('a_'));
+		// Determine Viewer Level
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
-		if (!$can_manage)
+		if ($viewer_level === 0)
 		{
 			return;
 		}
-
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);

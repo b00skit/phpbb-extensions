@@ -35,18 +35,17 @@ class main
 
 	protected function check_auth()
 	{
-		if (!$this->auth->acl_get('m_warn') && !$this->auth->acl_get('a_'))
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
+		if ($viewer_level === 0)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
+		return $viewer_level;
 	}
 
 	public function add_record($user_id)
 	{
-		$this->check_auth();
-
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
+		$viewer_level = $this->check_auth();
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
@@ -102,7 +101,7 @@ class main
 
 	public function edit_record($record_id)
 	{
-		$this->check_auth();
+		$viewer_level = $this->check_auth();
 
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 		$this->user->add_lang('common');
@@ -113,9 +112,6 @@ class main
 			trigger_error('NO_DISCIPLINARY_RECORD');
 		}
 		$user_id = $record['user_id'];
-
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
@@ -173,7 +169,7 @@ class main
 
 	public function delete_record($record_id)
 	{
-		$this->check_auth();
+		$viewer_level = $this->check_auth();
 
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
@@ -183,9 +179,6 @@ class main
 			trigger_error('NO_DISCIPLINARY_RECORD');
 		}
 		$user_id = $record['user_id'];
-
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
