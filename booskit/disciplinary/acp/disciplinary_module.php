@@ -32,12 +32,20 @@ class disciplinary_module
 			}
 
 			$config->set('booskit_disciplinary_json_url', $request->variable('booskit_disciplinary_json_url', ''));
+			$config->set('booskit_disciplinary_access_l1', $request->variable('booskit_disciplinary_access_l1', ''));
+			$config->set('booskit_disciplinary_access_l2', $request->variable('booskit_disciplinary_access_l2', ''));
+			$config->set('booskit_disciplinary_access_l3', $request->variable('booskit_disciplinary_access_l3', ''));
+			$config->set('booskit_disciplinary_access_full', $request->variable('booskit_disciplinary_access_full', ''));
 
 			trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 		}
 
 		$template->assign_vars(array(
 			'BOOSKIT_DISCIPLINARY_JSON_URL'	=> $config['booskit_disciplinary_json_url'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_L1'	=> $config['booskit_disciplinary_access_l1'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_L2'	=> $config['booskit_disciplinary_access_l2'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_L3'	=> $config['booskit_disciplinary_access_l3'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_FULL'	=> $config['booskit_disciplinary_access_full'],
 			'U_ACTION'						=> $this->u_action,
 		));
 	}

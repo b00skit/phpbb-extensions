@@ -39,24 +39,21 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
-		$can_manage = ($this->auth->acl_get('m_warn') || $this->auth->acl_get('a_'));
+		// Determine Viewer Level
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
 
-		if (!$can_manage)
+		if ($viewer_level === 0)
 		{
 			return;
 		}
 
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
-
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		// Hierarchical Access Check: Viewer must be higher level than Target
-		// Exception: Admins (2) can manage Moderators (1) - 2 > 1 (OK)
-		// Moderators (1) cannot manage Moderators (1) - 1 > 1 (False)
-		// Admins (2) cannot manage Admins (2) - 2 > 2 (False)
-		if ($viewer_level <= $target_level)
+		// Hierarchical Access Check:
+		// Full Access (4) can target everyone.
+		// Others must be strictly higher level than target.
+		if ($viewer_level !== 4 && $viewer_level <= $target_level)
 		{
 			return;
 		}
@@ -76,8 +73,8 @@ class listener implements EventSubscriberInterface
 
 			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
-			// Edit/Delete Permission Check: Founder (3) can edit all; others only their own
-			$can_modify = ($viewer_level == 3 || $this->user->data['user_id'] == $record['issuer_user_id']);
+			// Edit/Delete Permission Check: Full Access (4) can edit all; others only their own
+			$can_modify = ($viewer_level == 4 || $this->user->data['user_id'] == $record['issuer_user_id']);
 
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
