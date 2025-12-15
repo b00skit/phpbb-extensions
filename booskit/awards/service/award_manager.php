@@ -190,4 +190,30 @@ class award_manager
 		$sql = 'DELETE FROM ' . $this->table . ' WHERE award_id = ' . (int) $award_id;
 		$this->db->sql_query($sql);
 	}
+
+	public function get_usernames($user_ids)
+	{
+		if (empty($user_ids))
+		{
+			return [];
+		}
+
+		$sql = 'SELECT user_id, username FROM ' . USERS_TABLE . ' WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
+		$result = $this->db->sql_query($sql);
+
+		$usernames = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$usernames[$row['user_id']] = $row['username'];
+		}
+		$this->db->sql_freeresult($result);
+
+		return $usernames;
+	}
+
+	public function get_username_string($user_id)
+	{
+		$usernames = $this->get_usernames([$user_id]);
+		return isset($usernames[$user_id]) ? $usernames[$user_id] : 'Unknown';
+	}
 }

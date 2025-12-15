@@ -25,6 +25,7 @@ services:
             - '@user'
             - '@controller.helper'
             - '@auth'
+            - '@log'
             - '@booskit.awards.service.award_manager'
             - '%core.root_path%'
             - '%core.php_ext%'

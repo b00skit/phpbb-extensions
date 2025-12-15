@@ -194,6 +194,12 @@ class disciplinary_manager
 		return $usernames;
 	}
 
+	public function get_username_string($user_id)
+	{
+		$usernames = $this->get_usernames([$user_id]);
+		return isset($usernames[$user_id]) ? $usernames[$user_id] : 'Unknown';
+	}
+
 	public function get_user_role_level($user_id)
 	{
 		// 0 = Regular, 1 = L1, 2 = L2, 3 = L3, 4 = Full Access

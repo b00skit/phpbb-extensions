@@ -16,11 +16,12 @@ class main
 	protected $user;
 	protected $helper;
 	protected $auth;
+	protected $log;
 	protected $disciplinary_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \booskit\disciplinary\service\disciplinary_manager $disciplinary_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\disciplinary\service\disciplinary_manager $disciplinary_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->request = $request;
@@ -28,6 +29,7 @@ class main
 		$this->user = $user;
 		$this->helper = $helper;
 		$this->auth = $auth;
+		$this->log = $log;
 		$this->disciplinary_manager = $disciplinary_manager;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
@@ -92,6 +94,9 @@ class main
 			}
 
 			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id']);
+
+			$user_row = $this->disciplinary_manager->get_username_string($user_id);
+			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -168,6 +173,9 @@ class main
 
 			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence);
 
+			$user_row = $this->disciplinary_manager->get_username_string($user_id);
+			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
+
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
 			meta_refresh(3, $u_profile);
@@ -212,6 +220,9 @@ class main
 		if (confirm_box(true))
 		{
 			$this->disciplinary_manager->delete_record($record_id);
+
+			$user_row = $this->disciplinary_manager->get_username_string($user_id);
+			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_DELETED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 			meta_refresh(3, $u_profile);

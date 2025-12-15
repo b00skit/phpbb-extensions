@@ -18,6 +18,7 @@ services:
             - '@user'
             - '@controller.helper'
             - '@auth'
+            - '@log'
             - '@booskit.disciplinary.service.disciplinary_manager'
             - '%core.root_path%'
             - '%core.php_ext%'
