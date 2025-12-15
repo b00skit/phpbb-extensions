@@ -13,6 +13,11 @@
 				<!-- IF user_awards.COMMENT -->
 				<div style="font-style: italic; font-size: 0.9em;">{{ user_awards.COMMENT }}</div>
 				<!-- ENDIF -->
+				<!-- IF user_awards.U_REMOVE -->
+				<div style="margin-top: 5px;">
+					<a href="{{ user_awards.U_REMOVE }}" style="font-size: 0.8em; color: #a00;">{{ lang('REMOVE') }}</a>
+				</div>
+				<!-- ENDIF -->
 			</div>
 			<!-- END user_awards -->
 		</div>

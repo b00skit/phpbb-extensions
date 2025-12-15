@@ -37,8 +37,14 @@ class settings
 			}
 
 			$json_url = $this->request->variable('booskit_awards_json_url', '');
+			$access_l1 = $this->request->variable('booskit_awards_access_l1', '');
+			$access_l2 = $this->request->variable('booskit_awards_access_l2', '');
+			$access_full = $this->request->variable('booskit_awards_access_full', '');
 
 			$this->config->set('booskit_awards_json_url', $json_url);
+			$this->config->set('booskit_awards_access_l1', $access_l1);
+			$this->config->set('booskit_awards_access_l2', $access_l2);
+			$this->config->set('booskit_awards_access_full', $access_full);
 
 			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_SETTINGS_UPDATED');
 			trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
@@ -47,6 +53,9 @@ class settings
 		$this->template->assign_vars(array(
 			'U_ACTION' => $u_action,
 			'BOOSKIT_AWARDS_JSON_URL' => $this->config['booskit_awards_json_url'],
+			'BOOSKIT_AWARDS_ACCESS_L1' => isset($this->config['booskit_awards_access_l1']) ? $this->config['booskit_awards_access_l1'] : '',
+			'BOOSKIT_AWARDS_ACCESS_L2' => isset($this->config['booskit_awards_access_l2']) ? $this->config['booskit_awards_access_l2'] : '',
+			'BOOSKIT_AWARDS_ACCESS_FULL' => isset($this->config['booskit_awards_access_full']) ? $this->config['booskit_awards_access_full'] : '',
 		));
 	}
 }

@@ -32,4 +32,13 @@ $lang = array_merge($lang, array(
     'AWARD_SELECT' => 'Select Award',
     'NO_AWARD_SELECTED' => 'Please select an award.',
     'SELECT_OPTION' => 'Select option',
+	'BOOSKIT_AWARDS_ACCESS_L1' => 'Level 1 Access Groups',
+	'BOOSKIT_AWARDS_ACCESS_L1_EXPLAIN' => 'Comma separated list of group IDs for Level 1 access.',
+	'BOOSKIT_AWARDS_ACCESS_L2' => 'Level 2 Access Groups',
+	'BOOSKIT_AWARDS_ACCESS_L2_EXPLAIN' => 'Comma separated list of group IDs for Level 2 access.',
+	'BOOSKIT_AWARDS_ACCESS_FULL' => 'Full Access Groups',
+	'BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN' => 'Comma separated list of group IDs for Full Access.',
+	'REMOVE' => 'Remove',
+	'AWARD_REMOVED' => 'Award successfully removed.',
+	'CONFIRM_OPERATION' => 'Are you sure you want to carry out this operation?',
 ));
