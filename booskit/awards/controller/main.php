@@ -35,8 +35,20 @@ class main
 
 	public function add_award($user_id)
 	{
-		// Permission check: m_ or a_
-		if (!$this->auth->acl_get('m_') && !$this->auth->acl_get('a_'))
+		$issuer_level = $this->award_manager->get_user_role_level($this->user->data['user_id']);
+		// Permission check: Level > 0
+		if ($issuer_level < 1)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$target_level = $this->award_manager->get_user_role_level($user_id);
+
+		// Logic:
+		// L1 (1) -> Target < 1 (0)
+		// L2 (2) -> Target < 2 (0, 1)
+		// Full (3) -> Everyone
+		if ($issuer_level < 3 && $target_level >= $issuer_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -95,5 +107,44 @@ class main
 		add_form_key('add_award');
 
 		return $this->helper->render('add_award.html', $this->user->lang['ADD_AWARD']);
+	}
+
+	public function remove_award($award_id)
+	{
+		$issuer_level = $this->award_manager->get_user_role_level($this->user->data['user_id']);
+		// Permission check: Level >= 2
+		if ($issuer_level < 2)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$award = $this->award_manager->get_award($award_id);
+		if (!$award)
+		{
+			trigger_error('NO_AWARD_SELECTED');
+		}
+
+		$target_user_id = $award['user_id'];
+		$target_level = $this->award_manager->get_user_role_level($target_user_id);
+
+		if ($issuer_level < 3 && $target_level >= $issuer_level)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		if (confirm_box(true))
+		{
+			$this->award_manager->remove_award($award_id);
+
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id);
+			meta_refresh(3, $u_profile);
+			trigger_error($this->user->lang['AWARD_REMOVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
+		}
+		else
+		{
+			confirm_box(false, $this->user->lang['CONFIRM_OPERATION'], build_hidden_fields(array(
+				'award_id' => $award_id,
+			)));
+		}
 	}
 }

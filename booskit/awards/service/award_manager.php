@@ -23,6 +23,7 @@ class award_manager
 	protected $table;
 
 	protected $cached_definitions = null;
+	protected $cached_role_groups = null;
 
 	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table)
 	{
@@ -30,6 +31,52 @@ class award_manager
 		$this->db = $db;
 		$this->user = $user;
 		$this->table = $table;
+	}
+
+	public function get_user_role_level($user_id)
+	{
+		// 0 = Regular, 1 = L1, 2 = L2, 3 = Full Access
+
+		if ($this->cached_role_groups === null)
+		{
+			// Helper to parse CSV group IDs
+			$parse_groups = function($config_key) {
+				$raw = isset($this->config[$config_key]) ? $this->config[$config_key] : '';
+				if (empty($raw)) {
+					return [];
+				}
+				return array_map('intval', array_map('trim', explode(',', $raw)));
+			};
+
+			$this->cached_role_groups = [
+				'l1' => $parse_groups('booskit_awards_access_l1'),
+				'l2' => $parse_groups('booskit_awards_access_l2'),
+				'full' => $parse_groups('booskit_awards_access_full'),
+			];
+		}
+
+		// Fetch user's groups
+		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
+		$result = $this->db->sql_query($sql);
+		$user_groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$user_groups[] = (int) $row['group_id'];
+		}
+		$this->db->sql_freeresult($result);
+
+		// Determine level (highest match wins)
+		if (array_intersect($user_groups, $this->cached_role_groups['full'])) {
+			return 3;
+		}
+		if (array_intersect($user_groups, $this->cached_role_groups['l2'])) {
+			return 2;
+		}
+		if (array_intersect($user_groups, $this->cached_role_groups['l1'])) {
+			return 1;
+		}
+
+		return 0;
 	}
 
 	public function get_definitions()
@@ -126,5 +173,21 @@ class award_manager
 		$this->db->sql_query($sql);
 
 		return $this->db->sql_nextid();
+	}
+
+	public function get_award($award_id)
+	{
+		$sql = 'SELECT * FROM ' . $this->table . ' WHERE award_id = ' . (int) $award_id;
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		return $row;
+	}
+
+	public function remove_award($award_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table . ' WHERE award_id = ' . (int) $award_id;
+		$this->db->sql_query($sql);
 	}
 }
