@@ -74,21 +74,25 @@ class award_issued extends \phpbb\notification\type\base
 	/**
 	 * Get item id
 	 *
+	 * @param array $data The data from the notification table
+	 *
 	 * @return int
 	 */
-	public function get_item_id()
+	public static function get_item_id($data)
 	{
-		return (int) $this->data['item_id'];
+		return (int) $data['item_id'];
 	}
 
 	/**
 	 * Get item parent id
 	 *
+	 * @param array $data The data from the notification table
+	 *
 	 * @return int
 	 */
-	public function get_item_parent_id()
+	public static function get_item_parent_id($data)
 	{
-		return (int) $this->data['item_parent_id'];
+		return (int) $data['item_parent_id'];
 	}
 
 	/**
