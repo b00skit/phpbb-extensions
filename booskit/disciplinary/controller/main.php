@@ -96,7 +96,7 @@ class main
 			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id']);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -174,7 +174,7 @@ class main
 			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -222,7 +222,7 @@ class main
 			$this->disciplinary_manager->delete_record($record_id);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $user_id, $this->user->ip, 'LOG_DISCIPLINARY_DELETED', time(), array($user_row));
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_DELETED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 			meta_refresh(3, $u_profile);
