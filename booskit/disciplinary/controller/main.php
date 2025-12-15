@@ -51,7 +51,10 @@ class main
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		if ($viewer_level <= $target_level)
+		// Access Check:
+		// Full Access (4) can target everyone (including 4).
+		// Others must be strictly higher level than target.
+		if ($viewer_level !== 4 && $viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -117,13 +120,15 @@ class main
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		if ($viewer_level <= $target_level)
+		// Access Check
+		if ($viewer_level !== 4 && $viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
 
-		// Ownership check: Founders (3) can edit all; others only their own
-		if ($viewer_level < 3 && $this->user->data['user_id'] != $record['issuer_user_id'])
+		// Ownership check: Full Access (4) can edit all; others only their own
+		// Assuming L3 cannot edit others (replacing "Founder (3)" logic with Full Access (4))
+		if ($viewer_level < 4 && $this->user->data['user_id'] != $record['issuer_user_id'])
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -185,13 +190,14 @@ class main
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		if ($viewer_level <= $target_level)
+		// Access Check
+		if ($viewer_level !== 4 && $viewer_level <= $target_level)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
 
-		// Ownership check: Founders (3) can delete all; others only their own
-		if ($viewer_level < 3 && $this->user->data['user_id'] != $record['issuer_user_id'])
+		// Ownership check: Full Access (4) can delete all; others only their own
+		if ($viewer_level < 4 && $this->user->data['user_id'] != $record['issuer_user_id'])
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
