@@ -7,13 +7,6 @@ services:
             - '@user'
             - '%booskit.awards.tables.users%'
 
-    booskit.awards.notification.type.award_issued:
-        class: booskit\awards\notification\award_issued
-        shared: false
-        parent: notification.type.base
-        tags:
-            - { name: notification.type }
-
     booskit.awards.controller.acp.settings:
         class: booskit\awards\controller\acp\settings
         arguments:
@@ -33,7 +26,6 @@ services:
             - '@controller.helper'
             - '@auth'
             - '@log'
-            - '@notification_manager'
             - '@booskit.awards.service.award_manager'
             - '%core.root_path%'
             - '%core.php_ext%'

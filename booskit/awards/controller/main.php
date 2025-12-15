@@ -17,12 +17,11 @@ class main
 	protected $helper;
 	protected $auth;
 	protected $log;
-	protected $notification_manager;
 	protected $award_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \phpbb\notification\manager $notification_manager, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->request = $request;
@@ -31,7 +30,6 @@ class main
 		$this->helper = $helper;
 		$this->auth = $auth;
 		$this->log = $log;
-		$this->notification_manager = $notification_manager;
 		$this->award_manager = $award_manager;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
@@ -88,18 +86,6 @@ class main
 
 			$user_row = $this->award_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_ADDED', time(), array($user_row));
-
-			// Send notification
-			$award_def = $this->award_manager->get_definition($award_def_id);
-			$award_name = ($award_def) ? $award_def['name'] : 'Unknown Award';
-
-			$this->notification_manager->add_notifications('booskit.awards.notification.type.award_issued', array(
-				'item_type' 	=> 'award',
-				'item_id' 		=> $award_id,
-				'item_parent_id'=> $user_id, // The recipient
-				'user_id'		=> $this->user->data['user_id'], // The issuer
-				'award_name'	=> $award_name,
-			));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
