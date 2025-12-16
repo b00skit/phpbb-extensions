@@ -93,7 +93,14 @@ class main
 				trigger_error('NOT_AUTHORISED');
 			}
 
-			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id']);
+			$reason_uid = $reason_bitfield = $reason_options = '';
+			$evidence_uid = $evidence_bitfield = $evidence_options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+
+			generate_text_for_storage($reason, $reason_uid, $reason_bitfield, $reason_options, $allow_bbcode, $allow_urls, $allow_smilies);
+			generate_text_for_storage($evidence, $evidence_uid, $evidence_bitfield, $evidence_options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id'], $reason_uid, $reason_bitfield, $reason_options, $evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
@@ -171,7 +178,14 @@ class main
 				trigger_error('NOT_AUTHORISED');
 			}
 
-			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence);
+			$reason_uid = $reason_bitfield = $reason_options = '';
+			$evidence_uid = $evidence_bitfield = $evidence_options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+
+			generate_text_for_storage($reason, $reason_uid, $reason_bitfield, $reason_options, $allow_bbcode, $allow_urls, $allow_smilies);
+			generate_text_for_storage($evidence, $evidence_uid, $evidence_bitfield, $evidence_options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence, $reason_uid, $reason_bitfield, $reason_options, $evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
@@ -251,6 +265,17 @@ class main
 			$current_type = $record['disciplinary_type_id'];
 			$current_reason = $record['reason'];
 			$current_evidence = $record['evidence'];
+
+			// Decode BBCode
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+			if (isset($record['reason_bbcode_uid']) && !empty($record['reason_bbcode_uid']))
+			{
+				generate_text_for_edit($current_reason, $record['reason_bbcode_uid'], $record['reason_bbcode_bitfield'], $record['reason_bbcode_options'], $allow_bbcode, $allow_urls, $allow_smilies);
+			}
+			if (isset($record['evidence_bbcode_uid']) && !empty($record['evidence_bbcode_uid']))
+			{
+				generate_text_for_edit($current_evidence, $record['evidence_bbcode_uid'], $record['evidence_bbcode_bitfield'], $record['evidence_bbcode_options'], $allow_bbcode, $allow_urls, $allow_smilies);
+			}
 		}
 
 		$this->template->assign_vars(array(

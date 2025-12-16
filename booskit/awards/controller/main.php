@@ -82,7 +82,11 @@ class main
 				trigger_error($this->user->lang['NO_AWARD_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
-			$award_id = $this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id']);
+			$uid = $bitfield = $options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+			generate_text_for_storage($comment, $uid, $bitfield, $options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$award_id = $this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id'], $uid, $bitfield, $options);
 
 			$user_row = $this->award_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_ADDED', time(), array($user_row));

@@ -82,12 +82,33 @@ class listener implements EventSubscriberInterface
 			// Edit/Delete Permission Check: Full Access (4) can edit all; others only their own
 			$can_modify = ($viewer_level == 4 || $this->user->data['user_id'] == $record['issuer_user_id']);
 
+			// Parse BBCode
+			$reason = $record['reason'];
+			if (isset($record['reason_bbcode_uid']) && !empty($record['reason_bbcode_uid']))
+			{
+				$reason = generate_text_for_display($reason, $record['reason_bbcode_uid'], $record['reason_bbcode_bitfield'], $record['reason_bbcode_options']);
+			}
+			else
+			{
+				$reason = utf8_htmlspecialchars($reason);
+			}
+
+			$evidence = $record['evidence'];
+			if (isset($record['evidence_bbcode_uid']) && !empty($record['evidence_bbcode_uid']))
+			{
+				$evidence = generate_text_for_display($evidence, $record['evidence_bbcode_uid'], $record['evidence_bbcode_bitfield'], $record['evidence_bbcode_options']);
+			}
+			else
+			{
+				$evidence = utf8_htmlspecialchars($evidence);
+			}
+
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
 				'TYPE' => utf8_htmlspecialchars($type_name),
 				'DATE' => $this->user->format_date($record['issue_date']),
-				'REASON' => utf8_htmlspecialchars($record['reason']),
-				'EVIDENCE' => utf8_htmlspecialchars($record['evidence']),
+				'REASON' => $reason,
+				'EVIDENCE' => $evidence,
 				'ISSUER_ID' => $record['issuer_user_id'],
 				'ISSUER_NAME' => $issuer_name,
 				'COLOR' => $color,

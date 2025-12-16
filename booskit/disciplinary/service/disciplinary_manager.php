@@ -138,7 +138,7 @@ class disciplinary_manager
 		return $row;
 	}
 
-	public function add_record($user_id, $disciplinary_type_id, $issue_date, $reason, $evidence, $issuer_user_id)
+	public function add_record($user_id, $disciplinary_type_id, $issue_date, $reason, $evidence, $issuer_user_id, $reason_uid = '', $reason_bitfield = '', $reason_options = 7, $evidence_uid = '', $evidence_bitfield = '', $evidence_options = 7)
 	{
 		$sql_ary = [
 			'user_id' => (int) $user_id,
@@ -147,6 +147,12 @@ class disciplinary_manager
 			'reason' => $reason,
 			'evidence' => $evidence,
 			'issuer_user_id' => (int) $issuer_user_id,
+			'reason_bbcode_uid' => $reason_uid,
+			'reason_bbcode_bitfield' => $reason_bitfield,
+			'reason_bbcode_options' => $reason_options,
+			'evidence_bbcode_uid' => $evidence_uid,
+			'evidence_bbcode_bitfield' => $evidence_bitfield,
+			'evidence_bbcode_options' => $evidence_options,
 		];
 
 		$sql = 'INSERT INTO ' . $this->table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
@@ -155,13 +161,19 @@ class disciplinary_manager
 		return $this->db->sql_nextid();
 	}
 
-	public function update_record($record_id, $disciplinary_type_id, $issue_date, $reason, $evidence)
+	public function update_record($record_id, $disciplinary_type_id, $issue_date, $reason, $evidence, $reason_uid = '', $reason_bitfield = '', $reason_options = 7, $evidence_uid = '', $evidence_bitfield = '', $evidence_options = 7)
 	{
 		$sql_ary = [
 			'disciplinary_type_id' => $disciplinary_type_id,
 			'issue_date' => (int) $issue_date,
 			'reason' => $reason,
 			'evidence' => $evidence,
+			'reason_bbcode_uid' => $reason_uid,
+			'reason_bbcode_bitfield' => $reason_bitfield,
+			'reason_bbcode_options' => $reason_options,
+			'evidence_bbcode_uid' => $evidence_uid,
+			'evidence_bbcode_bitfield' => $evidence_bitfield,
+			'evidence_bbcode_options' => $evidence_options,
 		];
 
 		$sql = 'UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE record_id = ' . (int) $record_id;
