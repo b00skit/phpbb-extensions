@@ -32,6 +32,7 @@ $lang = array_merge($lang, array(
 	'DISCIPLINARY_DELETED'			=> 'Disciplinary action successfully deleted.',
 	'DELETE_DISCIPLINARY_CONFIRM'	=> 'Are you sure you want to delete this disciplinary action?',
 	'NO_DISCIPLINARY_ACTIONS'		=> 'No disciplinary actions found for this user.',
+	'NO_DISCIPLINARY_RECORD'		=> 'Disciplinary record not found.',
 	'ACTION'						=> 'Action',
 	'DATE'							=> 'Date',
 	'ISSUED_BY'						=> 'Issued by',

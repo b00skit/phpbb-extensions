@@ -250,4 +250,38 @@ class career_manager
 
 		return 0;
 	}
+
+	public function get_user_view_access($user_id)
+	{
+		// Check inheritence: If they have role level >= 1, they have view access.
+		$role_level = $this->get_user_role_level($user_id);
+		if ($role_level >= 1)
+		{
+			return true;
+		}
+
+		// Otherwise check 'booskit_career_access_view' groups
+		$view_groups = $this->parse_groups('booskit_career_access_view');
+		if (empty($view_groups))
+		{
+			// If empty, perhaps default to no access or all access?
+			// "any groups that have view access ... others shouldn't" implies strict check.
+			return false;
+		}
+
+		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
+		$result = $this->db->sql_query($sql);
+		$user_groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$user_groups[] = (int) $row['group_id'];
+		}
+		$this->db->sql_freeresult($result);
+
+		if (array_intersect($user_groups, $view_groups)) {
+			return true;
+		}
+
+		return false;
+	}
 }

@@ -40,6 +40,9 @@ class main
 		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
 		if ($viewer_level === 0)
 		{
+			// If not L1+, maybe they have add access some other way? No, add access is tied to levels.
+			// But for viewing, we have get_user_view_access.
+			// This method is for "add/edit/remove" auth generally, which requires at least L1.
 			trigger_error('NOT_AUTHORISED');
 		}
 		return $viewer_level;
@@ -103,13 +106,8 @@ class main
 
 	public function edit_note($note_id)
 	{
+		// Viewer must have at least L1 access to even be here (checked in check_auth)
 		$viewer_level = $this->check_auth();
-
-		// l2 and above users should have the ability to edit and remove.
-		if ($viewer_level < 2)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
 
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 		$this->user->add_lang('common');
@@ -122,7 +120,28 @@ class main
 		$user_id = $note['user_id'];
 		$target_level = $this->career_manager->get_user_role_level($user_id);
 
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		// Edit Permission Check:
+		// 1. Viewer is Full Access (L4) -> ALLOW
+		// 2. Viewer is L2+ AND viewer > target -> ALLOW
+		// 3. Viewer is Issuer (L1+) -> ALLOW (Self-edit for issuer)
+
+		$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
+		$can_edit = false;
+
+		if ($viewer_level === 4)
+		{
+			$can_edit = true;
+		}
+		elseif ($is_issuer)
+		{
+			$can_edit = true;
+		}
+		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
+		{
+			$can_edit = true;
+		}
+
+		if (!$can_edit)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -171,12 +190,6 @@ class main
 	{
 		$viewer_level = $this->check_auth();
 
-		// l2 and above users should have the ability to edit and remove.
-		if ($viewer_level < 2)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 
 		$note = $this->career_manager->get_note($note_id);
@@ -187,7 +200,24 @@ class main
 		$user_id = $note['user_id'];
 		$target_level = $this->career_manager->get_user_role_level($user_id);
 
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		// Remove Permission Check (Same as Edit):
+		$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
+		$can_remove = false;
+
+		if ($viewer_level === 4)
+		{
+			$can_remove = true;
+		}
+		elseif ($is_issuer)
+		{
+			$can_remove = true;
+		}
+		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
+		{
+			$can_remove = true;
+		}
+
+		if (!$can_remove)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -215,14 +245,13 @@ class main
 	{
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 
-		$target_username = $this->career_manager->get_username_string($user_id);
+		// Check view access
+		if (!$this->career_manager->get_user_view_access($this->user->data['user_id']))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
 
-		// View permissions: "same as awards"
-		// Assuming public or logged in?
-		// "view permissions should be the same as awards"
-		// I will assume it's public/registered user visible for now, or use core permissions if needed.
-		// There is no explicit restriction mentioned for viewing other than "same as awards".
-		// Without checking awards code deeply, I assume registered users can see profiles.
+		$target_username = $this->career_manager->get_username_string($user_id);
 
 		$notes = $this->career_manager->get_user_notes($user_id); // No limit
 		$definitions = $this->career_manager->get_definitions();
@@ -233,9 +262,29 @@ class main
 			$defs_map[$def['id']] = $def;
 		}
 
+		// Viewer level for edit/delete checks
+		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
+		$target_level = $this->career_manager->get_user_role_level($user_id);
+
 		foreach ($notes as $note)
 		{
 			$def = isset($defs_map[$note['career_type_id']]) ? $defs_map[$note['career_type_id']] : [];
+
+			$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
+			$has_access = false;
+
+			if ($viewer_level === 4)
+			{
+				$has_access = true;
+			}
+			elseif ($is_issuer && $viewer_level >= 1)
+			{
+				$has_access = true;
+			}
+			elseif ($viewer_level >= 2 && $viewer_level > $target_level)
+			{
+				$has_access = true;
+			}
 
 			$this->template->assign_block_vars('career_notes', array(
 				'ID' => $note['note_id'],
@@ -244,6 +293,8 @@ class main
 				'DATE' => $this->user->format_date($note['note_date']),
 				'ICON' => isset($def['icon']) ? $def['icon'] : 'fa-circle',
 				'COLOR' => isset($def['color']) ? $def['color'] : '#333',
+				'U_EDIT' => $has_access ? $this->helper->route('booskit_usercareer_edit_note', array('note_id' => $note['note_id'])) : '',
+				'U_REMOVE' => $has_access ? $this->helper->route('booskit_usercareer_remove_note', array('note_id' => $note['note_id'])) : '',
 			));
 		}
 

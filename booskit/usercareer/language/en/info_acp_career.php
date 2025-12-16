@@ -21,6 +21,7 @@ $lang = array_merge($lang, array(
 	'ACP_BOOSKIT_CAREER_SETTINGS' => 'Career Settings',
 	'CAREER_JSON_URL' => 'Definitions JSON URL',
 	'CAREER_JSON_URL_EXPLAIN' => 'URL to the JSON file containing career type definitions.',
+	'CAREER_ACCESS_VIEW' => 'View Access Group IDs',
 	'CAREER_ACCESS_L1' => 'Level 1 Access Group IDs',
 	'CAREER_ACCESS_L2' => 'Level 2 Access Group IDs',
 	'CAREER_ACCESS_L3' => 'Level 3 Access Group IDs',

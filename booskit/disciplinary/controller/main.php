@@ -128,15 +128,27 @@ class main
 		// Determine Target Level
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		// Access Check
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		// Access Check Logic:
+		// 1. Full Access (4) -> ALLOW
+		// 2. Issuer (Self-correction) -> ALLOW (Bypasses hierarchy check)
+		// 3. Others -> Must be > target AND have permission to edit others?
+		//    Currently, disciplinary only allows Issuer or Full Access to edit.
+		//    So, we just enforce that.
+
+		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
+		$has_access = false;
+
+		if ($viewer_level === 4)
 		{
-			trigger_error('NOT_AUTHORISED');
+			$has_access = true;
+		}
+		elseif ($is_issuer)
+		{
+			// Issuer allowed to edit their own record
+			$has_access = true;
 		}
 
-		// Ownership check: Full Access (4) can edit all; others only their own
-		// Assuming L3 cannot edit others (replacing "Founder (3)" logic with Full Access (4))
-		if ($viewer_level < 4 && $this->user->data['user_id'] != $record['issuer_user_id'])
+		if (!$has_access)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -202,17 +214,20 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		// Determine Target Level
-		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
+		// Access Check Logic (Same as Edit)
+		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
+		$has_access = false;
 
-		// Access Check
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		if ($viewer_level === 4)
 		{
-			trigger_error('NOT_AUTHORISED');
+			$has_access = true;
+		}
+		elseif ($is_issuer)
+		{
+			$has_access = true;
 		}
 
-		// Ownership check: Full Access (4) can delete all; others only their own
-		if ($viewer_level < 4 && $this->user->data['user_id'] != $record['issuer_user_id'])
+		if (!$has_access)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}

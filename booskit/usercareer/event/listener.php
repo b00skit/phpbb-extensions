@@ -51,10 +51,13 @@ class listener implements EventSubscriberInterface
 	{
 		$user_id = $event['member']['user_id'];
 
-		// Viewer permissions
-		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
-		// Assuming view permissions are open if not specified otherwise, similar to awards
+		// Viewer permissions - check view access first
+		if (!$this->career_manager->get_user_view_access($this->user->data['user_id']))
+		{
+			return; // Don't show anything if no view access
+		}
 
+		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
 		$notes = $this->career_manager->get_user_notes($user_id, 5); // Limit to 5
 		$definitions = $this->career_manager->get_definitions();
 
@@ -64,29 +67,18 @@ class listener implements EventSubscriberInterface
 			$defs_map[$def['id']] = $def;
 		}
 
+		$target_level = $this->career_manager->get_user_role_level($user_id);
+
 		foreach ($notes as $note)
 		{
 			$def = isset($defs_map[$note['career_type_id']]) ? $defs_map[$note['career_type_id']] : [];
 
-			$can_edit = ($viewer_level >= 2);
-			// Plus access check logic: L4 can edit everyone, others can edit if they issued it?
-			// Controller logic was: "Ownership check: Full Access (4) can edit all; others only their own"
-			// But note: "l2 and above users should have the ability to edit and remove."
-			// I'll stick to the simpler rule from the prompt: "l2 and above users should have the ability to edit and remove."
-			// But wait, the controller logic I wrote also checks "viewer <= target" hierarchy.
-			// I should probably replicate the check here to decide if the edit button is shown.
-			// Actually, let's just pass the permission bool.
-
-			// Re-evaluating controller logic vs prompt:
-			// Prompt: "l2 and above users should have the ability to edit and remove."
-			// Prompt: "Permissions for who can access who should be the same as disciplinary actions"
-			// Disciplinary logic: L1+ can ADD. L2+ can EDIT/REMOVE.
-			// Plus Hierarchy: Viewer must be > Target (unless Viewer is L4).
-
-			$target_level = $this->career_manager->get_user_role_level($user_id);
-
+			$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
 			$has_access = false;
+
 			if ($viewer_level === 4) {
+				$has_access = true;
+			} elseif ($is_issuer && $viewer_level >= 1) {
 				$has_access = true;
 			} elseif ($viewer_level >= 2 && $viewer_level > $target_level) {
 				$has_access = true;
@@ -106,7 +98,6 @@ class listener implements EventSubscriberInterface
 
 		// Check if user can add
 		$can_add = false;
-		$target_level = $this->career_manager->get_user_role_level($user_id);
 		if ($viewer_level >= 1) {
 			if ($viewer_level === 4 || $viewer_level > $target_level) {
 				$can_add = true;

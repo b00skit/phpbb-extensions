@@ -12,6 +12,12 @@
 			<div class="career-header">
 				<span class="career-type" style="color: {{ note.COLOR }};">{{ note.TYPE }}</span>
 				<span class="career-date">{{ note.DATE }}</span>
+				{% if note.U_EDIT or note.U_REMOVE %}
+				<div class="career-actions" style="float: right;">
+					{% if note.U_EDIT %}<a href="{{ note.U_EDIT }}" class="button button-secondary">{{ lang('CAREER_EDIT_NOTE') }}</a>{% endif %}
+					{% if note.U_REMOVE %}<a href="{{ note.U_REMOVE }}" class="button button-secondary">{{ lang('CAREER_DELETE_NOTE') }}</a>{% endif %}
+				</div>
+				{% endif %}
 			</div>
 			<div class="career-description">
 				{{ note.DESCRIPTION }}

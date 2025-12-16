@@ -32,6 +32,7 @@ class main_module
 			}
 
 			$config->set('booskit_career_json_url', $request->variable('booskit_career_json_url', ''));
+			$config->set('booskit_career_access_view', $request->variable('booskit_career_access_view', ''));
 			$config->set('booskit_career_access_l1', $request->variable('booskit_career_access_l1', ''));
 			$config->set('booskit_career_access_l2', $request->variable('booskit_career_access_l2', ''));
 			$config->set('booskit_career_access_l3', $request->variable('booskit_career_access_l3', ''));
@@ -42,6 +43,7 @@ class main_module
 
 		$template->assign_vars(array(
 			'BOOSKIT_CAREER_JSON_URL'	=> $config['booskit_career_json_url'],
+			'BOOSKIT_CAREER_ACCESS_VIEW'	=> isset($config['booskit_career_access_view']) ? $config['booskit_career_access_view'] : '',
 			'BOOSKIT_CAREER_ACCESS_L1'	=> $config['booskit_career_access_l1'],
 			'BOOSKIT_CAREER_ACCESS_L2'	=> $config['booskit_career_access_l2'],
 			'BOOSKIT_CAREER_ACCESS_L3'	=> $config['booskit_career_access_l3'],
