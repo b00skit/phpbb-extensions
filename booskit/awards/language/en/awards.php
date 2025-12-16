@@ -44,4 +44,8 @@ $lang = array_merge($lang, array(
 
 	'LOG_AWARD_ADDED' => '<strong>Added award to user</strong><br>» %s',
 	'LOG_AWARD_REMOVED' => '<strong>Removed award from user</strong><br>» %s',
+
+	'NOTIFICATION_AWARD' => 'You have been issued a new award!',
+	'NOTIFICATION_AWARD_TITLE' => 'You have been issued a new award: <strong>%s</strong>',
+	'NOTIFICATION_TYPE_AWARD' => 'Award notifications',
 ));

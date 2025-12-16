@@ -27,6 +27,7 @@ services:
             - '@auth'
             - '@log'
             - '@booskit.awards.service.award_manager'
+            - '@notification_manager'
             - '%core.root_path%'
             - '%core.php_ext%'
 
@@ -40,6 +41,17 @@ services:
             - '@booskit.awards.service.award_manager'
         tags:
             - { name: event.listener }
+
+    booskit.awards.notification.award:
+        class: booskit\awards\notification\award_notification
+        arguments:
+            - '@user_loader'
+            - '@config'
+            - '@user'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: notification.type }
 
 parameters:
     booskit.awards.tables.users: %core.table_prefix%booskit_awards_users

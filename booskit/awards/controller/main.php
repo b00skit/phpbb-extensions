@@ -18,10 +18,11 @@ class main
 	protected $auth;
 	protected $log;
 	protected $award_manager;
+	protected $notification_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, \phpbb\notification\manager $notification_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->request = $request;
@@ -31,6 +32,7 @@ class main
 		$this->auth = $auth;
 		$this->log = $log;
 		$this->award_manager = $award_manager;
+		$this->notification_manager = $notification_manager;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
 	}
@@ -83,6 +85,24 @@ class main
 			}
 
 			$award_id = $this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id']);
+
+			$definitions = $this->award_manager->get_definitions();
+			$award_name = '';
+			foreach ($definitions as $def)
+			{
+				if ($def['id'] == $award_def_id)
+				{
+					$award_name = $def['name'];
+					break;
+				}
+			}
+
+			$this->notification_manager->add_notifications('booskit.awards.notification.award', array(
+				'award_id' => $award_id,
+				'user_id' => $user_id,
+				'issuer_id' => $this->user->data['user_id'],
+				'award_name' => $award_name,
+			));
 
 			$user_row = $this->award_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_ADDED', time(), array($user_row));
