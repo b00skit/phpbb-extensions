@@ -1,0 +1,23 @@
+booskit_usercareer_add_note:
+    path: /career/add/{user_id}
+    defaults: { _controller: 'booskit.usercareer.controller.main:add_note' }
+    requirements:
+        user_id: \d+
+
+booskit_usercareer_edit_note:
+    path: /career/edit/{note_id}
+    defaults: { _controller: 'booskit.usercareer.controller.main:edit_note' }
+    requirements:
+        note_id: \d+
+
+booskit_usercareer_remove_note:
+    path: /career/remove/{note_id}
+    defaults: { _controller: 'booskit.usercareer.controller.main:remove_note' }
+    requirements:
+        note_id: \d+
+
+booskit_usercareer_view_timeline:
+    path: /career/timeline/{user_id}
+    defaults: { _controller: 'booskit.usercareer.controller.main:view_timeline' }
+    requirements:
+        user_id: \d+

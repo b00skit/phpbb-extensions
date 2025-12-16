@@ -1,0 +1,47 @@
+<div class="panel bg1 career-panel">
+	<div class="inner">
+		<h3>
+			{{ lang('CAREER_TIMELINE') }}
+			{% if U_CAREER_ADD %}
+			<a href="{{ U_CAREER_ADD }}" class="button button-secondary button-icon-only" style="float: right; margin-top: -5px;" title="{{ lang('CAREER_ADD_NOTE') }}">
+				<i class="icon fa-plus fa-fw" aria-hidden="true"></i>
+			</a>
+			{% endif %}
+		</h3>
+
+		<div class="career-timeline">
+			{% for note in career_notes %}
+			<div class="career-item" style="border-left-color: {{ note.COLOR }};">
+				<div class="career-icon" style="background-color: {{ note.COLOR }};">
+					<i class="icon fa {{ note.ICON }} fa-fw" aria-hidden="true"></i>
+				</div>
+				<div class="career-content">
+					<div class="career-header">
+						<span class="career-type" style="color: {{ note.COLOR }};">{{ note.TYPE }}</span>
+						<span class="career-date">{{ note.DATE }}</span>
+						<div class="career-actions">
+							{% if note.U_EDIT %}
+							<a href="{{ note.U_EDIT }}" title="{{ lang('EDIT') }}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+							{% endif %}
+							{% if note.U_REMOVE %}
+							<a href="{{ note.U_REMOVE }}" title="{{ lang('DELETE') }}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+							{% endif %}
+						</div>
+					</div>
+					<div class="career-description">
+						{{ note.DESCRIPTION }}
+					</div>
+				</div>
+			</div>
+			{% else %}
+			<p>{{ lang('NO_ENTRIES') }}</p>
+			{% endfor %}
+		</div>
+
+		{% if S_HAS_CAREER_NOTES %}
+		<div class="career-footer">
+			<a href="{{ U_CAREER_VIEW_MORE }}" class="button button-secondary">{{ lang('VIEW_FULL_TIMELINE') }}</a>
+		</div>
+		{% endif %}
+	</div>
+</div>

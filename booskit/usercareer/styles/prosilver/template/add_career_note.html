@@ -1,0 +1,45 @@
+{% INCLUDE 'overall_header.html' %}
+
+<a href="{{ U_BACK }}" class="arrow-{{ S_CONTENT_FLOW_BEGIN }}">{{ lang('BACK') }}</a>
+
+<form id="postform" method="post" action="{{ U_ACTION }}">
+
+<div class="panel">
+	<div class="inner">
+		<h3>{{ PAGE_TITLE }}</h3>
+
+		<fieldset>
+			<dl>
+				<dt><label for="career_type_id">{{ lang('CAREER_TYPE') }}</label></dt>
+				<dd>
+					<select name="career_type_id" id="career_type_id">
+						{% for type in types %}
+						<option value="{{ type.ID }}"{% if type.SELECTED %} selected="selected"{% endif %}>{{ type.NAME }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="note_date">{{ lang('CAREER_DATE') }}</label></dt>
+				<dd><input type="date" name="note_date" id="note_date" value="{{ S_NOTE_DATE }}" class="inputbox" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="description">{{ lang('CAREER_DESCRIPTION') }}</label></dt>
+				<dd><textarea name="description" id="description" rows="5" cols="45" class="inputbox">{{ DESCRIPTION }}</textarea></dd>
+			</dl>
+		</fieldset>
+	</div>
+</div>
+
+<div class="panel">
+	<div class="inner">
+		<fieldset class="submit-buttons">
+			{{ S_FORM_TOKEN }}
+			<input type="submit" accesskey="s" tabindex="6" name="submit" value="{{ lang('SUBMIT') }}" class="button1" />&nbsp;
+		</fieldset>
+	</div>
+</div>
+
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

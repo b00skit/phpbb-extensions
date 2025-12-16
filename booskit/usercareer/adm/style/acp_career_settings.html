@@ -1,0 +1,38 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_CAREER_SETTINGS') }}</h1>
+
+<form id="acp_career_settings" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('ACP_BOOSKIT_CAREER_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_career_json_url">{{ lang('CAREER_JSON_URL') }}</label><br /><span>{{ lang('CAREER_JSON_URL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_career_json_url" name="booskit_career_json_url" value="{{ BOOSKIT_CAREER_JSON_URL }}" maxlength="255" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_career_access_l1">{{ lang('CAREER_ACCESS_L1') }}</label><br /><span>{{ lang('CAREER_ACCESS_LEVEL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_career_access_l1" name="booskit_career_access_l1" value="{{ BOOSKIT_CAREER_ACCESS_L1 }}" maxlength="255" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_career_access_l2">{{ lang('CAREER_ACCESS_L2') }}</label><br /><span>{{ lang('CAREER_ACCESS_LEVEL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_career_access_l2" name="booskit_career_access_l2" value="{{ BOOSKIT_CAREER_ACCESS_L2 }}" maxlength="255" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_career_access_l3">{{ lang('CAREER_ACCESS_L3') }}</label><br /><span>{{ lang('CAREER_ACCESS_LEVEL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_career_access_l3" name="booskit_career_access_l3" value="{{ BOOSKIT_CAREER_ACCESS_L3 }}" maxlength="255" /></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_career_access_full">{{ lang('CAREER_ACCESS_FULL') }}</label><br /><span>{{ lang('CAREER_ACCESS_LEVEL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_career_access_full" name="booskit_career_access_full" value="{{ BOOSKIT_CAREER_ACCESS_FULL }}" maxlength="255" /></dd>
+	</dl>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
+	</p>
+	{{ S_FORM_TOKEN }}
+</fieldset>
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

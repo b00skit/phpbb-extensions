@@ -1,0 +1,43 @@
+services:
+    booskit.usercareer.service.career_manager:
+        class: booskit\usercareer\service\career_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '@cache.driver'
+            - '@auth'
+            - '%booskit.usercareer.table.notes%'
+
+    booskit.usercareer.controller.main:
+        class: booskit\usercareer\controller\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@auth'
+            - '@log'
+            - '@booskit.usercareer.service.career_manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    booskit.usercareer.controller.acp_main:
+        class: booskit\usercareer\acp\main_module
+        public: true
+
+    booskit.usercareer.listener:
+        class: booskit\usercareer\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@booskit.usercareer.service.career_manager'
+            - '@controller.helper'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
+
+parameters:
+    booskit.usercareer.table.notes: %core.table_prefix%booskit_career_notes

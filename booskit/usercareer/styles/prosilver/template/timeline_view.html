@@ -1,0 +1,34 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h2 class="career-title">{{ TIMELINE_USER }} - {{ lang('CAREER_TIMELINE') }}</h2>
+
+<div class="career-timeline full-timeline">
+	{% for note in career_notes %}
+	<div class="career-item" style="border-left-color: {{ note.COLOR }};">
+		<div class="career-icon" style="background-color: {{ note.COLOR }};">
+			<i class="icon fa {{ note.ICON }} fa-fw" aria-hidden="true"></i>
+		</div>
+		<div class="career-content">
+			<div class="career-header">
+				<span class="career-type" style="color: {{ note.COLOR }};">{{ note.TYPE }}</span>
+				<span class="career-date">{{ note.DATE }}</span>
+			</div>
+			<div class="career-description">
+				{{ note.DESCRIPTION }}
+			</div>
+		</div>
+	</div>
+	{% else %}
+	<div class="panel">
+		<div class="inner">
+			<p>{{ lang('NO_ENTRIES') }}</p>
+		</div>
+	</div>
+	{% endfor %}
+</div>
+
+<p class="action-bar bottom">
+	<a href="{{ U_BACK }}" class="button arrow-left">{{ lang('BACK_TO_PROFILE') }}</a>
+</p>
+
+{% INCLUDE 'overall_footer.html' %}

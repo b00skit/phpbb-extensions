@@ -1,0 +1,83 @@
+.career-panel {
+	margin-top: 10px;
+}
+
+.career-timeline {
+	position: relative;
+	padding: 10px 0;
+}
+
+.career-item {
+	position: relative;
+	padding-left: 40px;
+	margin-bottom: 15px;
+	border-left: 2px solid #ccc; /* Fallback color */
+}
+
+.career-item:last-child {
+	margin-bottom: 0;
+}
+
+.career-icon {
+	position: absolute;
+	left: -11px; /* Center on the border line (2px width) -> -1 + -10 = -11?
+	               Icon width 20px. Center is 10px. Line center is 1px.
+	               Left -9px would center it if line is at 0.
+	               Actually padding-left 40px means content starts at 40.
+	               If I put border on .career-item, it's on the left edge.
+	               So icon should be centered on that left edge. */
+	left: -12px;
+	top: 0;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	text-align: center;
+	line-height: 24px;
+	color: #fff;
+	font-size: 12px;
+}
+
+.career-content {
+	background: rgba(0,0,0,0.02);
+	padding: 10px;
+	border-radius: 4px;
+}
+
+.career-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 5px;
+	font-size: 0.9em;
+}
+
+.career-type {
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.career-date {
+	color: #777;
+}
+
+.career-description {
+	font-size: 1.1em;
+}
+
+.career-actions a {
+	margin-left: 5px;
+	color: #999;
+}
+
+.career-actions a:hover {
+	color: #333;
+}
+
+.career-footer {
+	text-align: center;
+	margin-top: 10px;
+}
+
+.full-timeline .career-item {
+    margin-bottom: 20px;
+}
