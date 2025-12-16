@@ -3,8 +3,8 @@
 }
 
 .career-timeline {
-	position: relative;
-	padding: 10px 0;
+    position: relative;
+    padding: 10px 0 10px 20px; /* Changed from "10px 0" to add 20px left padding */
 }
 
 .career-item {
