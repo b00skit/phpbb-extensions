@@ -52,7 +52,7 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 
 		// Viewer permissions - check view access first
-		if (!$this->career_manager->get_user_view_access($this->user->data['user_id']))
+		if (!$this->career_manager->get_user_view_access($this->user->data['user_id'], $user_id))
 		{
 			return; // Don't show anything if no view access
 		}

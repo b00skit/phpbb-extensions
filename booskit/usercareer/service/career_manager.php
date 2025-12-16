@@ -251,22 +251,13 @@ class career_manager
 		return 0;
 	}
 
-	public function get_user_view_access($user_id)
+	public function get_user_view_access($user_id, $target_user_id = null)
 	{
-		// Check inheritence: If they have role level >= 1, they have view access.
+		// Check inheritence: If they have role level >= 1, they have global view access.
 		$role_level = $this->get_user_role_level($user_id);
 		if ($role_level >= 1)
 		{
 			return true;
-		}
-
-		// Otherwise check 'booskit_career_access_view' groups
-		$view_groups = $this->parse_groups('booskit_career_access_view');
-		if (empty($view_groups))
-		{
-			// If empty, perhaps default to no access or all access?
-			// "any groups that have view access ... others shouldn't" implies strict check.
-			return false;
 		}
 
 		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
@@ -278,8 +269,25 @@ class career_manager
 		}
 		$this->db->sql_freeresult($result);
 
-		if (array_intersect($user_groups, $view_groups)) {
-			return true;
+		// Global View Access
+		$global_view_groups = $this->parse_groups('booskit_career_access_view_global');
+		if (!empty($global_view_groups))
+		{
+			if (array_intersect($user_groups, $global_view_groups)) {
+				return true;
+			}
+		}
+
+		// Local View Access
+		if ($target_user_id !== null && $user_id == $target_user_id)
+		{
+			$local_view_groups = $this->parse_groups('booskit_career_access_view');
+			if (!empty($local_view_groups))
+			{
+				if (array_intersect($user_groups, $local_view_groups)) {
+					return true;
+				}
+			}
 		}
 
 		return false;
