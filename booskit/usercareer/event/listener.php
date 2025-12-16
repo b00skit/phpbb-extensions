@@ -108,6 +108,7 @@ class listener implements EventSubscriberInterface
 			'U_CAREER_ADD' => $can_add ? $this->helper->route('booskit_usercareer_add_note', array('user_id' => $user_id)) : '',
 			'U_CAREER_VIEW_MORE' => $this->helper->route('booskit_usercareer_view_timeline', array('user_id' => $user_id)),
 			'S_HAS_CAREER_NOTES' => !empty($notes),
+			'S_CAREER_VIEW_ACCESS' => true,
 		));
 	}
 }
