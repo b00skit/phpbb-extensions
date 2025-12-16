@@ -202,25 +202,27 @@ class career_manager
 		return isset($usernames[$user_id]) ? $usernames[$user_id] : 'Unknown';
 	}
 
+	protected function parse_groups($config_key)
+	{
+		$raw = isset($this->config[$config_key]) ? $this->config[$config_key] : '';
+		if (empty($raw))
+		{
+			return [];
+		}
+		return array_map('intval', array_map('trim', explode(',', $raw)));
+	}
+
 	public function get_user_role_level($user_id)
 	{
 		// 0 = Regular, 1 = L1, 2 = L2, 3 = L3, 4 = Full Access
 
 		if ($this->cached_role_groups === null)
 		{
-			$parse_groups = function($config_key) {
-				$raw = isset($this->config[$config_key]) ? $this->config[$config_key] : '';
-				if (empty($raw)) {
-					return [];
-				}
-				return array_map('intval', array_map('trim', explode(',', $raw)));
-			};
-
 			$this->cached_role_groups = [
-				'l1' => $parse_groups('booskit_career_access_l1'),
-				'l2' => $parse_groups('booskit_career_access_l2'),
-				'l3' => $parse_groups('booskit_career_access_l3'),
-				'full' => $parse_groups('booskit_career_access_full'),
+				'l1' => $this->parse_groups('booskit_career_access_l1'),
+				'l2' => $this->parse_groups('booskit_career_access_l2'),
+				'l3' => $this->parse_groups('booskit_career_access_l3'),
+				'full' => $this->parse_groups('booskit_career_access_full'),
 			];
 		}
 
