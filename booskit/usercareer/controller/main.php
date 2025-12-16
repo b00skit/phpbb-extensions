@@ -251,6 +251,10 @@ class main
 			{
 				$description = generate_text_for_display($description, $note['bbcode_uid'], $note['bbcode_bitfield'], $note['bbcode_options']);
 			}
+			else
+			{
+				$description = utf8_htmlspecialchars($description);
+			}
 
 			$this->template->assign_block_vars('career_notes', array(
 				'ID' => $note['note_id'],

@@ -72,6 +72,10 @@ class listener implements EventSubscriberInterface
 				{
 					$comment = generate_text_for_display($comment, $award['bbcode_uid'], $award['bbcode_bitfield'], $award['bbcode_options']);
 				}
+				else
+				{
+					$comment = utf8_htmlspecialchars($comment);
+				}
 
 				$this->template->assign_block_vars('user_awards', array(
 					'NAME' => $definition['name'],
