@@ -76,7 +76,7 @@ class disciplinary_manager
 				// Fallback example
 				$definitions = [
 					[
-						'id' => 'warning',
+						'id' => 'Faction Warning',
 						'name' => 'Warning',
 						'description' => 'A formal warning.',
 						'color' => '#f1c40f',

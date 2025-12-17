@@ -48,7 +48,7 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 
 		// Viewer permissions - check view access first
-		if (!$this->career_manager->get_user_view_access($this->user->data['user_id']))
+		if (!$this->career_manager->get_user_view_access($this->user->data['user_id'], $user_id))
 		{
 			return; // Don't show anything if no view access
 		}
@@ -110,6 +110,7 @@ class listener implements EventSubscriberInterface
 			'U_CAREER_ADD' => $can_add ? $this->helper->route('booskit_usercareer_add_note', array('user_id' => $user_id)) : '',
 			'U_CAREER_VIEW_MORE' => $this->helper->route('booskit_usercareer_view_timeline', array('user_id' => $user_id)),
 			'S_HAS_CAREER_NOTES' => !empty($notes),
+			'S_CAREER_VIEW_ACCESS' => true,
 		));
 	}
 }

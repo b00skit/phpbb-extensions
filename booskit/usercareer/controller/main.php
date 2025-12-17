@@ -256,7 +256,7 @@ class main
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 
 		// Check view access
-		if (!$this->career_manager->get_user_view_access($this->user->data['user_id']))
+		if (!$this->career_manager->get_user_view_access($this->user->data['user_id'], $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
