@@ -142,7 +142,7 @@ class career_manager
 		return $row;
 	}
 
-	public function add_note($user_id, $career_type_id, $note_date, $description, $issuer_user_id)
+	public function add_note($user_id, $career_type_id, $note_date, $description, $issuer_user_id, $bbcode_uid, $bbcode_bitfield, $bbcode_options)
 	{
 		$sql_ary = [
 			'user_id' => (int) $user_id,
@@ -150,6 +150,9 @@ class career_manager
 			'note_date' => (int) $note_date,
 			'description' => $description,
 			'issuer_user_id' => (int) $issuer_user_id,
+			'bbcode_uid' => $bbcode_uid,
+			'bbcode_bitfield' => $bbcode_bitfield,
+			'bbcode_options' => $bbcode_options,
 		];
 
 		$sql = 'INSERT INTO ' . $this->table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
@@ -158,12 +161,15 @@ class career_manager
 		return $this->db->sql_nextid();
 	}
 
-	public function update_note($note_id, $career_type_id, $note_date, $description)
+	public function update_note($note_id, $career_type_id, $note_date, $description, $bbcode_uid, $bbcode_bitfield, $bbcode_options)
 	{
 		$sql_ary = [
 			'career_type_id' => $career_type_id,
 			'note_date' => (int) $note_date,
 			'description' => $description,
+			'bbcode_uid' => $bbcode_uid,
+			'bbcode_bitfield' => $bbcode_bitfield,
+			'bbcode_options' => $bbcode_options,
 		];
 
 		$sql = 'UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE note_id = ' . (int) $note_id;

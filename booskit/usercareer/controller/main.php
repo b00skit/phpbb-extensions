@@ -86,7 +86,12 @@ class main
 				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
-			$this->career_manager->add_note($user_id, $type_id, $note_date, $description, $this->user->data['user_id']);
+			// Parse BBCode
+			$uid = $bitfield = $options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+			generate_text_for_storage($description, $uid, $bitfield, $options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->career_manager->add_note($user_id, $type_id, $note_date, $description, $this->user->data['user_id'], $uid, $bitfield, $options);
 
 			$user_row = $this->career_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_ADDED', time(), array($user_row));
@@ -168,7 +173,12 @@ class main
 				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
-			$this->career_manager->update_note($note_id, $type_id, $note_date, $description);
+			// Parse BBCode
+			$uid = $bitfield = $options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+			generate_text_for_storage($description, $uid, $bitfield, $options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->career_manager->update_note($note_id, $type_id, $note_date, $description, $uid, $bitfield, $options);
 
 			$user_row = $this->career_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_EDITED', time(), array($user_row));
@@ -286,10 +296,16 @@ class main
 				$has_access = true;
 			}
 
+			// Render BBCode
+			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
+			$bbcode_bitfield = isset($note['bbcode_bitfield']) ? $note['bbcode_bitfield'] : '';
+			$bbcode_options = isset($note['bbcode_options']) ? $note['bbcode_options'] : 7;
+			$description_html = generate_text_for_display($note['description'], $bbcode_uid, $bbcode_bitfield, $bbcode_options);
+
 			$this->template->assign_block_vars('career_notes', array(
 				'ID' => $note['note_id'],
 				'TYPE' => isset($def['name']) ? $def['name'] : $note['career_type_id'],
-				'DESCRIPTION' => $note['description'],
+				'DESCRIPTION' => $description_html,
 				'DATE' => $this->user->format_date($note['note_date']),
 				'ICON' => isset($def['icon']) ? $def['icon'] : 'fa-circle',
 				'COLOR' => isset($def['color']) ? $def['color'] : '#333',
@@ -319,7 +335,12 @@ class main
 		{
 			$default_date = date('Y-m-d', $note['note_date']);
 			$current_type = $note['career_type_id'];
-			$current_description = $note['description'];
+
+			// Decode BBCode for editing
+			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
+			$bbcode_options = isset($note['bbcode_options']) ? $note['bbcode_options'] : 7;
+			$text_data = generate_text_for_edit($note['description'], $bbcode_uid, $bbcode_options);
+			$current_description = $text_data['text'];
 		}
 
 		$this->template->assign_vars(array(
@@ -330,6 +351,11 @@ class main
 				? $this->helper->route('booskit_usercareer_edit_note', array('note_id' => $note['note_id']))
 				: $this->helper->route('booskit_usercareer_add_note', array('user_id' => $user_id)),
 			'U_BACK'			=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
+			'S_BBCODE_ALLOWED' => true,
+			'S_BBCODE_QUOTE'   => true,
+			'S_BBCODE_IMG'     => true,
+			'S_LINKS_ALLOWED'  => true,
+			'S_SMILIES_ALLOWED'=> true,
 		));
 
 		foreach ($definitions as $def) {

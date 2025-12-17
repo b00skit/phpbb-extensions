@@ -66,13 +66,19 @@ class listener implements EventSubscriberInterface
 			$definition = $this->award_manager->get_definition($award['award_definition_id']);
 			if ($definition)
 			{
+				// Parse BBCode
+				$bbcode_uid = isset($award['bbcode_uid']) ? $award['bbcode_uid'] : '';
+				$bbcode_bitfield = isset($award['bbcode_bitfield']) ? $award['bbcode_bitfield'] : '';
+				$bbcode_options = isset($award['bbcode_options']) ? $award['bbcode_options'] : 7;
+				$comment_html = generate_text_for_display($award['comment'], $bbcode_uid, $bbcode_bitfield, $bbcode_options);
+
 				$this->template->assign_block_vars('user_awards', array(
 					'NAME' => $definition['name'],
 					'IMAGE' => $definition['image'],
 					'MAX_WIDTH' => isset($definition['max-width']) ? $definition['max-width'] : '',
 					'MAX_HEIGHT' => isset($definition['max-height']) ? $definition['max-height'] : '',
 					'DATE' => $this->user->format_date($award['issue_date'], 'D M d, Y'),
-					'COMMENT' => $award['comment'],
+					'COMMENT' => $comment_html,
 					'U_REMOVE' => $can_remove ? $this->helper->route('booskit_awards_remove_award', array('award_id' => $award['award_id'])) : '',
 				));
 			}

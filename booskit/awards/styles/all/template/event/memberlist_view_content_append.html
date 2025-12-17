@@ -11,7 +11,7 @@
 					<img src="{{ user_awards.IMAGE }}" alt="{{ user_awards.NAME }}" style="<!-- IF user_awards.MAX_WIDTH -->max-width: {{ user_awards.MAX_WIDTH }};<!-- ENDIF --> <!-- IF user_awards.MAX_HEIGHT -->max-height: {{ user_awards.MAX_HEIGHT }};<!-- ENDIF -->">
 				</div>
 				<!-- IF user_awards.COMMENT -->
-				<div style="font-style: italic; font-size: 0.9em;">{{ user_awards.COMMENT }}</div>
+				<div style="font-style: italic; font-size: 0.9em;">{{ user_awards.COMMENT|raw }}</div>
 				<!-- ENDIF -->
 				<!-- IF user_awards.U_REMOVE -->
 				<div style="margin-top: 5px;">

@@ -2,6 +2,11 @@
 
 <h2 class="solo">{{ lang('ADD_AWARD') }}</h2>
 
+<script>
+	var form_name = 'add_award_form';
+	var text_name = 'comment';
+</script>
+
 <form action="{{ U_ACTION }}" method="post" id="add_award_form">
 	<div class="panel">
 		<div class="inner">
@@ -33,9 +38,12 @@
 					<dt><label for="issue_date">{{ lang('AWARD_DATE') }}{{ lang('COLON') }}</label></dt>
 					<dd><input type="date" name="issue_date" id="issue_date" value="{{ S_ISSUE_DATE }}"></dd>
 				</dl>
+
+				{% INCLUDE 'posting_buttons.html' %}
+
 				<dl>
 					<dt><label for="comment">{{ lang('AWARD_COMMENT') }}{{ lang('COLON') }}</label></dt>
-					<dd><textarea name="comment" id="comment" rows="3" cols="30" class="inputbox"></textarea></dd>
+					<dd><textarea name="comment" id="comment" rows="10" cols="30" class="inputbox" tabindex="3"></textarea></dd>
 				</dl>
 			</fieldset>
 		</div>

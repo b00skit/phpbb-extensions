@@ -2,6 +2,11 @@
 
 <a href="{{ U_BACK }}" class="arrow-{{ S_CONTENT_FLOW_BEGIN }}">{{ lang('BACK') }}</a>
 
+<script>
+	var form_name = 'postform';
+	var text_name = 'description';
+</script>
+
 <form id="postform" method="post" action="{{ U_ACTION }}">
 
 <div class="panel">
@@ -23,9 +28,12 @@
 				<dt><label for="note_date">{{ lang('CAREER_DATE') }}</label></dt>
 				<dd><input type="date" name="note_date" id="note_date" value="{{ S_NOTE_DATE }}" class="inputbox" /></dd>
 			</dl>
+
+			{% INCLUDE 'posting_buttons.html' %}
+
 			<dl>
 				<dt><label for="description">{{ lang('CAREER_DESCRIPTION') }}</label></dt>
-				<dd><textarea name="description" id="description" rows="5" cols="45" class="inputbox">{{ DESCRIPTION }}</textarea></dd>
+				<dd><textarea name="description" id="description" rows="10" cols="45" class="inputbox" tabindex="3">{{ DESCRIPTION }}</textarea></dd>
 			</dl>
 		</fieldset>
 	</div>

@@ -16,17 +16,13 @@ class listener implements EventSubscriberInterface
 	protected $user;
 	protected $career_manager;
 	protected $helper;
-	protected $root_path;
-	protected $php_ext;
 
-	public function __construct(\phpbb\template\template $template, \phpbb\user $user, \booskit\usercareer\service\career_manager $career_manager, \phpbb\controller\helper $helper, $root_path, $php_ext)
+	public function __construct(\phpbb\template\template $template, \phpbb\user $user, \booskit\usercareer\service\career_manager $career_manager, \phpbb\controller\helper $helper)
 	{
 		$this->template = $template;
 		$this->user = $user;
 		$this->career_manager = $career_manager;
 		$this->helper = $helper;
-		$this->root_path = $root_path;
-		$this->php_ext = $php_ext;
 	}
 
 	static public function getSubscribedEvents()
@@ -84,10 +80,16 @@ class listener implements EventSubscriberInterface
 				$has_access = true;
 			}
 
+			// Render BBCode
+			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
+			$bbcode_bitfield = isset($note['bbcode_bitfield']) ? $note['bbcode_bitfield'] : '';
+			$bbcode_options = isset($note['bbcode_options']) ? $note['bbcode_options'] : 7;
+			$description_html = generate_text_for_display($note['description'], $bbcode_uid, $bbcode_bitfield, $bbcode_options);
+
 			$this->template->assign_block_vars('career_notes', array(
 				'ID' => $note['note_id'],
 				'TYPE' => isset($def['name']) ? $def['name'] : $note['career_type_id'],
-				'DESCRIPTION' => $note['description'],
+				'DESCRIPTION' => $description_html,
 				'DATE' => $this->user->format_date($note['note_date']),
 				'ICON' => isset($def['icon']) ? $def['icon'] : 'fa-circle',
 				'COLOR' => isset($def['color']) ? $def['color'] : '#333',

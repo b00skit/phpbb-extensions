@@ -93,7 +93,17 @@ class main
 				trigger_error('NOT_AUTHORISED');
 			}
 
-			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id']);
+			// Parse BBCode
+			$reason_uid = $reason_bitfield = $reason_options = '';
+			$evidence_uid = $evidence_bitfield = $evidence_options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+
+			generate_text_for_storage($reason, $reason_uid, $reason_bitfield, $reason_options, $allow_bbcode, $allow_urls, $allow_smilies);
+			generate_text_for_storage($evidence, $evidence_uid, $evidence_bitfield, $evidence_options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id'],
+				$reason_uid, $reason_bitfield, $reason_options,
+				$evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
@@ -183,7 +193,17 @@ class main
 				trigger_error('NOT_AUTHORISED');
 			}
 
-			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence);
+			// Parse BBCode
+			$reason_uid = $reason_bitfield = $reason_options = '';
+			$evidence_uid = $evidence_bitfield = $evidence_options = '';
+			$allow_bbcode = $allow_urls = $allow_smilies = true;
+
+			generate_text_for_storage($reason, $reason_uid, $reason_bitfield, $reason_options, $allow_bbcode, $allow_urls, $allow_smilies);
+			generate_text_for_storage($evidence, $evidence_uid, $evidence_bitfield, $evidence_options, $allow_bbcode, $allow_urls, $allow_smilies);
+
+			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence,
+				$reason_uid, $reason_bitfield, $reason_options,
+				$evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
@@ -264,8 +284,17 @@ class main
 		{
 			$default_date = date('Y-m-d', $record['issue_date']);
 			$current_type = $record['disciplinary_type_id'];
-			$current_reason = $record['reason'];
-			$current_evidence = $record['evidence'];
+
+			// Decode BBCode
+			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
+			$reason_options = isset($record['reason_bbcode_options']) ? $record['reason_bbcode_options'] : 7;
+			$reason_data = generate_text_for_edit($record['reason'], $reason_uid, $reason_options);
+			$current_reason = $reason_data['text'];
+
+			$evidence_uid = isset($record['evidence_bbcode_uid']) ? $record['evidence_bbcode_uid'] : '';
+			$evidence_options = isset($record['evidence_bbcode_options']) ? $record['evidence_bbcode_options'] : 7;
+			$evidence_data = generate_text_for_edit($record['evidence'], $evidence_uid, $evidence_options);
+			$current_evidence = $evidence_data['text'];
 		}
 
 		$this->template->assign_vars(array(
@@ -277,17 +306,17 @@ class main
 				? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id']))
 				: $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
 			'U_BACK'			=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
+			'S_BBCODE_ALLOWED' => true,
+			'S_BBCODE_QUOTE'   => true,
+			'S_BBCODE_IMG'     => true,
+			'S_LINKS_ALLOWED'  => true,
+			'S_SMILIES_ALLOWED'=> true,
 		));
 
 		foreach ($definitions as $def) {
 			// Filter by access level
 			if (isset($def['access_level']) && $viewer_level < $def['access_level'])
 			{
-				// If editing and this is the current type, we might want to show it but maybe disable it?
-				// But user requirement is "to be able to ISSUE it".
-				// If simply viewing an edit form for a record we can't issue, it's safer to hide it from the selection list.
-				// However, if it's the *current* selection, hiding it might break the form (empty selection on submit).
-				// If it is the current type, we allow it in the list so the form remains valid (unless changed).
 				if ($def['id'] != $current_type)
 				{
 					continue;

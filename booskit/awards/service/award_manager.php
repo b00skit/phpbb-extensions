@@ -159,7 +159,7 @@ class award_manager
 		return $awards;
 	}
 
-	public function add_award($user_id, $award_definition_id, $issue_date, $comment, $issuer_user_id)
+	public function add_award($user_id, $award_definition_id, $issue_date, $comment, $issuer_user_id, $bbcode_uid, $bbcode_bitfield, $bbcode_options)
 	{
 		$sql_ary = [
 			'user_id' => (int) $user_id,
@@ -167,6 +167,9 @@ class award_manager
 			'issue_date' => (int) $issue_date,
 			'comment' => $comment,
 			'issuer_user_id' => (int) $issuer_user_id,
+			'bbcode_uid' => $bbcode_uid,
+			'bbcode_bitfield' => $bbcode_bitfield,
+			'bbcode_options' => $bbcode_options,
 		];
 
 		$sql = 'INSERT INTO ' . $this->table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);

@@ -34,8 +34,6 @@ services:
             - '@user'
             - '@booskit.usercareer.service.career_manager'
             - '@controller.helper'
-            - '%core.root_path%'
-            - '%core.php_ext%'
         tags:
             - { name: event.listener }
 
