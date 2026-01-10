@@ -22,15 +22,19 @@ class award_manager
 	/** @var string */
 	protected $table;
 
+	/** @var string */
+	protected $table_definitions;
+
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table, $table_definitions)
 	{
 		$this->config = $config;
 		$this->db = $db;
 		$this->user = $user;
 		$this->table = $table;
+		$this->table_definitions = $table_definitions;
 	}
 
 	public function get_user_role_level($user_id)
@@ -86,49 +90,124 @@ class award_manager
 			return $this->cached_definitions;
 		}
 
-		$json_url = $this->config['booskit_awards_json_url'];
 		$definitions = [];
+		$source = isset($this->config['booskit_awards_source']) ? $this->config['booskit_awards_source'] : 'url';
 
-		if (!empty($json_url))
+		if ($source === 'local')
 		{
-			// Suppress errors and try to fetch
-			$context = stream_context_create(['http' => ['timeout' => 5]]);
-			$content = @file_get_contents($json_url, false, $context);
-			if ($content !== false)
+			// Fetch from database
+			$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+			$result = $this->db->sql_query($sql);
+			while ($row = $this->db->sql_fetchrow($result))
 			{
-				$data = json_decode($content, true);
-				if (is_array($data))
+				$definitions[] = [
+					'id' => $row['award_id'],
+					'name' => $row['award_name'],
+					'description' => $row['award_desc'],
+					'image' => $row['award_img'],
+					'max-height' => $row['award_h'],
+					'max-width' => $row['award_w'],
+					// Internal DB ID
+					'def_id' => $row['def_id'],
+				];
+			}
+			$this->db->sql_freeresult($result);
+		}
+		else
+		{
+			// Fetch from URL
+			$json_url = $this->config['booskit_awards_json_url'];
+			if (!empty($json_url))
+			{
+				// Suppress errors and try to fetch
+				$context = stream_context_create(['http' => ['timeout' => 5]]);
+				$content = @file_get_contents($json_url, false, $context);
+				if ($content !== false)
 				{
-					$definitions = $data;
+					$data = json_decode($content, true);
+					if (is_array($data))
+					{
+						$definitions = $data;
+					}
 				}
 			}
-		}
 
-		if (empty($definitions))
-		{
-			// Fallback example
-			$definitions = [
-				[
-					'id' => 'example_award',
-					'name' => 'Example Award',
-					'description' => 'This is an internal example award.',
-					'image' => 'https://i.booskit.dev/u/6UPs0o.png',
-					'max-height' => '150px',
-					'max-width' => '150px',
-				],
-				[
-					'id' => 'another_award',
-					'name' => 'Another Award',
-					'description' => 'Another internal example.',
-					'image' => 'https://via.placeholder.com/150/0000FF/808080',
-					'max-height' => '150px',
-					'max-width' => '150px',
-				]
-			];
+			if (empty($definitions))
+			{
+				// Fallback example
+				$definitions = [
+					[
+						'id' => 'example_award',
+						'name' => 'Example Award',
+						'description' => 'This is an internal example award.',
+						'image' => 'https://i.booskit.dev/u/6UPs0o.png',
+						'max-height' => '150px',
+						'max-width' => '150px',
+					],
+					[
+						'id' => 'another_award',
+						'name' => 'Another Award',
+						'description' => 'Another internal example.',
+						'image' => 'https://via.placeholder.com/150/0000FF/808080',
+						'max-height' => '150px',
+						'max-width' => '150px',
+					]
+				];
+			}
 		}
 
 		$this->cached_definitions = $definitions;
 		return $definitions;
+	}
+
+	public function get_local_definitions()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+		$result = $this->db->sql_query($sql);
+		$definitions = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$definitions[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $definitions;
+	}
+
+	public function add_local_definition($id, $name, $desc, $img, $w, $h)
+	{
+		$sql_ary = [
+			'award_id' => $id,
+			'award_name' => $name,
+			'award_desc' => $desc,
+			'award_img' => $img,
+			'award_w' => $w,
+			'award_h' => $h,
+		];
+		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null; // Clear cache
+	}
+
+	public function update_local_definition($def_id, $id, $name, $desc, $img, $w, $h)
+	{
+		$sql_ary = [
+			'award_id' => $id,
+			'award_name' => $name,
+			'award_desc' => $desc,
+			'award_img' => $img,
+			'award_w' => $w,
+			'award_h' => $h,
+		];
+		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
+	}
+
+	public function delete_local_definition($def_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_definitions . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
 	}
 
 	public function get_definition($id)

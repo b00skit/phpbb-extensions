@@ -6,6 +6,7 @@ services:
             - '@dbal.conn'
             - '@user'
             - '%booskit.awards.tables.users%'
+            - '%booskit.awards.tables.definitions%'
 
     booskit.awards.controller.acp.settings:
         class: booskit\awards\controller\acp\settings
@@ -15,6 +16,7 @@ services:
             - '@template'
             - '@user'
             - '@log'
+            - '@booskit.awards.service.award_manager'
 
     booskit.awards.controller.main:
         class: booskit\awards\controller\main
@@ -43,3 +45,4 @@ services:
 
 parameters:
     booskit.awards.tables.users: %core.table_prefix%booskit_awards_users
+    booskit.awards.tables.definitions: %core.table_prefix%booskit_awards_definitions

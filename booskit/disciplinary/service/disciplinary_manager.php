@@ -28,10 +28,13 @@ class disciplinary_manager
 	/** @var string */
 	protected $table;
 
+	/** @var string */
+	protected $table_definitions;
+
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions)
 	{
 		$this->config = $config;
 		$this->db = $db;
@@ -39,6 +42,7 @@ class disciplinary_manager
 		$this->cache = $cache;
 		$this->auth = $auth;
 		$this->table = $table;
+		$this->table_definitions = $table_definitions;
 	}
 
 	public function get_definitions()
@@ -48,56 +52,129 @@ class disciplinary_manager
 			return $this->cached_definitions;
 		}
 
-		$cache_key = 'booskit_disciplinary_definitions';
-		$definitions = $this->cache->get($cache_key);
+		$definitions = [];
+		$source = isset($this->config['booskit_disciplinary_source']) ? $this->config['booskit_disciplinary_source'] : 'url';
 
-		if ($definitions === false)
+		if ($source === 'local')
 		{
-			$json_url = $this->config['booskit_disciplinary_json_url'];
-			$definitions = [];
-
-			if (!empty($json_url))
+			// Fetch from database
+			$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+			$result = $this->db->sql_query($sql);
+			while ($row = $this->db->sql_fetchrow($result))
 			{
-				// Suppress errors and try to fetch
-				$context = stream_context_create(['http' => ['timeout' => 5]]);
-				$content = @file_get_contents($json_url, false, $context);
-				if ($content !== false)
-				{
-					$data = json_decode($content, true);
-					if (is_array($data))
-					{
-						$definitions = $data;
-					}
-				}
-			}
-
-			if (empty($definitions))
-			{
-				// Fallback example
-				$definitions = [
-					[
-						'id' => 'Faction Warning',
-						'name' => 'Warning',
-						'description' => 'A formal warning.',
-						'color' => '#f1c40f',
-						'access_level' => 1,
-					],
-					[
-						'id' => 'ban',
-						'name' => 'Ban',
-						'description' => 'Account suspension.',
-						'color' => '#e74c3c',
-						'access_level' => 4,
-					]
+				$definitions[] = [
+					'id' => $row['disc_id'],
+					'name' => $row['disc_name'],
+					'description' => $row['disc_desc'],
+					'color' => $row['disc_color'],
+					'access_level' => (int)$row['access_level'],
+					// Internal DB ID
+					'def_id' => $row['def_id'],
 				];
 			}
+			$this->db->sql_freeresult($result);
+		}
+		else
+		{
+			$cache_key = 'booskit_disciplinary_definitions';
+			$definitions = $this->cache->get($cache_key);
 
-			// Cache for 1 hour
-			$this->cache->put($cache_key, $definitions, 3600);
+			if ($definitions === false)
+			{
+				$json_url = $this->config['booskit_disciplinary_json_url'];
+				$definitions = [];
+
+				if (!empty($json_url))
+				{
+					// Suppress errors and try to fetch
+					$context = stream_context_create(['http' => ['timeout' => 5]]);
+					$content = @file_get_contents($json_url, false, $context);
+					if ($content !== false)
+					{
+						$data = json_decode($content, true);
+						if (is_array($data))
+						{
+							$definitions = $data;
+						}
+					}
+				}
+
+				if (empty($definitions))
+				{
+					// Fallback example
+					$definitions = [
+						[
+							'id' => 'Faction Warning',
+							'name' => 'Warning',
+							'description' => 'A formal warning.',
+							'color' => '#f1c40f',
+							'access_level' => 1,
+						],
+						[
+							'id' => 'ban',
+							'name' => 'Ban',
+							'description' => 'Account suspension.',
+							'color' => '#e74c3c',
+							'access_level' => 4,
+						]
+					];
+				}
+
+				// Cache for 1 hour
+				$this->cache->put($cache_key, $definitions, 3600);
+			}
 		}
 
 		$this->cached_definitions = $definitions;
 		return $definitions;
+	}
+
+	public function get_local_definitions()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+		$result = $this->db->sql_query($sql);
+		$definitions = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$definitions[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $definitions;
+	}
+
+	public function add_local_definition($id, $name, $desc, $color, $access_level)
+	{
+		$sql_ary = [
+			'disc_id' => $id,
+			'disc_name' => $name,
+			'disc_desc' => $desc,
+			'disc_color' => $color,
+			'access_level' => (int)$access_level,
+		];
+		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null; // Clear cache
+	}
+
+	public function update_local_definition($def_id, $id, $name, $desc, $color, $access_level)
+	{
+		$sql_ary = [
+			'disc_id' => $id,
+			'disc_name' => $name,
+			'disc_desc' => $desc,
+			'disc_color' => $color,
+			'access_level' => (int)$access_level,
+		];
+		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
+	}
+
+	public function delete_local_definition($def_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_definitions . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
 	}
 
 	public function get_definition($id)

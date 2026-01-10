@@ -8,6 +8,7 @@ services:
             - '@cache.driver'
             - '@auth'
             - '%booskit.usercareer.table.notes%'
+            - '%booskit.usercareer.table.definitions%'
 
     booskit.usercareer.controller.main:
         class: booskit\usercareer\controller\main
@@ -39,3 +40,4 @@ services:
 
 parameters:
     booskit.usercareer.table.notes: %core.table_prefix%booskit_career_notes
+    booskit.usercareer.table.definitions: %core.table_prefix%booskit_career_definitions

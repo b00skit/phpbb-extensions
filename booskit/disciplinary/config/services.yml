@@ -8,6 +8,7 @@ services:
             - '@cache.driver'
             - '@auth'
             - '%booskit.disciplinary.table%'
+            - '%booskit.disciplinary.table_definitions%'
 
     booskit.disciplinary.controller.main:
         class: booskit\disciplinary\controller\main
@@ -36,3 +37,4 @@ services:
 
 parameters:
     booskit.disciplinary.table: '%core.table_prefix%booskit_disciplinary_users'
+    booskit.disciplinary.table_definitions: '%core.table_prefix%booskit_disciplinary_definitions'

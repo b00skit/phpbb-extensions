@@ -28,10 +28,13 @@ class career_manager
 	/** @var string */
 	protected $table;
 
+	/** @var string */
+	protected $table_definitions;
+
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions)
 	{
 		$this->config = $config;
 		$this->db = $db;
@@ -39,6 +42,7 @@ class career_manager
 		$this->cache = $cache;
 		$this->auth = $auth;
 		$this->table = $table;
+		$this->table_definitions = $table_definitions;
 	}
 
 	public function get_definitions()
@@ -48,53 +52,123 @@ class career_manager
 			return $this->cached_definitions;
 		}
 
-		$cache_key = 'booskit_career_definitions';
-		$definitions = $this->cache->get($cache_key);
+		$definitions = [];
+		$source = isset($this->config['booskit_career_source']) ? $this->config['booskit_career_source'] : 'url';
 
-		if ($definitions === false)
+		if ($source === 'local')
 		{
-			$json_url = $this->config['booskit_career_json_url'];
-			$definitions = [];
-
-			if (!empty($json_url))
+			// Fetch from database
+			$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+			$result = $this->db->sql_query($sql);
+			while ($row = $this->db->sql_fetchrow($result))
 			{
-				$context = stream_context_create(['http' => ['timeout' => 5]]);
-				$content = @file_get_contents($json_url, false, $context);
-				if ($content !== false)
-				{
-					$data = json_decode($content, true);
-					if (is_array($data))
-					{
-						$definitions = $data;
-					}
-				}
-			}
-
-			if (empty($definitions))
-			{
-				// Fallback example
-				$definitions = [
-					[
-						'id' => 'namechange',
-						'name' => 'Namechange',
-						'description' => 'User changed their name.',
-						'icon' => 'fa-id-card',
-					],
-					[
-						'id' => 'promotion',
-						'name' => 'Promotion',
-						'description' => 'User was promoted.',
-						'icon' => 'fa-arrow-up',
-					]
+				$definitions[] = [
+					'id' => $row['career_id'],
+					'name' => $row['career_name'],
+					'description' => $row['career_desc'],
+					'icon' => $row['career_icon'],
+					// Internal DB ID
+					'def_id' => $row['def_id'],
 				];
 			}
+			$this->db->sql_freeresult($result);
+		}
+		else
+		{
+			$cache_key = 'booskit_career_definitions';
+			$definitions = $this->cache->get($cache_key);
 
-			// Cache for 1 hour
-			$this->cache->put($cache_key, $definitions, 3600);
+			if ($definitions === false)
+			{
+				$json_url = $this->config['booskit_career_json_url'];
+				$definitions = [];
+
+				if (!empty($json_url))
+				{
+					$context = stream_context_create(['http' => ['timeout' => 5]]);
+					$content = @file_get_contents($json_url, false, $context);
+					if ($content !== false)
+					{
+						$data = json_decode($content, true);
+						if (is_array($data))
+						{
+							$definitions = $data;
+						}
+					}
+				}
+
+				if (empty($definitions))
+				{
+					// Fallback example
+					$definitions = [
+						[
+							'id' => 'namechange',
+							'name' => 'Namechange',
+							'description' => 'User changed their name.',
+							'icon' => 'fa-id-card',
+						],
+						[
+							'id' => 'promotion',
+							'name' => 'Promotion',
+							'description' => 'User was promoted.',
+							'icon' => 'fa-arrow-up',
+						]
+					];
+				}
+
+				// Cache for 1 hour
+				$this->cache->put($cache_key, $definitions, 3600);
+			}
 		}
 
 		$this->cached_definitions = $definitions;
 		return $definitions;
+	}
+
+	public function get_local_definitions()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_definitions . ' ORDER BY def_id ASC';
+		$result = $this->db->sql_query($sql);
+		$definitions = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$definitions[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $definitions;
+	}
+
+	public function add_local_definition($id, $name, $desc, $icon)
+	{
+		$sql_ary = [
+			'career_id' => $id,
+			'career_name' => $name,
+			'career_desc' => $desc,
+			'career_icon' => $icon,
+		];
+		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null; // Clear cache
+	}
+
+	public function update_local_definition($def_id, $id, $name, $desc, $icon)
+	{
+		$sql_ary = [
+			'career_id' => $id,
+			'career_name' => $name,
+			'career_desc' => $desc,
+			'career_icon' => $icon,
+		];
+		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
+	}
+
+	public function delete_local_definition($def_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_definitions . ' WHERE def_id = ' . (int) $def_id;
+		$this->db->sql_query($sql);
+		$this->cached_definitions = null;
 	}
 
 	public function get_definition($id)

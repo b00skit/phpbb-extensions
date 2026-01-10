@@ -3,30 +3,142 @@
 <h1>{{ lang('ACP_BOOSKIT_AWARDS_TITLE') }}</h1>
 
 <form id="acp_booskit_awards" method="post" action="{{ U_ACTION }}">
-	<fieldset>
-		<legend>{{ lang('ACP_BOOSKIT_AWARDS_SETTINGS') }}</legend>
+
+<fieldset>
+	<legend>{{ lang('ACP_BOOSKIT_AWARDS_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_awards_source">{{ lang('BOOSKIT_AWARDS_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_SOURCE_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_awards_source" value="url" {% if BOOSKIT_AWARDS_SOURCE == 'url' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_AWARDS_SOURCE_URL') }}</label>
+			<label><input type="radio" class="radio" name="booskit_awards_source" value="local" {% if BOOSKIT_AWARDS_SOURCE == 'local' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_AWARDS_SOURCE_LOCAL') }}</label>
+		</dd>
+	</dl>
+
+	<div id="booskit_awards_url_settings">
 		<dl>
 			<dt><label for="booskit_awards_json_url">{{ lang('BOOSKIT_AWARDS_JSON_URL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_JSON_URL_EXPLAIN') }}</span></dt>
 			<dd><input type="text" id="booskit_awards_json_url" name="booskit_awards_json_url" value="{{ BOOSKIT_AWARDS_JSON_URL }}" size="50"></dd>
 		</dl>
-		<dl>
-			<dt><label for="booskit_awards_access_l1">{{ lang('BOOSKIT_AWARDS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L1_EXPLAIN') }}</span></dt>
-			<dd><input type="text" id="booskit_awards_access_l1" name="booskit_awards_access_l1" value="{{ BOOSKIT_AWARDS_ACCESS_L1 }}" size="50"></dd>
-		</dl>
-		<dl>
-			<dt><label for="booskit_awards_access_l2">{{ lang('BOOSKIT_AWARDS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L2_EXPLAIN') }}</span></dt>
-			<dd><input type="text" id="booskit_awards_access_l2" name="booskit_awards_access_l2" value="{{ BOOSKIT_AWARDS_ACCESS_L2 }}" size="50"></dd>
-		</dl>
-		<dl>
-			<dt><label for="booskit_awards_access_full">{{ lang('BOOSKIT_AWARDS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN') }}</span></dt>
-			<dd><input type="text" id="booskit_awards_access_full" name="booskit_awards_access_full" value="{{ BOOSKIT_AWARDS_ACCESS_FULL }}" size="50"></dd>
-		</dl>
+	</div>
+
+	<dl>
+		<dt><label for="booskit_awards_access_l1">{{ lang('BOOSKIT_AWARDS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L1_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_awards_access_l1" name="booskit_awards_access_l1" value="{{ BOOSKIT_AWARDS_ACCESS_L1 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_awards_access_l2">{{ lang('BOOSKIT_AWARDS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L2_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_awards_access_l2" name="booskit_awards_access_l2" value="{{ BOOSKIT_AWARDS_ACCESS_L2 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_awards_access_full">{{ lang('BOOSKIT_AWARDS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_awards_access_full" name="booskit_awards_access_full" value="{{ BOOSKIT_AWARDS_ACCESS_FULL }}" size="50"></dd>
+	</dl>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit_config" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
+<div id="booskit_awards_local_settings">
+	<fieldset>
+		<legend>{{ lang('BOOSKIT_AWARDS_LOCAL_DEFINITIONS') }}</legend>
+		<p>{{ lang('BOOSKIT_AWARDS_LOCAL_DEFINITIONS_EXPLAIN') }}</p>
+
+		<table class="table1 zebra-table">
+		<thead>
+		<tr>
+			<th>{{ lang('ID') }}</th>
+			<th>{{ lang('NAME') }}</th>
+			<th>{{ lang('DESCRIPTION') }}</th>
+			<th>{{ lang('IMAGE') }}</th>
+			<th>{{ lang('DIMENSIONS') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for def in LOCAL_DEFINITIONS %}
+		<tr>
+			<td><input type="text" name="id[{{ def.def_id }}]" value="{{ def.award_id }}" /></td>
+			<td><input type="text" name="name[{{ def.def_id }}]" value="{{ def.award_name }}" /></td>
+			<td><textarea name="desc[{{ def.def_id }}]" rows="2">{{ def.award_desc }}</textarea></td>
+			<td><input type="text" name="img[{{ def.def_id }}]" value="{{ def.award_img }}" /></td>
+			<td>
+				W: <input type="text" name="w[{{ def.def_id }}]" value="{{ def.award_w }}" size="5" /><br>
+				H: <input type="text" name="h[{{ def.def_id }}]" value="{{ def.award_h }}" size="5" />
+			</td>
+			<td>
+				<button type="submit" name="submit_config" class="button2" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete&amp;def_id={{ def.def_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
 	</fieldset>
 
-	<fieldset class="submit-buttons">
-		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />
-		{{ S_FORM_TOKEN }}
+	<fieldset>
+		<legend>{{ lang('ADD') }}</legend>
+		<dl>
+			<dt>{{ lang('ID') }}</dt>
+			<dd><input type="text" name="new_id" placeholder="ID" /></dd>
+		</dl>
+		<dl>
+			<dt>{{ lang('NAME') }}</dt>
+			<dd><input type="text" name="new_name" placeholder="Name" /></dd>
+		</dl>
+		<dl>
+			<dt>{{ lang('DESCRIPTION') }}</dt>
+			<dd><textarea name="new_desc" rows="2" placeholder="Description"></textarea></dd>
+		</dl>
+		<dl>
+			<dt>{{ lang('IMAGE') }}</dt>
+			<dd><input type="text" name="new_img" placeholder="Image URL" /></dd>
+		</dl>
+		<dl>
+			<dt>{{ lang('DIMENSIONS') }}</dt>
+			<dd>
+				W: <input type="text" name="new_w" value="150px" size="5" />
+				H: <input type="text" name="new_h" value="150px" size="5" />
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit_config" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add" />
+		</p>
 	</fieldset>
+</div>
+
+{{ S_FORM_TOKEN }}
 </form>
+
+<script>
+(function() {
+	var urlSettings = document.getElementById('booskit_awards_url_settings');
+	var localSettings = document.getElementById('booskit_awards_local_settings');
+	var radios = document.getElementsByName('booskit_awards_source');
+
+	function updateVisibility() {
+		var selected = '';
+		for (var i = 0; i < radios.length; i++) {
+			if (radios[i].checked) {
+				selected = radios[i].value;
+				break;
+			}
+		}
+
+		if (selected === 'url') {
+			urlSettings.style.display = 'block';
+			localSettings.style.display = 'none';
+		} else {
+			urlSettings.style.display = 'none';
+			localSettings.style.display = 'block';
+		}
+	}
+
+	for (var i = 0; i < radios.length; i++) {
+		radios[i].addEventListener('change', updateVisibility);
+	}
+	updateVisibility();
+})();
+</script>
 
 {% INCLUDE 'overall_footer.html' %}

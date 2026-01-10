@@ -1,38 +1,142 @@
-<!-- INCLUDE overall_header.html -->
+{% INCLUDE 'overall_header.html' %}
 
-<h1>{L_ACP_BOOSKIT_DISCIPLINARY_SETTINGS}</h1>
+<h1>{{ lang('ACP_BOOSKIT_DISCIPLINARY_TITLE') }}</h1>
 
-<form id="acp_disciplinary_settings" method="post" action="{U_ACTION}">
+<form id="acp_booskit_disciplinary" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('ACP_BOOSKIT_DISCIPLINARY_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_disciplinary_source">{{ lang('BOOSKIT_DISCIPLINARY_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_SOURCE_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_disciplinary_source" value="url" {% if BOOSKIT_DISCIPLINARY_SOURCE == 'url' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DISCIPLINARY_SOURCE_URL') }}</label>
+			<label><input type="radio" class="radio" name="booskit_disciplinary_source" value="local" {% if BOOSKIT_DISCIPLINARY_SOURCE == 'local' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DISCIPLINARY_SOURCE_LOCAL') }}</label>
+		</dd>
+	</dl>
+
+	<div id="booskit_disciplinary_url_settings">
+		<dl>
+			<dt><label for="booskit_disciplinary_json_url">{{ lang('BOOSKIT_DISCIPLINARY_JSON_URL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_JSON_URL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_json_url" name="booskit_disciplinary_json_url" value="{{ BOOSKIT_DISCIPLINARY_JSON_URL }}" size="50"></dd>
+		</dl>
+	</div>
+
+	<dl>
+		<dt><label for="booskit_disciplinary_access_l1">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_l1" name="booskit_disciplinary_access_l1" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L1 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_l2">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_l2" name="booskit_disciplinary_access_l2" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L2 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_l3">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_l3" name="booskit_disciplinary_access_l3" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L3 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_full">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_full" name="booskit_disciplinary_access_full" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_FULL }}" size="50"></dd>
+	</dl>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
+<div id="booskit_disciplinary_local_settings">
+	<fieldset>
+		<legend>{{ lang('BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS') }}</legend>
+		<p>{{ lang('BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS_EXPLAIN') }}</p>
+
+		<table class="table1 zebra-table">
+		<thead>
+		<tr>
+			<th>{{ lang('ID') }}</th>
+			<th>{{ lang('NAME') }}</th>
+			<th>{{ lang('DESCRIPTION') }}</th>
+			<th>{{ lang('COLOR') }}</th>
+			<th>{{ lang('ACCESS_LEVEL') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for def in LOCAL_DEFINITIONS %}
+		<tr>
+			<td><input type="text" name="id[{{ def.def_id }}]" value="{{ def.disc_id }}" /></td>
+			<td><input type="text" name="name[{{ def.def_id }}]" value="{{ def.disc_name }}" /></td>
+			<td><textarea name="desc[{{ def.def_id }}]" rows="2">{{ def.disc_desc }}</textarea></td>
+			<td><input type="color" name="color[{{ def.def_id }}]" value="{{ def.disc_color }}" /></td>
+			<td><input type="number" name="access_level[{{ def.def_id }}]" value="{{ def.access_level }}" min="0" max="4" style="width: 50px;" /></td>
+			<td>
+				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete&amp;def_id={{ def.def_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	</fieldset>
 
 	<fieldset>
-		<legend>{L_ACP_BOOSKIT_DISCIPLINARY_SETTINGS}</legend>
+		<legend>{{ lang('ADD') }}</legend>
 		<dl>
-			<dt><label for="booskit_disciplinary_json_url">{L_BOOSKIT_DISCIPLINARY_JSON_URL}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_JSON_URL_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_disciplinary_json_url" name="booskit_disciplinary_json_url" value="{BOOSKIT_DISCIPLINARY_JSON_URL}" maxlength="255" size="50" /></dd>
+			<dt>{{ lang('ID') }}</dt>
+			<dd><input type="text" name="new_id" placeholder="ID" /></dd>
 		</dl>
 		<dl>
-			<dt><label for="booskit_disciplinary_access_l1">{L_BOOSKIT_DISCIPLINARY_ACCESS_L1}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_ACCESS_L1_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_disciplinary_access_l1" name="booskit_disciplinary_access_l1" value="{BOOSKIT_DISCIPLINARY_ACCESS_L1}" maxlength="255" size="50" /></dd>
+			<dt>{{ lang('NAME') }}</dt>
+			<dd><input type="text" name="new_name" placeholder="Name" /></dd>
 		</dl>
 		<dl>
-			<dt><label for="booskit_disciplinary_access_l2">{L_BOOSKIT_DISCIPLINARY_ACCESS_L2}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_ACCESS_L2_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_disciplinary_access_l2" name="booskit_disciplinary_access_l2" value="{BOOSKIT_DISCIPLINARY_ACCESS_L2}" maxlength="255" size="50" /></dd>
+			<dt>{{ lang('DESCRIPTION') }}</dt>
+			<dd><textarea name="new_desc" rows="2" placeholder="Description"></textarea></dd>
 		</dl>
 		<dl>
-			<dt><label for="booskit_disciplinary_access_l3">{L_BOOSKIT_DISCIPLINARY_ACCESS_L3}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_ACCESS_L3_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_disciplinary_access_l3" name="booskit_disciplinary_access_l3" value="{BOOSKIT_DISCIPLINARY_ACCESS_L3}" maxlength="255" size="50" /></dd>
+			<dt>{{ lang('COLOR') }}</dt>
+			<dd><input type="color" name="new_color" value="#000000" /></dd>
 		</dl>
 		<dl>
-			<dt><label for="booskit_disciplinary_access_full">{L_BOOSKIT_DISCIPLINARY_ACCESS_FULL}:</label><br /><span>{L_BOOSKIT_DISCIPLINARY_ACCESS_FULL_EXPLAIN}</span></dt>
-			<dd><input type="text" id="booskit_disciplinary_access_full" name="booskit_disciplinary_access_full" value="{BOOSKIT_DISCIPLINARY_ACCESS_FULL}" maxlength="255" size="50" /></dd>
+			<dt>{{ lang('ACCESS_LEVEL') }}</dt>
+			<dd><input type="number" name="new_access_level" value="0" min="0" max="4" style="width: 50px;" /></dd>
 		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add" />
+		</p>
 	</fieldset>
+</div>
 
-	<fieldset class="submit-buttons">
-		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
-		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
-		{S_FORM_TOKEN}
-	</fieldset>
+{{ S_FORM_TOKEN }}
 </form>
 
-<!-- INCLUDE overall_footer.html -->
+<script>
+(function() {
+	var urlSettings = document.getElementById('booskit_disciplinary_url_settings');
+	var localSettings = document.getElementById('booskit_disciplinary_local_settings');
+	var radios = document.getElementsByName('booskit_disciplinary_source');
+
+	function updateVisibility() {
+		var selected = '';
+		for (var i = 0; i < radios.length; i++) {
+			if (radios[i].checked) {
+				selected = radios[i].value;
+				break;
+			}
+		}
+
+		if (selected === 'url') {
+			urlSettings.style.display = 'block';
+			localSettings.style.display = 'none';
+		} else {
+			urlSettings.style.display = 'none';
+			localSettings.style.display = 'block';
+		}
+	}
+
+	for (var i = 0; i < radios.length; i++) {
+		radios[i].addEventListener('change', updateVisibility);
+	}
+	updateVisibility();
+})();
+</script>
+
+{% INCLUDE 'overall_footer.html' %}

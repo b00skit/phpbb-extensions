@@ -19,8 +19,31 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
 	'ACP_BOOSKIT_CAREER_TITLE' => 'User Career',
 	'ACP_BOOSKIT_CAREER_SETTINGS' => 'Career Settings',
+
+	'BOOSKIT_CAREER_SOURCE' => 'Definitions Source',
+	'BOOSKIT_CAREER_SOURCE_EXPLAIN' => 'Choose whether to load career definitions from an external JSON URL or manage them locally.',
+	'BOOSKIT_CAREER_SOURCE_URL' => 'External JSON URL',
+	'BOOSKIT_CAREER_SOURCE_LOCAL' => 'Local Settings (Database)',
+
+	'BOOSKIT_CAREER_JSON_URL' => 'Definitions JSON URL',
+	'BOOSKIT_CAREER_JSON_URL_EXPLAIN' => 'URL to the JSON file containing career type definitions.',
+
 	'CAREER_JSON_URL' => 'Definitions JSON URL',
 	'CAREER_JSON_URL_EXPLAIN' => 'URL to the JSON file containing career type definitions.',
+
+	'BOOSKIT_CAREER_ACCESS_VIEW' => 'Local View Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_VIEW_EXPLAIN' => 'Comma separated list of Group IDs.',
+	'BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL' => 'Global View Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL_EXPLAIN' => 'Comma separated list of Group IDs.',
+	'BOOSKIT_CAREER_ACCESS_L1' => 'Level 1 Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_L1_EXPLAIN' => 'Comma separated list of Group IDs.',
+	'BOOSKIT_CAREER_ACCESS_L2' => 'Level 2 Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_L2_EXPLAIN' => 'Comma separated list of Group IDs.',
+	'BOOSKIT_CAREER_ACCESS_L3' => 'Level 3 Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_L3_EXPLAIN' => 'Comma separated list of Group IDs.',
+	'BOOSKIT_CAREER_ACCESS_FULL' => 'Full Access Group IDs',
+	'BOOSKIT_CAREER_ACCESS_FULL_EXPLAIN' => 'Comma separated list of Group IDs.',
+
 	'CAREER_ACCESS_VIEW' => 'Local View Access Group IDs',
 	'CAREER_ACCESS_VIEW_GLOBAL' => 'Global View Access Group IDs',
 	'CAREER_ACCESS_L1' => 'Level 1 Access Group IDs',
@@ -28,6 +51,19 @@ $lang = array_merge($lang, array(
 	'CAREER_ACCESS_L3' => 'Level 3 Access Group IDs',
 	'CAREER_ACCESS_FULL' => 'Full Access Group IDs',
 	'CAREER_ACCESS_LEVEL_EXPLAIN' => 'Comma separated list of Group IDs.',
+
+	'BOOSKIT_CAREER_LOCAL_DEFINITIONS' => 'Local Definitions',
+	'BOOSKIT_CAREER_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the career definitions here when "Local Settings" is selected.',
+
+	'ID' => 'ID',
+	'NAME' => 'Name',
+	'DESCRIPTION' => 'Description',
+	'ICON' => 'Icon (FontAwesome)',
+	'ACTION' => 'Action',
+	'ADD' => 'Add',
+	'UPDATE' => 'Update',
+	'DELETE' => 'Delete',
+
 	'LOG_CAREER_ADDED' => '<strong>Added career note to user</strong><br />» %s',
 	'LOG_CAREER_EDITED' => '<strong>Edited career note for user</strong><br />» %s',
 	'LOG_CAREER_DELETED' => '<strong>Deleted career note from user</strong><br />» %s',
