@@ -128,7 +128,7 @@ class main_module
 		$ruleset_text = $config_text->get('booskit_career_ruleset');
 		$ruleset_uid = isset($config['booskit_career_ruleset_uid']) ? $config['booskit_career_ruleset_uid'] : '';
 		$ruleset_bitfield = isset($config['booskit_career_ruleset_bitfield']) ? $config['booskit_career_ruleset_bitfield'] : '';
-		$ruleset_options = isset($config['booskit_career_ruleset_options']) ? $config['booskit_career_ruleset_options'] : 7;
+		$ruleset_options = isset($config['booskit_career_ruleset_options']) ? (int) $config['booskit_career_ruleset_options'] : 7;
 
 		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
 

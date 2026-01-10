@@ -155,7 +155,7 @@ class settings
 		$ruleset_text = $this->config_text->get('booskit_awards_ruleset');
 		$ruleset_uid = isset($this->config['booskit_awards_ruleset_uid']) ? $this->config['booskit_awards_ruleset_uid'] : '';
 		$ruleset_bitfield = isset($this->config['booskit_awards_ruleset_bitfield']) ? $this->config['booskit_awards_ruleset_bitfield'] : '';
-		$ruleset_options = isset($this->config['booskit_awards_ruleset_options']) ? $this->config['booskit_awards_ruleset_options'] : 7;
+		$ruleset_options = isset($this->config['booskit_awards_ruleset_options']) ? (int) $this->config['booskit_awards_ruleset_options'] : 7;
 
 		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
 
