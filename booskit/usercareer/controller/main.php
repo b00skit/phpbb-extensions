@@ -16,14 +16,16 @@ class main
 	protected $user;
 	protected $helper;
 	protected $auth;
+	protected $config_text;
 	protected $log;
 	protected $career_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\usercareer\service\career_manager $career_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\usercareer\service\career_manager $career_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
+		$this->config_text = $config_text;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
@@ -104,6 +106,17 @@ class main
 
 		$this->assign_form_vars($user_id, null, false, $viewer_level);
 		add_form_key('add_career');
+
+		// Ruleset
+		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
+		$ruleset_uid = isset($this->config['booskit_career_ruleset_uid']) ? $this->config['booskit_career_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_career_ruleset_bitfield']) ? $this->config['booskit_career_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_career_ruleset_options']) ? $this->config['booskit_career_ruleset_options'] : 7;
+		$ruleset_html = generate_text_for_display($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options);
+
+		$this->template->assign_vars(array(
+			'BOOSKIT_CAREER_RULESET' => $ruleset_html,
+		));
 
 		page_header($this->user->lang['CAREER_ADD_NOTE']);
 		return $this->helper->render('add_career_note.html', $this->user->lang['CAREER_ADD_NOTE']);
@@ -191,6 +204,18 @@ class main
 
 		$this->assign_form_vars($user_id, $note, true, $viewer_level);
 		add_form_key('edit_career');
+
+		// Ruleset
+		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
+		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
+		$ruleset_uid = isset($this->config['booskit_career_ruleset_uid']) ? $this->config['booskit_career_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_career_ruleset_bitfield']) ? $this->config['booskit_career_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_career_ruleset_options']) ? $this->config['booskit_career_ruleset_options'] : 7;
+		$ruleset_html = generate_text_for_display($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options);
+
+		$this->template->assign_vars(array(
+			'BOOSKIT_CAREER_RULESET' => $ruleset_html,
+		));
 
 		page_header($this->user->lang['CAREER_EDIT_NOTE']);
 		return $this->helper->render('add_career_note.html', $this->user->lang['CAREER_EDIT_NOTE']);

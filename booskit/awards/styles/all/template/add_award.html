@@ -8,6 +8,14 @@
 </script>
 
 <form action="{{ U_ACTION }}" method="post" id="add_award_form">
+    {% if BOOSKIT_AWARDS_RULESET %}
+    <div class="rules">
+        <div class="inner">
+            <div class="content">{{ BOOSKIT_AWARDS_RULESET|raw }}</div>
+        </div>
+    </div>
+    {% endif %}
+
 	<div class="panel">
 		<div class="inner">
 			<fieldset>

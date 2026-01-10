@@ -22,6 +22,16 @@
 	</div>
 
 	<dl>
+		<dt><label for="booskit_disciplinary_ruleset">{{ lang('RULES') }}{{ lang('COLON') }}</label><br><span>{{ lang('RULES_EXPLAIN') }}</span></dt>
+		<dd>
+			<textarea name="booskit_disciplinary_ruleset" id="booskit_disciplinary_ruleset" rows="10" cols="60" style="width: 95%;">{{ BOOSKIT_DISCIPLINARY_RULESET }}</textarea>
+			<input type="hidden" name="booskit_disciplinary_ruleset_uid" value="{{ BOOSKIT_DISCIPLINARY_RULESET_UID }}" />
+			<input type="hidden" name="booskit_disciplinary_ruleset_bitfield" value="{{ BOOSKIT_DISCIPLINARY_RULESET_BITFIELD }}" />
+			<input type="hidden" name="booskit_disciplinary_ruleset_options" value="{{ BOOSKIT_DISCIPLINARY_RULESET_OPTIONS }}" />
+		</dd>
+	</dl>
+
+	<dl>
 		<dt><label for="booskit_disciplinary_access_l1">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1_EXPLAIN') }}</span></dt>
 		<dd><input type="text" id="booskit_disciplinary_access_l1" name="booskit_disciplinary_access_l1" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L1 }}" size="50"></dd>
 	</dl>

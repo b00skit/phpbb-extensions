@@ -9,6 +9,14 @@
 
 <form id="postform" method="post" action="{{ U_ACTION }}">
 
+    {% if BOOSKIT_CAREER_RULESET %}
+    <div class="rules">
+        <div class="inner">
+            <div class="content">{{ BOOSKIT_CAREER_RULESET|raw }}</div>
+        </div>
+    </div>
+    {% endif %}
+
 <div class="panel">
 	<div class="inner">
 		<h3>{{ PAGE_TITLE }}</h3>

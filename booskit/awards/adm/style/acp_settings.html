@@ -7,6 +7,15 @@
 <fieldset>
 	<legend>{{ lang('ACP_BOOSKIT_AWARDS_SETTINGS') }}</legend>
 	<dl>
+		<dt><label for="booskit_awards_ruleset">{{ lang('RULES') }}{{ lang('COLON') }}</label><br><span>{{ lang('RULES_EXPLAIN') }}</span></dt>
+		<dd>
+			<textarea name="booskit_awards_ruleset" id="booskit_awards_ruleset" rows="10" cols="60" style="width: 95%;">{{ BOOSKIT_AWARDS_RULESET }}</textarea>
+			<input type="hidden" name="booskit_awards_ruleset_uid" value="{{ BOOSKIT_AWARDS_RULESET_UID }}" />
+			<input type="hidden" name="booskit_awards_ruleset_bitfield" value="{{ BOOSKIT_AWARDS_RULESET_BITFIELD }}" />
+			<input type="hidden" name="booskit_awards_ruleset_options" value="{{ BOOSKIT_AWARDS_RULESET_OPTIONS }}" />
+		</dd>
+	</dl>
+	<dl>
 		<dt><label for="booskit_awards_source">{{ lang('BOOSKIT_AWARDS_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_SOURCE_EXPLAIN') }}</span></dt>
 		<dd>
 			<label><input type="radio" class="radio" name="booskit_awards_source" value="url" {% if BOOSKIT_AWARDS_SOURCE == 'url' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_AWARDS_SOURCE_URL') }}</label>

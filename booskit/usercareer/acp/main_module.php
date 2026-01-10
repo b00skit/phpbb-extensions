@@ -26,6 +26,7 @@ class main_module
 
 		$action = $request->variable('action', '');
 		$career_manager = $phpbb_container->get('booskit.usercareer.service.career_manager');
+		$config_text = $phpbb_container->get('config.text');
 
 		if ($action == 'delete')
 		{
@@ -101,6 +102,19 @@ class main_module
 				$config->set('booskit_career_access_l3', $request->variable('booskit_career_access_l3', ''));
 				$config->set('booskit_career_access_full', $request->variable('booskit_career_access_full', ''));
 
+				// Ruleset
+				$ruleset_text = $request->variable('booskit_career_ruleset', '', true);
+				$ruleset_uid = $request->variable('booskit_career_ruleset_uid', '');
+				$ruleset_bitfield = $request->variable('booskit_career_ruleset_bitfield', '');
+				$ruleset_options = $request->variable('booskit_career_ruleset_options', 7);
+
+				generate_text_for_storage($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, true, true, true);
+
+				$config_text->set('booskit_career_ruleset', $ruleset_text);
+				$config->set('booskit_career_ruleset_uid', $ruleset_uid);
+				$config->set('booskit_career_ruleset_bitfield', $ruleset_bitfield);
+				$config->set('booskit_career_ruleset_options', $ruleset_options);
+
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
 		}
@@ -108,7 +122,19 @@ class main_module
 		// Fetch local definitions
 		$local_definitions = $career_manager->get_local_definitions();
 
+		// Prepare Ruleset
+		$ruleset_text = $config_text->get('booskit_career_ruleset');
+		$ruleset_uid = isset($config['booskit_career_ruleset_uid']) ? $config['booskit_career_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($config['booskit_career_ruleset_bitfield']) ? $config['booskit_career_ruleset_bitfield'] : '';
+		$ruleset_options = isset($config['booskit_career_ruleset_options']) ? $config['booskit_career_ruleset_options'] : 7;
+
+		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
+
 		$template->assign_vars(array(
+			'BOOSKIT_CAREER_RULESET' => $ruleset_text,
+			'BOOSKIT_CAREER_RULESET_UID' => $ruleset_uid,
+			'BOOSKIT_CAREER_RULESET_BITFIELD' => $ruleset_bitfield,
+			'BOOSKIT_CAREER_RULESET_OPTIONS' => $ruleset_options,
 			'BOOSKIT_CAREER_SOURCE'	=> isset($config['booskit_career_source']) ? $config['booskit_career_source'] : 'url',
 			'BOOSKIT_CAREER_JSON_URL'	=> $config['booskit_career_json_url'],
 			'BOOSKIT_CAREER_ACCESS_VIEW'	=> isset($config['booskit_career_access_view']) ? $config['booskit_career_access_view'] : '',

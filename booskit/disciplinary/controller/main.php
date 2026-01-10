@@ -16,14 +16,16 @@ class main
 	protected $user;
 	protected $helper;
 	protected $auth;
+	protected $config_text;
 	protected $log;
 	protected $disciplinary_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\disciplinary\service\disciplinary_manager $disciplinary_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\disciplinary\service\disciplinary_manager $disciplinary_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
+		$this->config_text = $config_text;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
@@ -117,6 +119,17 @@ class main
 		$this->assign_form_vars($user_id, null, false, $viewer_level);
 
 		add_form_key('add_disciplinary');
+
+		// Ruleset
+		$ruleset_text = $this->config_text->get('booskit_disciplinary_ruleset');
+		$ruleset_uid = isset($this->config['booskit_disciplinary_ruleset_uid']) ? $this->config['booskit_disciplinary_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_disciplinary_ruleset_bitfield']) ? $this->config['booskit_disciplinary_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_disciplinary_ruleset_options']) ? $this->config['booskit_disciplinary_ruleset_options'] : 7;
+		$ruleset_html = generate_text_for_display($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options);
+
+		$this->template->assign_vars(array(
+			'BOOSKIT_DISCIPLINARY_RULESET' => $ruleset_html,
+		));
 
 		return $this->helper->render('add_disciplinary.html', $this->user->lang['ADD_DISCIPLINARY']);
 	}
@@ -217,6 +230,17 @@ class main
 		$this->assign_form_vars($user_id, $record, true, $viewer_level);
 
 		add_form_key('edit_disciplinary');
+
+		// Ruleset
+		$ruleset_text = $this->config_text->get('booskit_disciplinary_ruleset');
+		$ruleset_uid = isset($this->config['booskit_disciplinary_ruleset_uid']) ? $this->config['booskit_disciplinary_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_disciplinary_ruleset_bitfield']) ? $this->config['booskit_disciplinary_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_disciplinary_ruleset_options']) ? $this->config['booskit_disciplinary_ruleset_options'] : 7;
+		$ruleset_html = generate_text_for_display($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options);
+
+		$this->template->assign_vars(array(
+			'BOOSKIT_DISCIPLINARY_RULESET' => $ruleset_html,
+		));
 
 		return $this->helper->render('add_disciplinary.html', $this->user->lang['EDIT_DISCIPLINARY']);
 	}

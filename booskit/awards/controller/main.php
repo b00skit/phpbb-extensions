@@ -16,14 +16,16 @@ class main
 	protected $user;
 	protected $helper;
 	protected $auth;
+	protected $config_text;
 	protected $log;
 	protected $award_manager;
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
 	{
 		$this->config = $config;
+		$this->config_text = $config_text;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
@@ -100,8 +102,16 @@ class main
 
 		$definitions = $this->award_manager->get_definitions();
 
+		// Ruleset
+		$ruleset_text = $this->config_text->get('booskit_awards_ruleset');
+		$ruleset_uid = isset($this->config['booskit_awards_ruleset_uid']) ? $this->config['booskit_awards_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_awards_ruleset_bitfield']) ? $this->config['booskit_awards_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_awards_ruleset_options']) ? $this->config['booskit_awards_ruleset_options'] : 7;
+		$ruleset_html = generate_text_for_display($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options);
+
 		// Pass definitions to template as JSON for JS preview
 		$this->template->assign_vars(array(
+			'BOOSKIT_AWARDS_RULESET' => $ruleset_html,
 			'AWARDS_JSON' => json_encode($definitions),
 			'U_ACTION' => $this->helper->route('booskit_awards_add_award', array('user_id' => $user_id)),
             'S_ISSUE_DATE' => date('Y-m-d'), // Default to today

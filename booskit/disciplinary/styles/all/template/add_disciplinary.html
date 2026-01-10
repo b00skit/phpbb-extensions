@@ -12,6 +12,14 @@
 </script>
 
 <form id="add_disciplinary" method="post" action="{U_ACTION}">
+    {% if BOOSKIT_DISCIPLINARY_RULESET %}
+    <div class="rules">
+        <div class="inner">
+            <div class="content">{{ BOOSKIT_DISCIPLINARY_RULESET|raw }}</div>
+        </div>
+    </div>
+    {% endif %}
+
 	<div class="panel">
 		<div class="inner">
 			<fieldset>

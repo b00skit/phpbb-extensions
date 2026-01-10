@@ -11,15 +11,17 @@ namespace booskit\awards\controller\acp;
 class settings
 {
 	protected $config;
+	protected $config_text;
 	protected $request;
 	protected $template;
 	protected $user;
 	protected $log;
 	protected $award_manager;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\log\log $log, \booskit\awards\service\award_manager $award_manager)
+	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\log\log $log, \booskit\awards\service\award_manager $award_manager)
 	{
 		$this->config = $config;
+		$this->config_text = $config_text;
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
@@ -122,11 +124,24 @@ class settings
 				$access_l2 = $this->request->variable('booskit_awards_access_l2', '');
 				$access_full = $this->request->variable('booskit_awards_access_full', '');
 
+				// Ruleset
+				$ruleset_text = $this->request->variable('booskit_awards_ruleset', '', true);
+				$ruleset_uid = $this->request->variable('booskit_awards_ruleset_uid', '');
+				$ruleset_bitfield = $this->request->variable('booskit_awards_ruleset_bitfield', '');
+				$ruleset_options = $this->request->variable('booskit_awards_ruleset_options', 7);
+
+				generate_text_for_storage($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, true, true, true);
+
 				$this->config->set('booskit_awards_source', $source);
 				$this->config->set('booskit_awards_json_url', $json_url);
 				$this->config->set('booskit_awards_access_l1', $access_l1);
 				$this->config->set('booskit_awards_access_l2', $access_l2);
 				$this->config->set('booskit_awards_access_full', $access_full);
+
+				$this->config_text->set('booskit_awards_ruleset', $ruleset_text);
+				$this->config->set('booskit_awards_ruleset_uid', $ruleset_uid);
+				$this->config->set('booskit_awards_ruleset_bitfield', $ruleset_bitfield);
+				$this->config->set('booskit_awards_ruleset_options', $ruleset_options);
 
 				$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_SETTINGS_UPDATED');
 				trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
@@ -136,8 +151,20 @@ class settings
 		// Fetch local definitions
 		$local_definitions = $this->award_manager->get_local_definitions();
 
+		// Prepare Ruleset
+		$ruleset_text = $this->config_text->get('booskit_awards_ruleset');
+		$ruleset_uid = isset($this->config['booskit_awards_ruleset_uid']) ? $this->config['booskit_awards_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($this->config['booskit_awards_ruleset_bitfield']) ? $this->config['booskit_awards_ruleset_bitfield'] : '';
+		$ruleset_options = isset($this->config['booskit_awards_ruleset_options']) ? $this->config['booskit_awards_ruleset_options'] : 7;
+
+		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
+
 		$this->template->assign_vars(array(
 			'U_ACTION' => $u_action,
+			'BOOSKIT_AWARDS_RULESET' => $ruleset_text,
+			'BOOSKIT_AWARDS_RULESET_UID' => $ruleset_uid,
+			'BOOSKIT_AWARDS_RULESET_BITFIELD' => $ruleset_bitfield,
+			'BOOSKIT_AWARDS_RULESET_OPTIONS' => $ruleset_options,
 			'BOOSKIT_AWARDS_SOURCE' => isset($this->config['booskit_awards_source']) ? $this->config['booskit_awards_source'] : 'url',
 			'BOOSKIT_AWARDS_JSON_URL' => $this->config['booskit_awards_json_url'],
 			'BOOSKIT_AWARDS_ACCESS_L1' => isset($this->config['booskit_awards_access_l1']) ? $this->config['booskit_awards_access_l1'] : '',

@@ -26,6 +26,7 @@ class disciplinary_module
 
 		$action = $request->variable('action', '');
 		$disciplinary_manager = $phpbb_container->get('booskit.disciplinary.service.disciplinary_manager');
+		$config_text = $phpbb_container->get('config.text');
 
 		if ($action == 'delete')
 		{
@@ -102,6 +103,19 @@ class disciplinary_module
 				$config->set('booskit_disciplinary_access_l3', $request->variable('booskit_disciplinary_access_l3', ''));
 				$config->set('booskit_disciplinary_access_full', $request->variable('booskit_disciplinary_access_full', ''));
 
+				// Ruleset
+				$ruleset_text = $request->variable('booskit_disciplinary_ruleset', '', true);
+				$ruleset_uid = $request->variable('booskit_disciplinary_ruleset_uid', '');
+				$ruleset_bitfield = $request->variable('booskit_disciplinary_ruleset_bitfield', '');
+				$ruleset_options = $request->variable('booskit_disciplinary_ruleset_options', 7);
+
+				generate_text_for_storage($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, true, true, true);
+
+				$config_text->set('booskit_disciplinary_ruleset', $ruleset_text);
+				$config->set('booskit_disciplinary_ruleset_uid', $ruleset_uid);
+				$config->set('booskit_disciplinary_ruleset_bitfield', $ruleset_bitfield);
+				$config->set('booskit_disciplinary_ruleset_options', $ruleset_options);
+
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
 		}
@@ -109,7 +123,19 @@ class disciplinary_module
 		// Fetch local definitions
 		$local_definitions = $disciplinary_manager->get_local_definitions();
 
+		// Prepare Ruleset
+		$ruleset_text = $config_text->get('booskit_disciplinary_ruleset');
+		$ruleset_uid = isset($config['booskit_disciplinary_ruleset_uid']) ? $config['booskit_disciplinary_ruleset_uid'] : '';
+		$ruleset_bitfield = isset($config['booskit_disciplinary_ruleset_bitfield']) ? $config['booskit_disciplinary_ruleset_bitfield'] : '';
+		$ruleset_options = isset($config['booskit_disciplinary_ruleset_options']) ? $config['booskit_disciplinary_ruleset_options'] : 7;
+
+		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
+
 		$template->assign_vars(array(
+			'BOOSKIT_DISCIPLINARY_RULESET' => $ruleset_text,
+			'BOOSKIT_DISCIPLINARY_RULESET_UID' => $ruleset_uid,
+			'BOOSKIT_DISCIPLINARY_RULESET_BITFIELD' => $ruleset_bitfield,
+			'BOOSKIT_DISCIPLINARY_RULESET_OPTIONS' => $ruleset_options,
 			'BOOSKIT_DISCIPLINARY_SOURCE'	=> isset($config['booskit_disciplinary_source']) ? $config['booskit_disciplinary_source'] : 'url',
 			'BOOSKIT_DISCIPLINARY_JSON_URL'	=> $config['booskit_disciplinary_json_url'],
 			'BOOSKIT_DISCIPLINARY_ACCESS_L1'	=> $config['booskit_disciplinary_access_l1'],

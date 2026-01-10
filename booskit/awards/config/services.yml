@@ -12,6 +12,7 @@ services:
         class: booskit\awards\controller\acp\settings
         arguments:
             - '@config'
+            - '@config.text'
             - '@request'
             - '@template'
             - '@user'
@@ -22,6 +23,7 @@ services:
         class: booskit\awards\controller\main
         arguments:
             - '@config'
+            - '@config.text'
             - '@request'
             - '@template'
             - '@user'
