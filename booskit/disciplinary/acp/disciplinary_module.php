@@ -26,7 +26,9 @@ class disciplinary_module
 
 		$action = $request->variable('action', '');
 		$disciplinary_manager = $phpbb_container->get('booskit.disciplinary.service.disciplinary_manager');
-		$config_text = $phpbb_container->get('config.text');
+
+		global $db, $table_prefix;
+		$config_text = new \phpbb\config\db_text($db, $table_prefix . 'config_text');
 
 		if ($action == 'delete')
 		{

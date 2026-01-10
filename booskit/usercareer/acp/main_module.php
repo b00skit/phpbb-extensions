@@ -26,7 +26,9 @@ class main_module
 
 		$action = $request->variable('action', '');
 		$career_manager = $phpbb_container->get('booskit.usercareer.service.career_manager');
-		$config_text = $phpbb_container->get('config.text');
+
+		global $db, $table_prefix;
+		$config_text = new \phpbb\config\db_text($db, $table_prefix . 'config_text');
 
 		if ($action == 'delete')
 		{

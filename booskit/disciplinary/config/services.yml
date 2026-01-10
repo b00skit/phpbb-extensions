@@ -14,7 +14,7 @@ services:
         class: booskit\disciplinary\controller\main
         arguments:
             - '@config'
-            - '@config.text'
+            - '@dbal.conn'
             - '@request'
             - '@template'
             - '@user'
@@ -24,6 +24,7 @@ services:
             - '@booskit.disciplinary.service.disciplinary_manager'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '%core.table_prefix%'
 
     booskit.disciplinary.listener:
         class: booskit\disciplinary\event\listener

@@ -14,7 +14,7 @@ services:
         class: booskit\usercareer\controller\main
         arguments:
             - '@config'
-            - '@config.text'
+            - '@dbal.conn'
             - '@request'
             - '@template'
             - '@user'
@@ -24,6 +24,7 @@ services:
             - '@booskit.usercareer.service.career_manager'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '%core.table_prefix%'
 
     booskit.usercareer.controller.acp_main:
         class: booskit\usercareer\acp\main_module

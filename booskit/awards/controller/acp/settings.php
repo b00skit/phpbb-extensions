@@ -18,10 +18,10 @@ class settings
 	protected $log;
 	protected $award_manager;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\log\log $log, \booskit\awards\service\award_manager $award_manager)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\log\log $log, \booskit\awards\service\award_manager $award_manager, $table_prefix)
 	{
 		$this->config = $config;
-		$this->config_text = $config_text;
+		$this->config_text = new \phpbb\config\db_text($db, $table_prefix . 'config_text');
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;

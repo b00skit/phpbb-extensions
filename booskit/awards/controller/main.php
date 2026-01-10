@@ -22,10 +22,10 @@ class main
 	protected $root_path;
 	protected $php_ext;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\config\db_text $config_text, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\awards\service\award_manager $award_manager, $root_path, $php_ext, $table_prefix)
 	{
 		$this->config = $config;
-		$this->config_text = $config_text;
+		$this->config_text = new \phpbb\config\db_text($db, $table_prefix . 'config_text');
 		$this->request = $request;
 		$this->template = $template;
 		$this->user = $user;
