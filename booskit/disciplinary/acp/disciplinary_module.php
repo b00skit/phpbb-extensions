@@ -131,7 +131,9 @@ class disciplinary_module
 		$ruleset_bitfield = isset($config['booskit_disciplinary_ruleset_bitfield']) ? $config['booskit_disciplinary_ruleset_bitfield'] : '';
 		$ruleset_options = isset($config['booskit_disciplinary_ruleset_options']) ? (int) $config['booskit_disciplinary_ruleset_options'] : 7;
 
-		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
+		// FIX: Use correct arguments and capture return
+		$text_data = generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_options);
+		$ruleset_text = $text_data['text'];
 
 		$template->assign_vars(array(
 			'BOOSKIT_DISCIPLINARY_RULESET' => $ruleset_text,

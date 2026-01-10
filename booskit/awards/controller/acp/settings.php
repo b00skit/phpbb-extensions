@@ -37,9 +37,7 @@ class settings
 
 		$action = $this->request->variable('action', '');
 
-		// Handle Delete (GET request usually, but can be handled via post if using button,
-		// but typically delete links are GET with confirm_box or ajax)
-		// Based on user example: <a href="{{ U_ACTION }}&amp;action=delete...
+		// Handle Delete
 		if ($action == 'delete')
 		{
 			$def_id = $this->request->variable('def_id', 0);
@@ -157,7 +155,9 @@ class settings
 		$ruleset_bitfield = isset($this->config['booskit_awards_ruleset_bitfield']) ? $this->config['booskit_awards_ruleset_bitfield'] : '';
 		$ruleset_options = isset($this->config['booskit_awards_ruleset_options']) ? (int) $this->config['booskit_awards_ruleset_options'] : 7;
 
-		generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, false);
+		// FIX: Use correct arguments and capture return
+		$text_data = generate_text_for_edit($ruleset_text, $ruleset_uid, $ruleset_options);
+		$ruleset_text = $text_data['text'];
 
 		$this->template->assign_vars(array(
 			'U_ACTION' => $u_action,
