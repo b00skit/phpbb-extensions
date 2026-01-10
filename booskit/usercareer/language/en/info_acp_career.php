@@ -52,6 +52,9 @@ $lang = array_merge($lang, array(
 	'CAREER_ACCESS_FULL' => 'Full Access Group IDs',
 	'CAREER_ACCESS_LEVEL_EXPLAIN' => 'Comma separated list of Group IDs.',
 
+	'RULES' => 'Ruleset',
+	'RULES_EXPLAIN' => 'The message displayed at the top of the management form. BBCode is supported.',
+
 	'BOOSKIT_CAREER_LOCAL_DEFINITIONS' => 'Local Definitions',
 	'BOOSKIT_CAREER_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the career definitions here when "Local Settings" is selected.',
 

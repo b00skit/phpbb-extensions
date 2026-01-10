@@ -35,6 +35,9 @@ $lang = array_merge($lang, array(
 	'BOOSKIT_AWARDS_ACCESS_FULL' => 'Full Access Groups',
 	'BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN' => 'Comma separated list of group IDs.',
 
+	'RULES' => 'Ruleset',
+	'RULES_EXPLAIN' => 'The message displayed at the top of the management form. BBCode is supported.',
+
 	'BOOSKIT_AWARDS_LOCAL_DEFINITIONS' => 'Local Definitions',
 	'BOOSKIT_AWARDS_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the award definitions here when "Local Settings" is selected.',
 

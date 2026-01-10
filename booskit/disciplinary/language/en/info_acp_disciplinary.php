@@ -37,6 +37,9 @@ $lang = array_merge($lang, array(
 	'BOOSKIT_DISCIPLINARY_ACCESS_FULL'			=> 'Full Access Groups',
 	'BOOSKIT_DISCIPLINARY_ACCESS_FULL_EXPLAIN'	=> 'Comma separated list of group IDs for Full Access.',
 
+	'RULES' => 'Ruleset',
+	'RULES_EXPLAIN' => 'The message displayed at the top of the management form. BBCode is supported.',
+
 	'BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS' => 'Local Definitions',
 	'BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the disciplinary definitions here when "Local Settings" is selected.',
 

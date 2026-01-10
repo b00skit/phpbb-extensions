@@ -1,6 +1,6 @@
 # phpBB Extensions Collection
 
-This repository contains a collection of three phpBB extensions developed by Booskit.
+This repository contains a collection of phpBB extensions developed by Booskit.
 
 ## 1. GTA: World OAuth (`booskit/gtawoauth`)
 
@@ -67,3 +67,62 @@ The base URL for the API is `https://domain.com/app.php/booskit/phpbbapi`.
 2.  Configure the **API Key** in the extension settings.
 3.  (Optional) Configure allowed **Forum IDs**.
 4.  Make HTTP requests to the endpoints using the configured key.
+
+---
+
+## 4. User Awards (`booskit/awards`)
+
+Manages user awards with support for multiple access levels and display on user profiles.
+
+### Features
+*   **Award Management:** Add, edit, and remove awards.
+*   **Definitions:** Load award definitions from an external JSON URL or manage them locally in the database.
+*   **Access Levels:** Configurable Group IDs for Level 1, Level 2, and Full Access permissions.
+*   **Profile Display:** Displays awarded badges on user profiles.
+*   **Notifications:** Sends notifications to users when they receive an award.
+*   **Ruleset:** Configurable global message displayed on the management form.
+
+### Usage
+1.  Enable the extension in the ACP.
+2.  Configure **Access Groups** for different levels.
+3.  Choose **Definitions Source** (URL or Local) and configure accordingly.
+4.  Authorized users can issue awards via the user profile.
+
+---
+
+## 5. Disciplinary Actions (`booskit/disciplinary`)
+
+Manages disciplinary actions (records) for users, displayed on their profile.
+
+### Features
+*   **Action Management:** Add, edit, and remove disciplinary records.
+*   **Definitions:** Load action definitions (e.g., Warning, Ban) from external JSON or local database.
+*   **Hierarchy System:** Enforces a hierarchy where users can only target those with lower role levels.
+*   **Access Control:** Configurable Group IDs for Level 1, Level 2, Level 3, and Full Access.
+*   **Profile Display:** Lists disciplinary history on user profiles.
+*   **Ruleset:** Configurable global message displayed on the management form.
+
+### Usage
+1.  Enable the extension in the ACP.
+2.  Configure **Access Groups** for the 4 levels of access.
+3.  Choose **Definitions Source** (URL or Local).
+4.  Authorized users can add disciplinary records via the user profile.
+
+---
+
+## 6. User Career (`booskit/usercareer`)
+
+Manages a career timeline for users, allowing tracking of their history and roles.
+
+### Features
+*   **Timeline:** Visual timeline of user career history on profiles (showing latest 5 entries).
+*   **Definitions:** Load career types/roles from external JSON or local database.
+*   **Access Control:** Granular permissions for Viewing (Local/Global) and Management (L1, L2, L3, Full).
+*   **Rich Text:** Supports BBCode in career notes.
+*   **Ruleset:** Configurable global message displayed on the management form.
+
+### Usage
+1.  Enable the extension in the ACP.
+2.  Configure **Access Groups** for View and Management levels.
+3.  Choose **Definitions Source** (URL or Local).
+4.  Authorized users can add career notes via the user profile.
