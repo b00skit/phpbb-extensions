@@ -1,0 +1,110 @@
+<!-- IF S_IC_DISCIPLINARY -->
+<div class="panel">
+	<div class="inner">
+		<h3>{L_IC_DISCIPLINARY_RECORDS}</h3>
+
+        <form action="{U_ACTION}" method="get" id="ic_character_select">
+            <fieldset>
+                <dl>
+                    <dt><label for="character_id">{L_IC_CHARACTER}:</label></dt>
+                    <dd>
+                        <select name="character_id" id="character_id" onchange="document.getElementById('ic_character_select').submit();">
+                            <option value="0">{L_SELECT_CHARACTER}</option>
+                            {CHARACTER_OPTIONS}
+                        </select>
+                        <!-- IF S_CAN_ADD_CHARACTER -->
+                        <a href="{U_ADD_CHARACTER}" class="button button-icon-only" title="{L_ADD_CHARACTER}">
+                            <i class="icon fa-plus fa-fw" aria-hidden="true"></i><span class="sr-only">{L_ADD_CHARACTER}</span>
+                        </a>
+                        <!-- ENDIF -->
+                        <!-- IF S_CAN_ARCHIVE_CHARACTER -->
+                        <a href="{U_ARCHIVE_CHARACTER}" class="button button-icon-only" title="{L_ARCHIVE_CHARACTER}">
+                            <i class="icon fa-archive fa-fw" aria-hidden="true"></i><span class="sr-only">{L_ARCHIVE_CHARACTER}</span>
+                        </a>
+                        <!-- ENDIF -->
+                        <!-- IF S_CAN_DELETE_CHARACTER -->
+                         <a href="{U_DELETE_CHARACTER}" class="button button-icon-only" title="{L_DELETE_CHARACTER}">
+                            <i class="icon fa-trash fa-fw" aria-hidden="true"></i><span class="sr-only">{L_DELETE_CHARACTER}</span>
+                        </a>
+                        <!-- ENDIF -->
+                    </dd>
+                </dl>
+                <!-- Retain other GET params -->
+                <input type="hidden" name="mode" value="viewprofile" />
+                <input type="hidden" name="u" value="{USER_ID}" />
+            </fieldset>
+        </form>
+
+        <!-- IF S_CHARACTER_SELECTED -->
+		<ul class="topiclist">
+			<li class="header">
+				<dl class="row-item">
+					<dt><div class="list-inner" style="color: #333333;">{L_DISCIPLINARY_TYPE}</div></dt>
+					<dd class="posts" style="color: #333333;">{L_DATE}</dd>
+					<dd class="lastpost" style="color: #333333;">{L_REASON}</dd>
+					<!-- IF U_ADD_IC_RECORD --><dd class="mark" style="color: #333333;">{L_ACTION}</dd><!-- ENDIF -->
+				</dl>
+			</li>
+		</ul>
+		<ul class="topiclist forums">
+            <!-- IF .ic_records -->
+			<!-- BEGIN ic_records -->
+			<li class="row">
+				<dl class="row-item">
+					<dt>
+						<div class="list-inner">
+							<strong style="color: {ic_records.COLOR}">{ic_records.TYPE}</strong>
+							<br />
+							<!-- IF ic_records.EVIDENCE -->
+							<span class="responsive-hide">{L_EVIDENCE}: {ic_records.EVIDENCE|raw}</span>
+							<br />
+							<!-- ENDIF -->
+							<span class="responsive-hide">{L_ISSUED_BY}: {ic_records.ISSUER_NAME}</span>
+						</div>
+					</dt>
+					<dd class="posts">{ic_records.DATE}</dd>
+					<dd class="lastpost"><span>{ic_records.REASON|raw}</span></dd>
+					<!-- IF ic_records.U_EDIT -->
+					<dd class="mark">
+						<a href="{ic_records.U_EDIT}" class="button button-icon-only" title="{L_EDIT}">
+							<i class="icon fa-pencil fa-fw" aria-hidden="true"></i><span class="sr-only">{L_EDIT}</span>
+						</a>
+						<a href="{ic_records.U_DELETE}" class="button button-icon-only" title="{L_DELETE}">
+							<i class="icon fa-trash fa-fw" aria-hidden="true"></i><span class="sr-only">{L_DELETE}</span>
+						</a>
+					</dd>
+					<!-- ENDIF -->
+				</dl>
+			</li>
+			<!-- END ic_records -->
+            <!-- ELSE -->
+            <li class="row">
+                <div class="list-inner" style="padding: 10px;">
+                    {L_NO_IC_RECORDS}
+                </div>
+            </li>
+            <!-- ENDIF -->
+		</ul>
+        <!-- ELSE -->
+            <!-- IF S_HAS_CHARACTERS -->
+            <p>{L_NO_CHARACTER_SELECTED}</p>
+            <!-- ELSE -->
+            <p>No characters found.</p>
+            <!-- ENDIF -->
+        <!-- ENDIF -->
+	</div>
+</div>
+
+<!-- IF U_ADD_IC_RECORD -->
+<div class="panel">
+	<div class="inner">
+		<ul class="linklist">
+			<li>
+				<a href="{U_ADD_IC_RECORD}" style="font-weight: bold;">{L_ADD_IC_RECORD}</a>
+			</li>
+		</ul>
+	</div>
+</div>
+<!-- ENDIF -->
+
+<!-- ENDIF -->

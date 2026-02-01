@@ -1,0 +1,36 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2 class="titlespace">{L_ADD_CHARACTER}</h2>
+
+<form id="add_ic_character" method="post" action="{U_ACTION}">
+
+<div class="panel">
+	<div class="inner">
+		<fieldset>
+			<dl>
+				<dt><label for="character_name">{L_CHARACTER_NAME}:</label></dt>
+				<dd><input type="text" name="character_name" id="character_name" value="" class="inputbox autowidth" /></dd>
+			</dl>
+		</fieldset>
+	</div>
+</div>
+
+<div class="submit-buttons">
+	<input type="reset" value="{L_RESET}" name="reset" class="button2" />&nbsp;
+	<input type="submit" name="submit" value="{L_SUBMIT}" class="button1" />
+	{S_FORM_TOKEN}
+</div>
+
+</form>
+
+<div class="panel">
+	<div class="inner">
+		<ul class="linklist">
+			<li>
+				<a href="{U_BACK}">&lt; {L_BACK_TO_PROFILE}</a>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

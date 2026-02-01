@@ -1,0 +1,35 @@
+booskit_icdisciplinary_add_character:
+    path: /icdisciplinary/character/add/{user_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:add_character }
+    requirements:
+        user_id: \d+
+
+booskit_icdisciplinary_archive_character:
+    path: /icdisciplinary/character/archive/{character_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:archive_character }
+    requirements:
+        character_id: \d+
+
+booskit_icdisciplinary_delete_character:
+    path: /icdisciplinary/character/delete/{character_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:delete_character }
+    requirements:
+        character_id: \d+
+
+booskit_icdisciplinary_add_record:
+    path: /icdisciplinary/record/add/{character_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:add_record }
+    requirements:
+        character_id: \d+
+
+booskit_icdisciplinary_edit_record:
+    path: /icdisciplinary/record/edit/{record_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:edit_record }
+    requirements:
+        record_id: \d+
+
+booskit_icdisciplinary_delete_record:
+    path: /icdisciplinary/record/delete/{record_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:delete_record }
+    requirements:
+        record_id: \d+

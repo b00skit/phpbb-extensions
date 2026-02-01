@@ -1,0 +1,40 @@
+services:
+    booskit.icdisciplinary.service.ic_manager:
+        class: booskit\icdisciplinary\service\ic_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '@cache.driver'
+            - '@auth'
+            - '%core.table_prefix%booskit_ic_characters'
+            - '%core.table_prefix%booskit_ic_records'
+            - '%core.table_prefix%booskit_ic_definitions'
+
+    booskit.icdisciplinary.controller.main:
+        class: booskit\icdisciplinary\controller\main
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@auth'
+            - '@log'
+            - '@booskit.icdisciplinary.service.ic_manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+            - '%core.table_prefix%'
+
+    booskit.icdisciplinary.event.listener:
+        class: booskit\icdisciplinary\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@request'
+            - '@booskit.icdisciplinary.service.ic_manager'
+            - '@controller.helper'
+            - '@auth'
+        tags:
+            - { name: event.listener }
