@@ -128,6 +128,7 @@ class listener implements EventSubscriberInterface
             'CHARACTER_OPTIONS' => $options,
             'S_HAS_CHARACTERS' => !empty($characters),
             'S_CHARACTER_SELECTED' => ($current_character_id > 0),
+			'U_IC_ACTION' => append_sid('memberlist', 'mode=viewprofile&u=' . $user_id),
 		));
 
 		if ($current_character)

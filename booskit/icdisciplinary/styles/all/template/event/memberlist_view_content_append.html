@@ -3,7 +3,7 @@
 	<div class="inner">
 		<h3>{L_IC_DISCIPLINARY_RECORDS}</h3>
 
-        <form action="{U_ACTION}" method="get" id="ic_character_select">
+        <form action="{U_IC_ACTION}" method="post" id="ic_character_select">
             <fieldset>
                 <dl>
                     <dt><label for="character_id">{L_IC_CHARACTER}:</label></dt>
@@ -29,9 +29,7 @@
                         <!-- ENDIF -->
                     </dd>
                 </dl>
-                <!-- Retain other GET params -->
-                <input type="hidden" name="mode" value="viewprofile" />
-                <input type="hidden" name="u" value="{USER_ID}" />
+                {S_FORM_TOKEN}
             </fieldset>
         </form>
 
