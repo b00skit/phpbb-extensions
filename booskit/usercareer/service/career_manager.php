@@ -446,6 +446,8 @@ class career_manager
 			'poster_ip'				=> $this->user->ip,
 			'post_approve'          => 1, // Force approved? 1 = approved.
 			'post_edit_locked'		=> 0,
+			'notify_set'			=> false,
+			'notify'				=> false,
 		];
 
 		// If poster_id is different from current user, submit_post might log it as current user unless we trick it.
