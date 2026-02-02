@@ -73,6 +73,7 @@
 			<th>{{ lang('NAME') }}</th>
 			<th>{{ lang('DESCRIPTION') }}</th>
 			<th>{{ lang('ICON') }}</th>
+			<th>{{ lang('PUBLIC_POST') }}</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
 		</thead>
@@ -83,9 +84,73 @@
 			<td><input type="text" name="name[{{ def.def_id }}]" value="{{ def.career_name }}" /></td>
 			<td><textarea name="desc[{{ def.def_id }}]" rows="2">{{ def.career_desc }}</textarea></td>
 			<td><input type="text" name="icon[{{ def.def_id }}]" value="{{ def.career_icon }}" /></td>
+			<td style="text-align: center;">
+				<input type="checkbox" disabled="disabled" {% if def.enable_public_posting %}checked="checked"{% endif %} />
+			</td>
 			<td>
-				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
+				<button type="button" class="button2" onclick="toggleSettings({{ def.def_id }});">{{ lang('EDIT') }}</button>
+				<button type="submit" name="submit" class="button1" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
 				<a href="{{ U_ACTION }}&amp;action=delete&amp;def_id={{ def.def_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</td>
+		</tr>
+		<tr id="settings-{{ def.def_id }}" style="display: none;">
+			<td colspan="6">
+				<fieldset>
+					<legend>{{ lang('PUBLIC_POST_SETTINGS') }}</legend>
+					<dl>
+						<dt><label>{{ lang('ENABLE_PUBLIC_POSTING') }}</label></dt>
+						<dd>
+							<label><input type="checkbox" class="radio" name="enable_public_posting[{{ def.def_id }}]" value="1" {% if def.enable_public_posting %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+						</dd>
+					</dl>
+					<dl>
+						<dt><label>{{ lang('POSTER_ID') }}</label></dt>
+						<dd><input type="number" name="public_posting_poster_id[{{ def.def_id }}]" value="{{ def.public_posting_poster_id }}" /></dd>
+					</dl>
+					<dl>
+						<dt><label>{{ lang('FORUM_ID') }}</label></dt>
+						<dd><input type="number" name="public_posting_forum_id[{{ def.def_id }}]" value="{{ def.public_posting_forum_id }}" /></dd>
+					</dl>
+
+					<hr />
+					<h4>{{ lang('CUSTOM_FIELDS') }}</h4>
+					<p>{{ lang('CUSTOM_FIELDS_EXPLAIN') }}</p>
+
+					<table class="table1" id="fields-table-{{ def.def_id }}">
+						<thead>
+							<tr>
+								<th>{{ lang('FIELD_NAME') }}</th>
+								<th>{{ lang('FIELD_DESC') }}</th>
+								<th>{{ lang('PLACEHOLDER') }}</th>
+								<th>{{ lang('TYPE') }}</th>
+								<th>{{ lang('VARIABLE') }}</th>
+								<th>{{ lang('ACTION') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- JS will populate this -->
+						</tbody>
+					</table>
+					<p>
+						<button type="button" class="button2" onclick="addFieldRow({{ def.def_id }});">{{ lang('ADD_FIELD') }}</button>
+					</p>
+					<input type="hidden" name="public_posting_fields_json[{{ def.def_id }}]" id="fields-json-{{ def.def_id }}" value="{{ def.public_posting_fields|e }}" />
+
+					<hr />
+					<h4>{{ lang('POST_TEMPLATE') }}</h4>
+					<p>{{ lang('POST_TEMPLATE_EXPLAIN') }} <br />
+						<code>{#type}</code>, <code>{#creator}</code>, <code>{#date}</code>, <code>{#target}</code> <br />
+						{{ lang('CUSTOM_VARIABLES_EXPLAIN') }}
+					</p>
+					<dl>
+						<dt><label>{{ lang('SUBJECT') }}</label></dt>
+						<dd><input type="text" name="public_posting_subject_tpl[{{ def.def_id }}]" value="{{ def.public_posting_subject_tpl }}" style="width: 100%;" /></dd>
+					</dl>
+					<dl>
+						<dt><label>{{ lang('BODY') }}</label></dt>
+						<dd><textarea name="public_posting_body_tpl[{{ def.def_id }}]" rows="5" style="width: 100%;">{{ def.public_posting_body_tpl }}</textarea></dd>
+					</dl>
+				</fieldset>
 			</td>
 		</tr>
 		{% endfor %}
@@ -149,6 +214,83 @@
 	}
 	updateVisibility();
 })();
+
+// Career Settings JS
+var lang_delete = "{{ lang('DELETE') }}";
+
+function toggleSettings(id) {
+	var row = document.getElementById('settings-' + id);
+	if (row.style.display === 'none') {
+		row.style.display = 'table-row';
+		initFieldsTable(id);
+	} else {
+		row.style.display = 'none';
+	}
+}
+
+function initFieldsTable(id) {
+	var tableBody = document.querySelector('#fields-table-' + id + ' tbody');
+	if (tableBody.getAttribute('data-loaded')) return;
+
+	var jsonInput = document.getElementById('fields-json-' + id);
+	var data = [];
+	try {
+		if (jsonInput.value) data = JSON.parse(jsonInput.value);
+	} catch (e) { console.error('Invalid JSON', e); }
+
+	if (Array.isArray(data)) {
+		data.forEach(function(field) {
+			addFieldRow(id, field);
+		});
+	}
+
+	tableBody.setAttribute('data-loaded', 'true');
+}
+
+function addFieldRow(id, fieldData) {
+	var tableBody = document.querySelector('#fields-table-' + id + ' tbody');
+	var row = document.createElement('tr');
+
+	var name = fieldData ? fieldData.name : '';
+	var desc = fieldData ? fieldData.description : '';
+	var placeholder = fieldData ? fieldData.placeholder : '';
+	var type = fieldData ? fieldData.type : 'text';
+	var variable = fieldData ? fieldData.variable : 'var_' + Math.random().toString(36).substr(2, 5);
+
+	row.innerHTML = '<td><input type="text" class="field-name" value="' + name + '" onchange="updateJson(' + id + ')" /></td>' +
+		'<td><input type="text" class="field-desc" value="' + desc + '" onchange="updateJson(' + id + ')" /></td>' +
+		'<td><input type="text" class="field-placeholder" value="' + placeholder + '" onchange="updateJson(' + id + ')" /></td>' +
+		'<td><select class="field-type" onchange="updateJson(' + id + ')"><option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option><option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option></select></td>' +
+		'<td><input type="text" class="field-variable" value="' + variable + '" readonly /></td>' +
+		'<td><button type="button" class="button2" onclick="removeFieldRow(this, ' + id + ')">' + lang_delete + '</button></td>';
+
+	tableBody.appendChild(row);
+	updateJson(id);
+}
+
+function removeFieldRow(btn, id) {
+	var row = btn.closest('tr');
+	row.remove();
+	updateJson(id);
+}
+
+function updateJson(id) {
+	var rows = document.querySelectorAll('#fields-table-' + id + ' tbody tr');
+	var data = [];
+
+	for (var i = 0; i < rows.length; i++) {
+		var row = rows[i];
+		data.push({
+			name: row.querySelector('.field-name').value,
+			description: row.querySelector('.field-desc').value,
+			placeholder: row.querySelector('.field-placeholder').value,
+			type: row.querySelector('.field-type').value,
+			variable: row.querySelector('.field-variable').value
+		});
+	}
+
+	document.getElementById('fields-json-' + id).value = JSON.stringify(data);
+}
 </script>
 
 {% INCLUDE 'overall_footer.html' %}

@@ -34,4 +34,7 @@ $lang = array_merge($lang, array(
 	'CAREER_TIMELINE_FOR' => 'Career Timeline for %s',
 	'NO_ENTRIES' => 'No entries found.',
 	'BACK_TO_PROFILE' => 'Back to Profile',
+
+	'MAKE_PUBLIC_POST' => 'Make Public Notice Post',
+	'PUBLIC_POST_SETTINGS' => 'Public Post Settings',
 ));

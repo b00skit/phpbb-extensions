@@ -80,6 +80,13 @@ class main_module
 				$descs = $request->variable('desc', array(0 => ''));
 				$icons = $request->variable('icon', array(0 => ''));
 
+				$enable_public_postings = $request->variable('enable_public_posting', array(0 => 0));
+				$poster_ids = $request->variable('public_posting_poster_id', array(0 => 0));
+				$forum_ids = $request->variable('public_posting_forum_id', array(0 => 0));
+				$subject_tpls = $request->variable('public_posting_subject_tpl', array(0 => ''), true);
+				$body_tpls = $request->variable('public_posting_body_tpl', array(0 => ''), true);
+				$fields_jsons = $request->variable('public_posting_fields_json', array(0 => ''), true);
+
 				if ($def_id && isset($ids[$def_id]) && isset($names[$def_id]))
 				{
 					$career_manager->update_local_definition(
@@ -87,7 +94,13 @@ class main_module
 						$ids[$def_id],
 						$names[$def_id],
 						$descs[$def_id],
-						$icons[$def_id]
+						$icons[$def_id],
+						isset($enable_public_postings[$def_id]) ? $enable_public_postings[$def_id] : 0,
+						isset($poster_ids[$def_id]) ? $poster_ids[$def_id] : 0,
+						isset($forum_ids[$def_id]) ? $forum_ids[$def_id] : 0,
+						isset($subject_tpls[$def_id]) ? $subject_tpls[$def_id] : '',
+						isset($body_tpls[$def_id]) ? $body_tpls[$def_id] : '',
+						isset($fields_jsons[$def_id]) ? htmlspecialchars_decode($fields_jsons[$def_id]) : ''
 					);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));

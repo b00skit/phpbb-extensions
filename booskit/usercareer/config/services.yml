@@ -9,6 +9,8 @@ services:
             - '@auth'
             - '%booskit.usercareer.table.notes%'
             - '%booskit.usercareer.table.definitions%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
 
     booskit.usercareer.controller.main:
         class: booskit\usercareer\controller\main
