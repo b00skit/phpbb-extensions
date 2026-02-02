@@ -438,12 +438,14 @@ class career_manager
 			'forum_parents'			=> '',
 			'forum_name'			=> '',
 			'post_subject'			=> $subject,
+			'message'				=> $text,
 			'post_text'				=> $text,
 			'bbcode_uid'			=> $uid,
 			'bbcode_bitfield'		=> $bitfield,
 			'bbcode_options'		=> $options,
 			'poster_ip'				=> $this->user->ip,
 			'post_approve'          => 1, // Force approved? 1 = approved.
+			'post_edit_locked'		=> 0,
 		];
 
 		// If poster_id is different from current user, submit_post might log it as current user unless we trick it.
