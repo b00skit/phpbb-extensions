@@ -36,5 +36,7 @@ services:
             - '@booskit.icdisciplinary.service.ic_manager'
             - '@controller.helper'
             - '@auth'
+            - '%core.root_path%'
+            - '%core.php_ext%'
         tags:
             - { name: event.listener }

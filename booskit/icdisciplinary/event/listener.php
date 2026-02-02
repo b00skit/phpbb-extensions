@@ -18,8 +18,10 @@ class listener implements EventSubscriberInterface
 	protected $ic_manager;
 	protected $helper;
 	protected $auth;
+	protected $root_path;
+	protected $php_ext;
 
-	public function __construct(\phpbb\template\template $template, \phpbb\user $user, \phpbb\request\request_interface $request, \booskit\icdisciplinary\service\ic_manager $ic_manager, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth)
+	public function __construct(\phpbb\template\template $template, \phpbb\user $user, \phpbb\request\request_interface $request, \booskit\icdisciplinary\service\ic_manager $ic_manager, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, $root_path, $php_ext)
 	{
 		$this->template = $template;
 		$this->user = $user;
@@ -27,6 +29,8 @@ class listener implements EventSubscriberInterface
 		$this->ic_manager = $ic_manager;
 		$this->helper = $helper;
 		$this->auth = $auth;
+		$this->root_path = $root_path;
+		$this->php_ext = $php_ext;
 	}
 
 	static public function getSubscribedEvents()
@@ -128,7 +132,7 @@ class listener implements EventSubscriberInterface
             'CHARACTER_OPTIONS' => $options,
             'S_HAS_CHARACTERS' => !empty($characters),
             'S_CHARACTER_SELECTED' => ($current_character_id > 0),
-			'U_IC_ACTION' => append_sid('memberlist', 'mode=viewprofile&u=' . $user_id),
+			'U_IC_ACTION' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
 		));
 
 		if ($current_character)
