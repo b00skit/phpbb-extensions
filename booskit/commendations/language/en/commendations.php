@@ -17,6 +17,7 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
+	'ACP_BOOSKIT_COMMENDATIONS_TITLE' => 'Commendations',
 	'COMMENDATION_ADD'				=> 'Add Commendation',
 	'COMMENDATION_EDIT'				=> 'Edit Commendation',
 	'COMMENDATION_ADDED'			=> 'Commendation successfully added.',
