@@ -1,0 +1,54 @@
+{% INCLUDE 'overall_header.html' %}
+
+<a href="{{ U_BACK }}" class="arrow-{{ S_CONTENT_FLOW_BEGIN }}">{{ lang('BACK') }}</a>
+
+<script>
+	var form_name = 'postform';
+	var text_name = 'reason';
+</script>
+
+<form id="postform" method="post" action="{{ U_ACTION }}">
+
+<div class="panel">
+	<div class="inner">
+		<h3>{{ PAGE_TITLE }}</h3>
+
+		<fieldset>
+			<dl>
+				<dt><label for="commendation_type">{{ lang('COMMENDATION_TYPE') }}</label></dt>
+				<dd>
+					<select name="commendation_type" id="commendation_type">
+						<option value="IC" {% if COMMENDATION_TYPE == 'IC' %}selected{% endif %}>{{ lang('COMMENDATION_TYPE_IC') }}</option>
+						<option value="OOC" {% if COMMENDATION_TYPE == 'OOC' %}selected{% endif %}>{{ lang('COMMENDATION_TYPE_OOC') }}</option>
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="commendation_date">{{ lang('COMMENDATION_DATE') }}</label></dt>
+				<dd><input type="date" name="commendation_date" id="commendation_date" value="{{ S_COMMENDATION_DATE }}" class="inputbox" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="character_name">{{ lang('COMMENDATION_CHARACTER') }}</label></dt>
+				<dd><input type="text" name="character_name" id="character_name" value="{{ CHARACTER_NAME }}" class="inputbox" /></dd>
+			</dl>
+
+			<dl>
+				<dt><label for="reason">{{ lang('COMMENDATION_REASON') }}</label></dt>
+				<dd><textarea name="reason" id="reason" rows="10" cols="45" class="inputbox" tabindex="3">{{ REASON }}</textarea></dd>
+			</dl>
+		</fieldset>
+	</div>
+</div>
+
+<div class="panel">
+	<div class="inner">
+		<fieldset class="submit-buttons">
+			{{ S_FORM_TOKEN }}
+			<input type="submit" accesskey="s" tabindex="6" name="submit" value="{{ lang('SUBMIT') }}" class="button1" />&nbsp;
+		</fieldset>
+	</div>
+</div>
+
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

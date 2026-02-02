@@ -1,0 +1,25 @@
+{
+    "name": "booskit/commendations",
+    "type": "phpbb-extension",
+    "description": "An extension to manage and display user commendations.",
+    "homepage": "https://www.booskit.dev/",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Booskit",
+            "email": "direct@booskit.dev",
+            "homepage": "https://github.com/b00skit/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.1"
+    },
+    "extra": {
+        "display-name": "User Commendations",
+        "soft-require": {
+            "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+        }
+    }
+}

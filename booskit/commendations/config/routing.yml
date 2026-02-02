@@ -1,0 +1,23 @@
+booskit_commendations_add:
+    path: /commendations/add/{user_id}
+    defaults: { _controller: 'booskit.commendations.controller.main:add_commendation' }
+    requirements:
+        user_id: \d+
+
+booskit_commendations_edit:
+    path: /commendations/edit/{commendation_id}
+    defaults: { _controller: 'booskit.commendations.controller.main:edit_commendation' }
+    requirements:
+        commendation_id: \d+
+
+booskit_commendations_remove:
+    path: /commendations/remove/{commendation_id}
+    defaults: { _controller: 'booskit.commendations.controller.main:remove_commendation' }
+    requirements:
+        commendation_id: \d+
+
+booskit_commendations_view_all:
+    path: /commendations/view/{user_id}
+    defaults: { _controller: 'booskit.commendations.controller.main:view_all' }
+    requirements:
+        user_id: \d+

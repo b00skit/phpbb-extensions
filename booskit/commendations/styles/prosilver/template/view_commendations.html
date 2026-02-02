@@ -1,0 +1,76 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h2>{{ PAGE_TITLE }}</h2>
+
+<a href="{{ U_BACK }}" class="arrow-{{ S_CONTENT_FLOW_BEGIN }}">{{ lang('BACK') }}</a>
+
+<div class="panel">
+	<div class="inner">
+
+		<div class="commendation-filters" style="margin-bottom: 15px;">
+			<strong>{{ lang('FILTER') }}{{ lang('COLON') }}</strong>
+			<label><input type="radio" name="filter_type" value="all" checked> {{ lang('COMMENDATION_TYPE_ALL') }}</label>
+			<label><input type="radio" name="filter_type" value="IC"> {{ lang('COMMENDATION_TYPE_IC') }}</label>
+			<label><input type="radio" name="filter_type" value="OOC"> {{ lang('COMMENDATION_TYPE_OOC') }}</label>
+		</div>
+
+		<div class="commendations-list full-list">
+			{% for comm in commendations %}
+			<div class="commendation-item commendation-type-{{ comm.TYPE|lower }}" data-type="{{ comm.TYPE }}">
+				<div class="commendation-header">
+					<span class="commendation-badge badge-{{ comm.TYPE|lower }}">{{ comm.TYPE_LANG }}</span>
+					<span class="commendation-date">{{ comm.DATE }}</span>
+					<span class="commendation-character">{{ lang('COMMENDATION_CHARACTER') }}{{ lang('COLON') }} <strong>{{ comm.CHARACTER }}</strong></span>
+					<div class="commendation-actions">
+						{% if comm.U_EDIT %}
+						<a href="{{ comm.U_EDIT }}" title="{{ lang('EDIT') }}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+						{% endif %}
+						{% if comm.U_REMOVE %}
+						<a href="{{ comm.U_REMOVE }}" title="{{ lang('DELETE') }}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+						{% endif %}
+					</div>
+				</div>
+				<div class="commendation-body">
+					<div class="commendation-reason">{{ comm.REASON|raw }}</div>
+				</div>
+				<div class="commendation-footer">
+					<span class="commendation-issuer">{{ lang('COMMENDATION_ISSUER') }}{{ lang('COLON') }} <a href="{{ comm.U_ISSUER }}" style="color: inherit; font-weight: bold;">{{ comm.ISSUER }}</a></span>
+				</div>
+			</div>
+			{% else %}
+			<p>{{ lang('NO_COMMENDATION_RECORD') }}</p>
+			{% endfor %}
+		</div>
+	</div>
+</div>
+
+<script>
+(function() {
+	var radios = document.getElementsByName('filter_type');
+	var items = document.querySelectorAll('.commendation-item');
+
+	function filterItems() {
+		var type = 'all';
+		for (var i = 0; i < radios.length; i++) {
+			if (radios[i].checked) {
+				type = radios[i].value;
+				break;
+			}
+		}
+
+		for (var i = 0; i < items.length; i++) {
+			if (type === 'all' || items[i].getAttribute('data-type') === type) {
+				items[i].style.display = 'block';
+			} else {
+				items[i].style.display = 'none';
+			}
+		}
+	}
+
+	for (var i = 0; i < radios.length; i++) {
+		radios[i].addEventListener('change', filterItems);
+	}
+})();
+</script>
+
+{% INCLUDE 'overall_footer.html' %}

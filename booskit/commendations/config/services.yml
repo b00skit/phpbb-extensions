@@ -1,0 +1,35 @@
+services:
+    booskit.commendations.service.commendations_manager:
+        class: booskit\commendations\service\commendations_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '@cache.driver'
+            - '@auth'
+            - '%core.table_prefix%'
+
+    booskit.commendations.controller.main:
+        class: booskit\commendations\controller\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@log'
+            - '@booskit.commendations.service.commendations_manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    booskit.commendations.event.listener:
+        class: booskit\commendations\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@booskit.commendations.service.commendations_manager'
+            - '@controller.helper'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }

@@ -1,0 +1,43 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_COMMENDATIONS_TITLE') }}</h1>
+
+<form id="acp_booskit_commendations" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('ACP_BOOSKIT_COMMENDATIONS_SETTINGS') }}</legend>
+
+	<dl>
+		<dt><label for="booskit_commendations_access_view">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_view" name="booskit_commendations_access_view" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_commendations_access_view_global">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_view_global" name="booskit_commendations_access_view_global" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_commendations_access_l1">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_l1" name="booskit_commendations_access_l1" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L1 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_commendations_access_l2">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_l2" name="booskit_commendations_access_l2" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L2 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_commendations_access_l3">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_l3" name="booskit_commendations_access_l3" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L3 }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_commendations_access_full">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_commendations_access_full" name="booskit_commendations_access_full" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_FULL }}" size="50"></dd>
+	</dl>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
+{{ S_FORM_TOKEN }}
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

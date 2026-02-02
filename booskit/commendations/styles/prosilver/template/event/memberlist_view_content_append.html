@@ -1,0 +1,48 @@
+{% if S_COMMENDATIONS_VIEW_ACCESS %}
+<div class="panel bg1 commendations-panel">
+	<div class="inner">
+		<h3>
+			{{ lang('ACP_BOOSKIT_COMMENDATIONS_TITLE') }}
+			{% if U_COMMENDATION_ADD %}
+			<a href="{{ U_COMMENDATION_ADD }}" class="button button-secondary button-icon-only" style="float: right; margin-top: -5px;" title="{{ lang('COMMENDATION_ADD') }}">
+				<i class="icon fa-plus fa-fw" aria-hidden="true"></i>
+			</a>
+			{% endif %}
+		</h3>
+
+		<div class="commendations-list">
+			{% for comm in commendations %}
+			<div class="commendation-item commendation-type-{{ comm.TYPE|lower }}">
+				<div class="commendation-header">
+					<span class="commendation-badge badge-{{ comm.TYPE|lower }}">{{ comm.TYPE_LANG }}</span>
+					<span class="commendation-date">{{ comm.DATE }}</span>
+					<span class="commendation-character">{{ lang('COMMENDATION_CHARACTER') }}{{ lang('COLON') }} <strong>{{ comm.CHARACTER }}</strong></span>
+					<div class="commendation-actions">
+						{% if comm.U_EDIT %}
+						<a href="{{ comm.U_EDIT }}" title="{{ lang('EDIT') }}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+						{% endif %}
+						{% if comm.U_REMOVE %}
+						<a href="{{ comm.U_REMOVE }}" title="{{ lang('DELETE') }}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+						{% endif %}
+					</div>
+				</div>
+				<div class="commendation-body">
+					<div class="commendation-reason">{{ comm.REASON|raw }}</div>
+				</div>
+				<div class="commendation-footer">
+					<span class="commendation-issuer">{{ lang('COMMENDATION_ISSUER') }}{{ lang('COLON') }} <a href="{{ comm.U_ISSUER }}" style="color: inherit; font-weight: bold;">{{ comm.ISSUER }}</a></span>
+				</div>
+			</div>
+			{% else %}
+			<p>{{ lang('NO_COMMENDATION_RECORD') }}</p>
+			{% endfor %}
+		</div>
+
+		{% if S_HAS_COMMENDATIONS %}
+		<div class="commendation-footer-link" style="margin-top: 10px;">
+			<a href="{{ U_COMMENDATION_VIEW_MORE }}" class="button button-secondary">{{ lang('VIEW_MORE_COMMENDATIONS') }}</a>
+		</div>
+		{% endif %}
+	</div>
+</div>
+{% endif %}
