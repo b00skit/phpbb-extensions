@@ -126,3 +126,18 @@ Manages a career timeline for users, allowing tracking of their history and role
 2.  Configure **Access Groups** for View and Management levels.
 3.  Choose **Definitions Source** (URL or Local).
 4.  Authorized users can add career notes via the user profile.
+
+---
+
+## 7. IC Disciplinary Records (`booskit/icdisciplinary`)
+
+Manages In-Character disciplinary records for users' characters, displayed on their profile.
+
+### Features
+*   **Action Management:** Add, edit, and remove IC disciplinary records.
+*   **Character System:** Actions are associated with specific characters.
+*   **Profile Display:** Lists IC disciplinary history on user profiles with character filtering.
+
+### Usage
+1.  Enable the extension in the ACP.
+2.  Authorized users can add IC disciplinary records via the user profile.

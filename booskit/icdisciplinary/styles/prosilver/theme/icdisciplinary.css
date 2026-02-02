@@ -1,0 +1,81 @@
+.icdisciplinary-list {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.icdisciplinary-item {
+	border: 1px solid #34495e;
+	border-radius: 5px;
+	background-color: #fff;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.icdisciplinary-header {
+	padding: 10px 15px;
+	background-color: #ebedef;
+	border-bottom: 1px solid #d6dbdf;
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.icdisciplinary-type-badge {
+	padding: 4px 8px;
+	border-radius: 3px;
+	color: #fff;
+	font-weight: bold;
+	font-size: 0.85em;
+	background-color: #34495e; /* Dark Blue */
+	text-transform: uppercase;
+}
+
+.icdisciplinary-date {
+	color: #7f8c8d;
+	font-size: 0.9em;
+}
+
+.icdisciplinary-actions {
+	margin-left: auto;
+	display: flex;
+	gap: 10px;
+}
+
+.icdisciplinary-body {
+	padding: 15px;
+}
+
+.icdisciplinary-reason {
+	font-size: 1.1em;
+	color: #2c3e50;
+}
+
+.icdisciplinary-evidence {
+	margin-top: 15px;
+	padding: 10px;
+	background-color: #f8f9f9;
+	border-left: 3px solid #bdc3c7;
+	font-size: 0.9em;
+	color: #7f8c8d;
+}
+
+.icdisciplinary-evidence strong {
+	color: #2c3e50;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.icdisciplinary-footer {
+	padding: 8px 15px;
+	background-color: #f4f6f6;
+	border-top: 1px solid #ecf0f1;
+	font-size: 0.85em;
+	color: #95a5a6;
+}
+
+.icdisciplinary-issuer a {
+	font-weight: bold;
+	color: inherit;
+}

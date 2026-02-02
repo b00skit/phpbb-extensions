@@ -1,0 +1,81 @@
+.disciplinary-list {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.disciplinary-item {
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	background-color: #fff;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.disciplinary-header {
+	padding: 10px 15px;
+	background-color: #f8f8f8;
+	border-bottom: 1px solid #eee;
+	display: flex;
+	align-items: center;
+	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.disciplinary-type-badge {
+	padding: 4px 8px;
+	border-radius: 3px;
+	color: #fff;
+	font-weight: bold;
+	font-size: 0.85em;
+	background-color: #555; /* Default fallback */
+	text-transform: uppercase;
+}
+
+.disciplinary-date {
+	color: #777;
+	font-size: 0.9em;
+}
+
+.disciplinary-actions {
+	margin-left: auto;
+	display: flex;
+	gap: 10px;
+}
+
+.disciplinary-body {
+	padding: 15px;
+}
+
+.disciplinary-reason {
+	font-size: 1.1em;
+	color: #333;
+}
+
+.disciplinary-evidence {
+	margin-top: 15px;
+	padding: 10px;
+	background-color: #fafafa;
+	border-left: 3px solid #ddd;
+	font-size: 0.9em;
+	color: #666;
+}
+
+.disciplinary-evidence strong {
+	color: #444;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.disciplinary-footer {
+	padding: 8px 15px;
+	background-color: #fcfcfc;
+	border-top: 1px solid #f0f0f0;
+	font-size: 0.85em;
+	color: #888;
+}
+
+.disciplinary-issuer a {
+	font-weight: bold;
+	color: inherit;
+}

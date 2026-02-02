@@ -3,7 +3,7 @@
     "type": "phpbb-extension",
     "description": "An extension to manage and display user awards.",
     "homepage": "https://www.booskit.dev/",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
     "authors": [
         {
