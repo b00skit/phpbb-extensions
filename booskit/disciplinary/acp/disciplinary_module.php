@@ -64,10 +64,12 @@ class disciplinary_module
 				$desc = $request->variable('new_desc', '');
 				$color = $request->variable('new_color', '#000000');
 				$access_level = $request->variable('new_access_level', 0);
+				$locally_viewable = $request->variable('new_locally_viewable', 0);
+				$globally_viewable = $request->variable('new_globally_viewable', 0);
 
 				if (!empty($id) && !empty($name))
 				{
-					$disciplinary_manager->add_local_definition($id, $name, $desc, $color, $access_level);
+					$disciplinary_manager->add_local_definition($id, $name, $desc, $color, $access_level, $locally_viewable, $globally_viewable);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
@@ -81,6 +83,8 @@ class disciplinary_module
 				$descs = $request->variable('desc', array(0 => ''));
 				$colors = $request->variable('color', array(0 => ''));
 				$access_levels = $request->variable('access_level', array(0 => 0));
+				$locally_viewables = $request->variable('locally_viewable', array(0 => 0));
+				$globally_viewables = $request->variable('globally_viewable', array(0 => 0));
 
 				if ($def_id && isset($ids[$def_id]) && isset($names[$def_id]))
 				{
@@ -90,7 +94,9 @@ class disciplinary_module
 						$names[$def_id],
 						$descs[$def_id],
 						$colors[$def_id],
-						$access_levels[$def_id]
+						$access_levels[$def_id],
+						isset($locally_viewables[$def_id]) ? $locally_viewables[$def_id] : 0,
+						isset($globally_viewables[$def_id]) ? $globally_viewables[$def_id] : 0
 					);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
@@ -104,6 +110,12 @@ class disciplinary_module
 				$config->set('booskit_disciplinary_access_l2', $request->variable('booskit_disciplinary_access_l2', ''));
 				$config->set('booskit_disciplinary_access_l3', $request->variable('booskit_disciplinary_access_l3', ''));
 				$config->set('booskit_disciplinary_access_full', $request->variable('booskit_disciplinary_access_full', ''));
+
+				$config->set('booskit_disciplinary_access_view_local', $request->variable('booskit_disciplinary_access_view_local', ''));
+				$config->set('booskit_disciplinary_access_view_exempted', $request->variable('booskit_disciplinary_access_view_exempted', ''));
+				$config->set('booskit_disciplinary_access_view_limited', $request->variable('booskit_disciplinary_access_view_limited', ''));
+				$config->set('booskit_disciplinary_access_view_global', $request->variable('booskit_disciplinary_access_view_global', ''));
+				$config->set('booskit_disciplinary_access_view_limited_map', $request->variable('booskit_disciplinary_access_view_limited_map', '', true));
 
 				// Ruleset
 				$ruleset_text = $request->variable('booskit_disciplinary_ruleset', '', true);
@@ -146,6 +158,11 @@ class disciplinary_module
 			'BOOSKIT_DISCIPLINARY_ACCESS_L2'	=> $config['booskit_disciplinary_access_l2'],
 			'BOOSKIT_DISCIPLINARY_ACCESS_L3'	=> $config['booskit_disciplinary_access_l3'],
 			'BOOSKIT_DISCIPLINARY_ACCESS_FULL'	=> $config['booskit_disciplinary_access_full'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL' => $config['booskit_disciplinary_access_view_local'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED' => $config['booskit_disciplinary_access_view_exempted'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED' => $config['booskit_disciplinary_access_view_limited'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL' => $config['booskit_disciplinary_access_view_global'],
+			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP' => $config['booskit_disciplinary_access_view_limited_map'],
 			'LOCAL_DEFINITIONS'				=> $local_definitions,
 			'U_ACTION'						=> $this->u_action,
 		));

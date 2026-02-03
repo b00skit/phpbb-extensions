@@ -68,6 +68,8 @@ class disciplinary_manager
 					'description' => $row['disc_desc'],
 					'color' => $row['disc_color'],
 					'access_level' => (int)$row['access_level'],
+					'locally_viewable' => (bool)$row['locally_viewable'],
+					'globally_viewable' => (bool)$row['globally_viewable'],
 					// Internal DB ID
 					'def_id' => $row['def_id'],
 				];
@@ -142,7 +144,7 @@ class disciplinary_manager
 		return $definitions;
 	}
 
-	public function add_local_definition($id, $name, $desc, $color, $access_level)
+	public function add_local_definition($id, $name, $desc, $color, $access_level, $locally_viewable, $globally_viewable)
 	{
 		$sql_ary = [
 			'disc_id' => $id,
@@ -150,13 +152,15 @@ class disciplinary_manager
 			'disc_desc' => $desc,
 			'disc_color' => $color,
 			'access_level' => (int)$access_level,
+			'locally_viewable' => (int)$locally_viewable,
+			'globally_viewable' => (int)$globally_viewable,
 		];
 		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
 		$this->db->sql_query($sql);
 		$this->cached_definitions = null; // Clear cache
 	}
 
-	public function update_local_definition($def_id, $id, $name, $desc, $color, $access_level)
+	public function update_local_definition($def_id, $id, $name, $desc, $color, $access_level, $locally_viewable, $globally_viewable)
 	{
 		$sql_ary = [
 			'disc_id' => $id,
@@ -164,6 +168,8 @@ class disciplinary_manager
 			'disc_desc' => $desc,
 			'disc_color' => $color,
 			'access_level' => (int)$access_level,
+			'locally_viewable' => (int)$locally_viewable,
+			'globally_viewable' => (int)$globally_viewable,
 		];
 		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
 		$this->db->sql_query($sql);
@@ -341,5 +347,113 @@ class disciplinary_manager
 		}
 
 		return 0;
+	}
+
+	public function check_view_access($viewer_id, $target_user_id, $definition)
+	{
+		// 1. Check existing full access (L1-4)
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$target_level = $this->get_user_role_level($target_user_id);
+
+		if ($viewer_level > 0)
+		{
+			// Existing logic: Full Access (4) or strictly higher than target
+			if ($viewer_level === 4 || $viewer_level > $target_level)
+			{
+				return ['allowed' => true, 'show_evidence' => true];
+			}
+		}
+
+		// 2. Check limited/public access
+		$viewer_groups = $this->get_user_groups($viewer_id);
+
+		$access_local = $this->get_config_groups('booskit_disciplinary_access_view_local');
+		$access_exempted = $this->get_config_groups('booskit_disciplinary_access_view_exempted');
+		$access_limited = $this->get_config_groups('booskit_disciplinary_access_view_limited');
+		$access_global = $this->get_config_groups('booskit_disciplinary_access_view_global');
+
+		// Exempted Local View -> All records, no evidence
+		if (array_intersect($viewer_groups, $access_exempted))
+		{
+			return ['allowed' => true, 'show_evidence' => false];
+		}
+
+		// Global View -> All records, no evidence
+		if (array_intersect($viewer_groups, $access_global))
+		{
+			return ['allowed' => true, 'show_evidence' => false];
+		}
+
+		// Local View -> Locally Viewable records, no evidence
+		if (array_intersect($viewer_groups, $access_local))
+		{
+			if (!empty($definition['locally_viewable']))
+			{
+				return ['allowed' => true, 'show_evidence' => false];
+			}
+		}
+
+		// Limited View -> Globally Viewable records AND target in mapped group, no evidence
+		if (array_intersect($viewer_groups, $access_limited))
+		{
+			if (!empty($definition['globally_viewable']))
+			{
+				$map = $this->get_limited_view_map();
+				$target_groups = $this->get_user_groups($target_user_id);
+
+				// Iterate viewer groups to find which mapping applies
+				foreach ($viewer_groups as $g_id)
+				{
+					if (isset($map[$g_id]))
+					{
+						if (array_intersect($target_groups, $map[$g_id]))
+						{
+							return ['allowed' => true, 'show_evidence' => false];
+						}
+					}
+				}
+			}
+		}
+
+		return ['allowed' => false, 'show_evidence' => false];
+	}
+
+	protected function get_user_groups($user_id)
+	{
+		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$groups[] = (int) $row['group_id'];
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	protected function get_config_groups($key)
+	{
+		$raw = isset($this->config[$key]) ? $this->config[$key] : '';
+		if (empty($raw)) return [];
+		return array_map('intval', array_map('trim', explode(',', $raw)));
+	}
+
+	protected function get_limited_view_map()
+	{
+		$raw = isset($this->config['booskit_disciplinary_access_view_limited_map']) ? $this->config['booskit_disciplinary_access_view_limited_map'] : '';
+		$lines = explode("\n", $raw);
+		$map = [];
+		foreach ($lines as $line)
+		{
+			// Format: ViewerGroupID:TargetGroupID,TargetGroupID
+			$parts = explode(':', $line);
+			if (count($parts) == 2)
+			{
+				$viewer_gid = (int)trim($parts[0]);
+				$targets = array_map('intval', array_map('trim', explode(',', $parts[1])));
+				$map[$viewer_gid] = $targets;
+			}
+		}
+		return $map;
 	}
 }
