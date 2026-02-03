@@ -344,7 +344,7 @@ class main
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
 				'TYPE' => utf8_htmlspecialchars($type_name),
-				'DATE' => $this->user->format_date($record['issue_date']),
+				'DATE' => $this->user->format_date($record['issue_date'], 'D M d, Y'),
 				'REASON' => $reason_html,
 				'EVIDENCE' => $evidence_html,
 				'ISSUER_ID' => $record['issuer_user_id'],

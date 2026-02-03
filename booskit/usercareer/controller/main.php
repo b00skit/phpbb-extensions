@@ -380,7 +380,7 @@ class main
 				'ID' => $note['note_id'],
 				'TYPE' => isset($def['name']) ? $def['name'] : $note['career_type_id'],
 				'DESCRIPTION' => $description_html,
-				'DATE' => $this->user->format_date($note['note_date']),
+				'DATE' => $this->user->format_date($note['note_date'], 'D M d, Y'),
 				'ICON' => isset($def['icon']) ? $def['icon'] : 'fa-circle',
 				'COLOR' => isset($def['color']) ? $def['color'] : '#333',
 				'U_EDIT' => $has_access ? $this->helper->route('booskit_usercareer_edit_note', array('note_id' => $note['note_id'])) : '',

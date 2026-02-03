@@ -295,7 +295,7 @@ class main
 				'TYPE_LANG' => ($comm['commendation_type'] == 'IC') ? $this->user->lang['COMMENDATION_TYPE_IC'] : $this->user->lang['COMMENDATION_TYPE_OOC'],
 				'CHARACTER' => $comm['character_name'],
 				'REASON' => $reason_html,
-				'DATE' => $this->user->format_date($comm['commendation_date']),
+				'DATE' => $this->user->format_date($comm['commendation_date'], 'D M d, Y'),
 				'ISSUER' => isset($issuer_names[$comm['issuer_user_id']]) ? $issuer_names[$comm['issuer_user_id']] : 'Unknown',
 				'U_ISSUER' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $comm['issuer_user_id']),
 				'U_EDIT' => $has_access ? $this->helper->route('booskit_commendations_edit', array('commendation_id' => $comm['commendation_id'])) : '',
