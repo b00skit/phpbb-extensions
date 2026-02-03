@@ -114,6 +114,8 @@ class main
 							'{#creator}' => $this->user->data['username'],
 							'{#date}' => strtoupper(date('d/M/Y', $note_date)),
 							'{#target}' => $this->career_manager->get_username_string($user_id),
+							'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
+							'{#posterGroup}' => $this->career_manager->get_primary_group_name($def['public_posting_poster_id']),
 						];
 
 						foreach ($fields_config as $field)

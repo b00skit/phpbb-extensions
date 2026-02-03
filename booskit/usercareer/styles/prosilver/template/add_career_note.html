@@ -135,13 +135,26 @@
 					input.name = 'custom_fields[' + field.variable + ']';
 					input.className = 'inputbox';
 					input.rows = 5;
-					if (field.placeholder) input.placeholder = field.placeholder;
+					if (field.placeholder) input.value = field.placeholder;
+				} else if (field.type === 'dropdown') {
+					input = document.createElement('select');
+					input.name = 'custom_fields[' + field.variable + ']';
+
+					var options = field.placeholder ? field.placeholder.split(',') : [];
+					if (options.length === 0) options.push('None');
+
+					options.forEach(function(opt) {
+						var option = document.createElement('option');
+						option.value = opt.trim();
+						option.textContent = opt.trim();
+						input.appendChild(option);
+					});
 				} else {
 					input = document.createElement('input');
 					input.type = 'text';
 					input.name = 'custom_fields[' + field.variable + ']';
 					input.className = 'inputbox';
-					if (field.placeholder) input.placeholder = field.placeholder;
+					if (field.placeholder) input.value = field.placeholder;
 				}
 
 				dd.appendChild(input);

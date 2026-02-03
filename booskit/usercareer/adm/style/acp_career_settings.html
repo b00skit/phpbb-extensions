@@ -121,7 +121,7 @@
 							<tr>
 								<th>{{ lang('FIELD_NAME') }}</th>
 								<th>{{ lang('FIELD_DESC') }}</th>
-								<th>{{ lang('PLACEHOLDER') }}</th>
+								<th>{{ lang('DEFAULT_OPTIONS') }}</th>
 								<th>{{ lang('TYPE') }}</th>
 								<th>{{ lang('VARIABLE') }}</th>
 								<th>{{ lang('ACTION') }}</th>
@@ -260,7 +260,7 @@ function addFieldRow(id, fieldData) {
 	row.innerHTML = '<td><input type="text" class="field-name" value="' + name + '" onchange="updateJson(' + id + ')" /></td>' +
 		'<td><input type="text" class="field-desc" value="' + desc + '" onchange="updateJson(' + id + ')" /></td>' +
 		'<td><input type="text" class="field-placeholder" value="' + placeholder + '" onchange="updateJson(' + id + ')" /></td>' +
-		'<td><select class="field-type" onchange="updateJson(' + id + ')"><option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option><option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option></select></td>' +
+		'<td><select class="field-type" onchange="updateJson(' + id + ')"><option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option><option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option><option value="dropdown"' + (type === 'dropdown' ? ' selected' : '') + '>Dropdown</option></select></td>' +
 		'<td><input type="text" class="field-variable" value="' + variable + '" readonly /></td>' +
 		'<td><button type="button" class="button2" onclick="removeFieldRow(this, ' + id + ')">' + lang_delete + '</button></td>';
 

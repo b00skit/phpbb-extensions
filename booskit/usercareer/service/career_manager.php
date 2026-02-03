@@ -305,6 +305,24 @@ class career_manager
 		return isset($usernames[$user_id]) ? $usernames[$user_id] : 'Unknown';
 	}
 
+	public function get_primary_group_name($user_id)
+	{
+		$sql = 'SELECT g.group_name, g.group_type
+			FROM ' . USERS_TABLE . ' u
+			JOIN ' . GROUPS_TABLE . ' g ON u.user_group_id = g.group_id
+			WHERE u.user_id = ' . (int) $user_id;
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		if ($row)
+		{
+			return ($row['group_type'] == GROUP_SPECIAL) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+		}
+
+		return '';
+	}
+
 	protected function parse_groups($config_key)
 	{
 		$raw = isset($this->config[$config_key]) ? $this->config[$config_key] : '';
