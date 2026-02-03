@@ -44,4 +44,6 @@ $lang = array_merge($lang, array(
 
 	'LOG_AWARD_ADDED' => '<strong>Added award to user</strong><br>» %s',
 	'LOG_AWARD_REMOVED' => '<strong>Removed award from user</strong><br>» %s',
+
+	'NO_AWARDS_FOUND' => 'No awards found for this user',
 ));

@@ -1,7 +1,13 @@
-<!-- IF .user_awards -->
-<div class="panel">
+<div class="panel bg1">
 	<div class="inner">
-		<h3>{{ lang('USER_AWARDS') }}</h3>
+		<h3>
+			{{ lang('USER_AWARDS') }}
+			<!-- IF U_ADD_AWARD -->
+			<a href="{{ U_ADD_AWARD }}" class="button button-secondary button-icon-only" style="float: right; margin-top: -5px;" title="{{ lang('ADD_AWARD') }}">
+				<i class="icon fa-plus fa-fw" aria-hidden="true"></i>
+			</a>
+			<!-- ENDIF -->
+		</h3>
 		<div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
 			<!-- BEGIN user_awards -->
 			<div style="text-align: center; border: 1px solid #ccc; padding: 10px; border-radius: 5px; max-width: 200px;">
@@ -19,20 +25,9 @@
 				</div>
 				<!-- ENDIF -->
 			</div>
+			<!-- BEGINELSE -->
+			<p>{{ lang('NO_AWARDS_FOUND') }}</p>
 			<!-- END user_awards -->
 		</div>
 	</div>
 </div>
-<!-- ENDIF -->
-
-<!-- IF U_ADD_AWARD -->
-<div class="panel">
-	<div class="inner">
-		<ul class="linklist">
-			<li>
-				<a href="{{ U_ADD_AWARD }}" style="font-weight: bold;">{{ lang('ADD_AWARD') }}</a>
-			</li>
-		</ul>
-	</div>
-</div>
-<!-- ENDIF -->
