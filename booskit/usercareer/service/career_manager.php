@@ -331,7 +331,7 @@ class career_manager
 
 	public function execute_group_actions($user_id, $groups_add_str, $groups_remove_str)
 	{
-		if (!function_exists('user_group_add'))
+		if (!function_exists('group_user_add'))
 		{
 			require($this->root_path . 'includes/functions_user.' . $this->php_ext);
 		}
@@ -342,8 +342,8 @@ class career_manager
 		{
 			if ($group_id > 0)
 			{
-				// user_group_add($group_id, $user_id_ary = false, $username_ary = false, $group_name = false, $default = false, $leader = 0, $pending = 0, $group_attributes = false)
-				\user_group_add($group_id, $user_id);
+				// group_user_add($group_id, $user_id_ary = false, $username_ary = false, $group_name = false, $default = false, $leader = 0, $pending = 0, $group_attributes = false)
+				\group_user_add($group_id, $user_id);
 			}
 		}
 
