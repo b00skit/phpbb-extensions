@@ -133,6 +133,17 @@ class main
 				}
 			}
 
+			// Forum Group Actions
+			$execute_group_action = $this->request->variable('execute_group_action', 0);
+			if ($execute_group_action)
+			{
+				$def = $this->career_manager->get_definition($type_id);
+				if ($def && !empty($def['enable_group_action']))
+				{
+					$this->career_manager->execute_group_actions($user_id, $def['group_action_add'], $def['group_action_remove']);
+				}
+			}
+
 			$user_row = $this->career_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_ADDED', time(), array($user_row));
 
@@ -390,6 +401,25 @@ class main
 	{
 		$definitions = $this->career_manager->get_definitions();
 
+		// Collect all group IDs referenced
+		$all_group_ids = [];
+		foreach ($definitions as $def)
+		{
+			if (!empty($def['enable_group_action']))
+			{
+				$g_add = array_filter(array_map('intval', explode(',', $def['group_action_add'])));
+				$g_remove = array_map('trim', explode(',', $def['group_action_remove']));
+
+				foreach ($g_add as $gid) $all_group_ids[] = $gid;
+				foreach ($g_remove as $gid)
+				{
+					if (is_numeric($gid) && $gid > 0) $all_group_ids[] = (int) $gid;
+				}
+			}
+		}
+		$all_group_ids = array_unique($all_group_ids);
+		$group_names = $this->career_manager->get_group_names($all_group_ids);
+
 		$default_date = date('Y-m-d');
 		$current_type = '';
 		$current_description = '';
@@ -420,6 +450,7 @@ class main
 			'S_LINKS_ALLOWED'  => true,
 			'S_SMILIES_ALLOWED'=> true,
 			'DEFINITIONS_JSON' => json_encode($definitions),
+			'GROUP_NAMES_JSON' => json_encode($group_names),
 		));
 
 		foreach ($definitions as $def) {

@@ -90,4 +90,11 @@ $lang = array_merge($lang, array(
 	'BODY' => 'Body',
 	'ADD_FIELD' => 'Add Field',
 	'EDIT' => 'Edit',
+
+	'FORUM_GROUP_ACTIONS' => 'Forum Group Actions',
+	'ENABLE_GROUP_ACTION' => 'Enable Forum Group Actions',
+	'GROUPS_ADD' => 'Groups to Add',
+	'GROUPS_ADD_EXPLAIN' => 'Comma separated list of Group IDs to add the user to.',
+	'GROUPS_REMOVE' => 'Groups to Remove',
+	'GROUPS_REMOVE_EXPLAIN' => 'Comma separated list of Group IDs to remove the user from. Use <code>*</code> to remove from all groups except Administrators and Global Moderators.',
 ));

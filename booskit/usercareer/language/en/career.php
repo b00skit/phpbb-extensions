@@ -37,4 +37,9 @@ $lang = array_merge($lang, array(
 
 	'MAKE_PUBLIC_POST' => 'Make Public Notice Post',
 	'PUBLIC_POST_SETTINGS' => 'Public Post Settings',
+
+	'FORUM_GROUP_ACTIONS' => 'Forum Group Actions',
+	'ENABLE_GROUP_ACTION' => 'Execute Forum Group Actions',
+	'GROUPS_ADD' => 'Groups Added',
+	'GROUPS_REMOVE' => 'Groups Removed',
 ));
