@@ -154,6 +154,28 @@
 						<button type="submit" name="submit" class="button1" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('SUBMIT') }}</button>
 					</p>
 				</fieldset>
+
+				<fieldset>
+					<legend>{{ lang('FORUM_GROUP_ACTIONS') }}</legend>
+					<dl>
+						<dt><label>{{ lang('ENABLE_GROUP_ACTION') }}</label></dt>
+						<dd>
+							<label><input type="checkbox" class="radio" name="enable_group_action[{{ def.def_id }}]" value="1" {% if def.enable_group_action %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+						</dd>
+					</dl>
+					<dl>
+						<dt><label>{{ lang('GROUPS_ADD') }}</label><br /><span>{{ lang('GROUPS_ADD_EXPLAIN') }}</span></dt>
+						<dd><textarea name="group_action_add[{{ def.def_id }}]" rows="2">{{ def.group_action_add }}</textarea></dd>
+					</dl>
+					<dl>
+						<dt><label>{{ lang('GROUPS_REMOVE') }}</label><br /><span>{{ lang('GROUPS_REMOVE_EXPLAIN') }}</span></dt>
+						<dd><textarea name="group_action_remove[{{ def.def_id }}]" rows="2">{{ def.group_action_remove }}</textarea></dd>
+					</dl>
+
+					<p class="submit-buttons">
+						<button type="submit" name="submit" class="button1" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('SUBMIT') }}</button>
+					</p>
+				</fieldset>
 			</td>
 		</tr>
 		{% endfor %}

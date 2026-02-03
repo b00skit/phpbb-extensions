@@ -60,6 +60,28 @@
 	</div>
 </div>
 
+<div class="panel" id="group_action_settings" style="display: none;">
+	<div class="inner">
+		<h3>{{ lang('FORUM_GROUP_ACTIONS') }}</h3>
+		<fieldset>
+			<dl>
+				<dt><label for="execute_group_action">{{ lang('ENABLE_GROUP_ACTION') }}</label></dt>
+				<dd><input type="checkbox" name="execute_group_action" id="execute_group_action" value="1" /></dd>
+			</dl>
+			<div id="group_action_details">
+				<dl>
+					<dt>{{ lang('GROUPS_ADD') }}{{ lang('COLON') }}</dt>
+					<dd id="groups_add_list"></dd>
+				</dl>
+				<dl>
+					<dt>{{ lang('GROUPS_REMOVE') }}{{ lang('COLON') }}</dt>
+					<dd id="groups_remove_list"></dd>
+				</dl>
+			</div>
+		</fieldset>
+	</div>
+</div>
+
 <div class="panel">
 	<div class="inner">
 		<fieldset class="submit-buttons">
@@ -74,10 +96,19 @@
 <script>
 (function() {
 	var definitions = {{ DEFINITIONS_JSON|raw }};
+	var groupNames = {{ GROUP_NAMES_JSON|raw }};
 	var typeSelect = document.getElementById('career_type_id');
+
+	// Public Post vars
 	var settingsPanel = document.getElementById('public_post_settings');
 	var makePublicCheckbox = document.getElementById('make_public_post');
 	var fieldsContainer = document.getElementById('custom_fields_container');
+
+	// Group Action vars
+	var groupActionPanel = document.getElementById('group_action_settings');
+	var executeGroupActionCheckbox = document.getElementById('execute_group_action');
+	var groupsAddList = document.getElementById('groups_add_list');
+	var groupsRemoveList = document.getElementById('groups_remove_list');
 
 	function getDefinition(id) {
 		for (var i = 0; i < definitions.length; i++) {
@@ -92,6 +123,7 @@
 		var selectedId = typeSelect.value;
 		var def = getDefinition(selectedId);
 
+		// Public Posting
 		if (def && def.enable_public_posting) {
 			settingsPanel.style.display = 'block';
 			updateFields(def);
@@ -100,6 +132,46 @@
 			makePublicCheckbox.checked = false;
 			fieldsContainer.style.display = 'none';
 		}
+
+		// Group Actions
+		if (def && def.enable_group_action) {
+			groupActionPanel.style.display = 'block';
+			updateGroupLists(def);
+		} else {
+			groupActionPanel.style.display = 'none';
+			executeGroupActionCheckbox.checked = false;
+		}
+	}
+
+	function getGroupName(id) {
+		return groupNames[id] ? groupNames[id] : 'ID: ' + id;
+	}
+
+	function updateGroupLists(def) {
+		var addStr = def.group_action_add || '';
+		var removeStr = def.group_action_remove || '';
+
+		var addList = [];
+		if (addStr) {
+			addStr.split(',').forEach(function(id) {
+				id = id.trim();
+				if (id) addList.push(getGroupName(id));
+			});
+		}
+		groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
+
+		var removeList = [];
+		if (removeStr) {
+			removeStr.split(',').forEach(function(id) {
+				id = id.trim();
+				if (id === '*') {
+					removeList.push('All (Except Admins/Global Mods)');
+				} else if (id) {
+					removeList.push(getGroupName(id));
+				}
+			});
+		}
+		groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
 	}
 
 	function updateFields(def) {

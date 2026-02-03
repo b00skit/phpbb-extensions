@@ -87,6 +87,10 @@ class main_module
 				$body_tpls = $request->variable('public_posting_body_tpl', array(0 => ''), true);
 				$fields_jsons = $request->variable('public_posting_fields_json', array(0 => ''), true);
 
+				$enable_group_actions = $request->variable('enable_group_action', array(0 => 0));
+				$group_action_adds = $request->variable('group_action_add', array(0 => ''));
+				$group_action_removes = $request->variable('group_action_remove', array(0 => ''));
+
 				if ($def_id && isset($ids[$def_id]) && isset($names[$def_id]))
 				{
 					$career_manager->update_local_definition(
@@ -100,7 +104,10 @@ class main_module
 						isset($forum_ids[$def_id]) ? $forum_ids[$def_id] : 0,
 						isset($subject_tpls[$def_id]) ? $subject_tpls[$def_id] : '',
 						isset($body_tpls[$def_id]) ? $body_tpls[$def_id] : '',
-						isset($fields_jsons[$def_id]) ? htmlspecialchars_decode($fields_jsons[$def_id]) : ''
+						isset($fields_jsons[$def_id]) ? htmlspecialchars_decode($fields_jsons[$def_id]) : '',
+						isset($enable_group_actions[$def_id]) ? $enable_group_actions[$def_id] : 0,
+						isset($group_action_adds[$def_id]) ? $group_action_adds[$def_id] : '',
+						isset($group_action_removes[$def_id]) ? $group_action_removes[$def_id] : ''
 					);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
