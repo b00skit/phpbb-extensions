@@ -60,8 +60,8 @@ class listener implements EventSubscriberInterface
 		$viewer_level = $this->commendations_manager->get_user_role_level($this->user->data['user_id']);
 		$target_level = $this->commendations_manager->get_user_role_level($user_id);
 
-		// Get latest 5 commendations
-		$commendations = $this->commendations_manager->get_commendations($user_id, 5);
+		// Get latest 3 commendations
+		$commendations = $this->commendations_manager->get_commendations($user_id, 3);
 
 		// Collect issuer IDs
 		$issuer_ids = [];

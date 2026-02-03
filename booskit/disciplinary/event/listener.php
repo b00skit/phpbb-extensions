@@ -74,7 +74,14 @@ class listener implements EventSubscriberInterface
 		$issuer_usernames = $this->disciplinary_manager->get_usernames($issuer_ids);
 
 		$displayed_count = 0;
-		$limit = 5;
+		$limit = 3;
+
+		if (!empty($records))
+		{
+			$this->template->assign_vars(array(
+				'U_VIEW_ALL_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_view_all', array('user_id' => $user_id)),
+			));
+		}
 
 		foreach ($records as $record)
 		{
@@ -90,9 +97,6 @@ class listener implements EventSubscriberInterface
 			$displayed_count++;
 			if ($displayed_count > $limit)
 			{
-				$this->template->assign_vars(array(
-					'U_VIEW_ALL_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_view_all', array('user_id' => $user_id)),
-				));
 				break;
 			}
 
