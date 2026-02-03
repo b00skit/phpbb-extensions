@@ -343,7 +343,7 @@ class career_manager
 			if ($group_id > 0)
 			{
 				// user_group_add($group_id, $user_id_ary = false, $username_ary = false, $group_name = false, $default = false, $leader = 0, $pending = 0, $group_attributes = false)
-				user_group_add($group_id, $user_id);
+				\user_group_add($group_id, $user_id);
 			}
 		}
 
@@ -407,7 +407,7 @@ class career_manager
 			{
 				if (!in_array($group_id, $keep_groups))
 				{
-					group_user_del($group_id, $user_id);
+					\group_user_del($group_id, $user_id);
 				}
 			}
 		}
@@ -415,7 +415,7 @@ class career_manager
 		{
 			foreach ($explicit_remove_ids as $group_id)
 			{
-				group_user_del($group_id, $user_id);
+				\group_user_del($group_id, $user_id);
 			}
 		}
 	}
