@@ -333,7 +333,7 @@ class career_manager
 	{
 		if (!function_exists('user_group_add'))
 		{
-			include($this->root_path . 'includes/functions_user.' . $this->php_ext);
+			require($this->root_path . 'includes/functions_user.' . $this->php_ext);
 		}
 
 		// Add Groups
