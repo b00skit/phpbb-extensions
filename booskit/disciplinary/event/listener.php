@@ -45,23 +45,25 @@ class listener implements EventSubscriberInterface
 		$user_id = $event['member']['user_id'];
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
-		// Determine Viewer Level
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
-
-		if ($viewer_level === 0)
-		{
-			return;
-		}
-
-		// Determine Target Level
+		$viewer_id = $this->user->data['user_id'];
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($viewer_id);
 		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		// Hierarchical Access Check:
-		// Full Access (4) can target everyone.
-		// Others must be strictly higher level than target.
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		// Determine Add Permission (Strict Hierarchy)
+		$can_add = false;
+		if ($viewer_level > 0)
 		{
-			return;
+			if ($viewer_level === 4 || $viewer_level > $target_level)
+			{
+				$can_add = true;
+			}
+		}
+
+		if ($can_add)
+		{
+			$this->template->assign_vars(array(
+				'U_ADD_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
+			));
 		}
 
 		$records = $this->disciplinary_manager->get_user_records($user_id);
@@ -74,13 +76,22 @@ class listener implements EventSubscriberInterface
 		foreach ($records as $record)
 		{
 			$definition = $this->disciplinary_manager->get_definition($record['disciplinary_type_id']);
+
+			// Check Access
+			$access = $this->disciplinary_manager->check_view_access($viewer_id, $user_id, $definition);
+			if (!$access['allowed'])
+			{
+				continue;
+			}
+
 			$type_name = $definition ? $definition['name'] : $record['disciplinary_type_id'];
 			$color = isset($definition['color']) ? $definition['color'] : '';
 
 			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
-			// Edit/Delete Permission Check: Full Access (4) can edit all; others only their own
-			$can_modify = ($viewer_level == 4 || $this->user->data['user_id'] == $record['issuer_user_id']);
+			// Edit/Delete Permission Check: Full Access (4) can edit all; others only their own (if they have hierarchy access)
+			// Note: If they only have "View Access" but not L1+ (viewer_level=0), they can't edit.
+			$can_modify = ($viewer_level == 4 || ($viewer_level > 0 && $this->user->data['user_id'] == $record['issuer_user_id']));
 
 			// Parse BBCode
 			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
@@ -88,10 +99,14 @@ class listener implements EventSubscriberInterface
 			$reason_options = isset($record['reason_bbcode_options']) ? $record['reason_bbcode_options'] : 7;
 			$reason_html = generate_text_for_display($record['reason'], $reason_uid, $reason_bitfield, $reason_options);
 
-			$evidence_uid = isset($record['evidence_bbcode_uid']) ? $record['evidence_bbcode_uid'] : '';
-			$evidence_bitfield = isset($record['evidence_bbcode_bitfield']) ? $record['evidence_bbcode_bitfield'] : '';
-			$evidence_options = isset($record['evidence_bbcode_options']) ? $record['evidence_bbcode_options'] : 7;
-			$evidence_html = generate_text_for_display($record['evidence'], $evidence_uid, $evidence_bitfield, $evidence_options);
+			$evidence_html = '';
+			if ($access['show_evidence'])
+			{
+				$evidence_uid = isset($record['evidence_bbcode_uid']) ? $record['evidence_bbcode_uid'] : '';
+				$evidence_bitfield = isset($record['evidence_bbcode_bitfield']) ? $record['evidence_bbcode_bitfield'] : '';
+				$evidence_options = isset($record['evidence_bbcode_options']) ? $record['evidence_bbcode_options'] : 7;
+				$evidence_html = generate_text_for_display($record['evidence'], $evidence_uid, $evidence_bitfield, $evidence_options);
+			}
 
 			$this->template->assign_block_vars('disciplinary', array(
 				'ID' => $record['record_id'],
@@ -106,9 +121,5 @@ class listener implements EventSubscriberInterface
 				'U_DELETE' => $can_modify ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
 			));
 		}
-
-		$this->template->assign_vars(array(
-			'U_ADD_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
-		));
 	}
 }

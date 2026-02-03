@@ -48,6 +48,27 @@
 		<dd><input type="text" id="booskit_disciplinary_access_full" name="booskit_disciplinary_access_full" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_FULL }}" size="50"></dd>
 	</dl>
 
+	<dl>
+		<dt><label for="booskit_disciplinary_access_view_local">Local View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_view_local" name="booskit_disciplinary_access_view_local" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_view_exempted">Exempted Local View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_view_exempted" name="booskit_disciplinary_access_view_exempted" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_view_limited">Limited View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_view_limited" name="booskit_disciplinary_access_view_limited" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_view_global">Global View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dd><input type="text" id="booskit_disciplinary_access_view_global" name="booskit_disciplinary_access_view_global" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_disciplinary_access_view_limited_map">Limited View Mapping{{ lang('COLON') }}</label><br><span>Format: ViewerGroupID:TargetGroupID,TargetGroupID (one per line).</span></dt>
+		<dd><textarea name="booskit_disciplinary_access_view_limited_map" id="booskit_disciplinary_access_view_limited_map" rows="5" cols="60">{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP }}</textarea></dd>
+	</dl>
+
 	<p class="submit-buttons">
 		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
 	</p>
@@ -66,6 +87,8 @@
 			<th>{{ lang('DESCRIPTION') }}</th>
 			<th>{{ lang('COLOR') }}</th>
 			<th>{{ lang('ACCESS_LEVEL') }}</th>
+			<th>Locally Viewable</th>
+			<th>Globally Viewable</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
 		</thead>
@@ -77,6 +100,8 @@
 			<td><textarea name="desc[{{ def.def_id }}]" rows="2">{{ def.disc_desc }}</textarea></td>
 			<td><input type="color" name="color[{{ def.def_id }}]" value="{{ def.disc_color }}" /></td>
 			<td><input type="number" name="access_level[{{ def.def_id }}]" value="{{ def.access_level }}" min="0" max="4" style="width: 50px;" /></td>
+			<td><input type="checkbox" name="locally_viewable[{{ def.def_id }}]" value="1" {% if def.locally_viewable %}checked{% endif %} /></td>
+			<td><input type="checkbox" name="globally_viewable[{{ def.def_id }}]" value="1" {% if def.globally_viewable %}checked{% endif %} /></td>
 			<td>
 				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
 				<a href="{{ U_ACTION }}&amp;action=delete&amp;def_id={{ def.def_id }}" class="button2">{{ lang('DELETE') }}</a>
@@ -108,6 +133,14 @@
 		<dl>
 			<dt>{{ lang('ACCESS_LEVEL') }}</dt>
 			<dd><input type="number" name="new_access_level" value="0" min="0" max="4" style="width: 50px;" /></dd>
+		</dl>
+		<dl>
+			<dt>Locally Viewable</dt>
+			<dd><input type="checkbox" name="new_locally_viewable" value="1" /></dd>
+		</dl>
+		<dl>
+			<dt>Globally Viewable</dt>
+			<dd><input type="checkbox" name="new_globally_viewable" value="1" /></dd>
 		</dl>
 		<p class="submit-buttons">
 			<input class="button1" type="submit" name="submit" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add" />
