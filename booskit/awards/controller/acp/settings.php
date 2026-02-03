@@ -97,6 +97,13 @@ class settings
 				$ws = $this->request->variable('w', array(0 => ''));
 				$hs = $this->request->variable('h', array(0 => ''));
 
+				$enable_public_postings = $this->request->variable('enable_public_posting', array(0 => 0));
+				$poster_ids = $this->request->variable('public_posting_poster_id', array(0 => 0));
+				$forum_ids = $this->request->variable('public_posting_forum_id', array(0 => 0));
+				$subject_tpls = $this->request->variable('public_posting_subject_tpl', array(0 => ''), true);
+				$body_tpls = $this->request->variable('public_posting_body_tpl', array(0 => ''), true);
+				$fields_jsons = $this->request->variable('public_posting_fields_json', array(0 => ''), true);
+
 				if ($def_id && isset($ids[$def_id]) && isset($names[$def_id]))
 				{
 					$this->award_manager->update_local_definition(
@@ -106,7 +113,13 @@ class settings
 						$descs[$def_id],
 						$imgs[$def_id],
 						$ws[$def_id],
-						$hs[$def_id]
+						$hs[$def_id],
+						isset($enable_public_postings[$def_id]) ? $enable_public_postings[$def_id] : 0,
+						isset($poster_ids[$def_id]) ? $poster_ids[$def_id] : 0,
+						isset($forum_ids[$def_id]) ? $forum_ids[$def_id] : 0,
+						isset($subject_tpls[$def_id]) ? $subject_tpls[$def_id] : '',
+						isset($body_tpls[$def_id]) ? $body_tpls[$def_id] : '',
+						isset($fields_jsons[$def_id]) ? htmlspecialchars_decode($fields_jsons[$def_id]) : ''
 					);
 					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_DEF_UPDATED', false, [$names[$def_id]]);
 				}

@@ -150,6 +150,9 @@
 						<dt><label>{{ lang('BODY') }}</label></dt>
 						<dd><textarea name="public_posting_body_tpl[{{ def.def_id }}]" rows="5" style="width: 100%;">{{ def.public_posting_body_tpl }}</textarea></dd>
 					</dl>
+					<p class="submit-buttons">
+						<button type="submit" name="submit" class="button1" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('SUBMIT') }}</button>
+					</p>
 				</fieldset>
 			</td>
 		</tr>

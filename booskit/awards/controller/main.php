@@ -91,6 +91,44 @@ class main
 
 			$award_id = $this->award_manager->add_award($user_id, $award_def_id, $issue_date, $comment, $this->user->data['user_id'], $uid, $bitfield, $options);
 
+			// Public Post Logic
+			$make_public_post = $this->request->variable('make_public_post', 0);
+			if ($make_public_post)
+			{
+				$def = $this->award_manager->get_definition($award_def_id);
+				if ($def && !empty($def['enable_public_posting']))
+				{
+					$fields_json = isset($def['public_posting_fields']) ? $def['public_posting_fields'] : '[]';
+					$fields_config = json_decode($fields_json, true);
+
+					if (is_array($fields_config))
+					{
+						$custom_fields_data = $this->request->variable('custom_fields', array('' => ''), true);
+
+						$replacements = [
+							'{#type}' => $def['name'],
+							'{#creator}' => $this->user->data['username'],
+							'{#date}' => strtoupper(date('d/M/Y', $issue_date)),
+							'{#target}' => $this->award_manager->get_username_string($user_id),
+							'{#userGroup}' => $this->award_manager->get_primary_group_name($user_id),
+							'{#posterGroup}' => $this->award_manager->get_primary_group_name($def['public_posting_poster_id']),
+						];
+
+						foreach ($fields_config as $field)
+						{
+							$var = $field['variable'];
+							$val = isset($custom_fields_data[$var]) ? $custom_fields_data[$var] : '';
+							$replacements['{@' . $var . '}'] = $val;
+						}
+
+						$subject = strtr($def['public_posting_subject_tpl'], $replacements);
+						$body = strtr($def['public_posting_body_tpl'], $replacements);
+
+						$this->award_manager->create_public_post($def['public_posting_forum_id'], $def['public_posting_poster_id'], $subject, $body);
+					}
+				}
+			}
+
 			$user_row = $this->award_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_AWARD_ADDED', time(), array($user_row));
 

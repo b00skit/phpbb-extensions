@@ -55,6 +55,21 @@
 		</div>
 	</div>
 
+	<div class="panel" id="public_post_settings" style="display: none;">
+		<div class="inner">
+			<h3>{{ lang('PUBLIC_POST_SETTINGS') }}</h3>
+			<fieldset>
+				<dl>
+					<dt><label for="make_public_post">{{ lang('MAKE_PUBLIC_POST') }}</label></dt>
+					<dd><input type="checkbox" name="make_public_post" id="make_public_post" value="1" /></dd>
+				</dl>
+				<div id="custom_fields_container" style="display: none;">
+					<!-- Dynamic fields injected here -->
+				</div>
+			</fieldset>
+		</div>
+	</div>
+
 	<div class="submit-buttons">
 		<input type="submit" name="submit" value="{{ lang('SUBMIT') }}" class="button1" />
 		{{ S_FORM_TOKEN }}
@@ -63,19 +78,21 @@
 
 <script>
 var awardsData = {{ AWARDS_JSON | raw }};
+var typeSelect = document.getElementById('award_definition_id');
+var settingsPanel = document.getElementById('public_post_settings');
+var makePublicCheckbox = document.getElementById('make_public_post');
+var fieldsContainer = document.getElementById('custom_fields_container');
 
 function updatePreview() {
-    var select = document.getElementById('award_definition_id');
-    var selectedId = select.value;
+    var selectedId = typeSelect.value;
     var container = document.getElementById('preview_container');
+    var award = null;
 
-    if (!selectedId) {
-        container.style.display = 'none';
-        return;
+    if (selectedId) {
+        award = awardsData.find(function(a) { return a.id == selectedId; });
     }
 
-    var award = awardsData.find(function(a) { return a.id == selectedId; });
-
+    // Preview Logic
     if (award) {
         document.getElementById('preview_name').textContent = award.name;
         var img = document.getElementById('preview_image');
@@ -94,7 +111,88 @@ function updatePreview() {
     } else {
         container.style.display = 'none';
     }
+
+    // Public Post Logic
+    if (award && award.enable_public_posting) {
+        settingsPanel.style.display = 'block';
+        updateFields(award);
+    } else {
+        settingsPanel.style.display = 'none';
+        makePublicCheckbox.checked = false;
+        fieldsContainer.style.display = 'none';
+    }
 }
+
+function updateFields(def) {
+    var fields = [];
+    try {
+        if (def.public_posting_fields) {
+            fields = JSON.parse(def.public_posting_fields);
+        }
+    } catch (e) { }
+
+    fieldsContainer.innerHTML = '';
+
+    if (fields.length > 0) {
+        fields.forEach(function(field) {
+            var dl = document.createElement('dl');
+            var dt = document.createElement('dt');
+            var label = document.createElement('label');
+            label.textContent = field.name;
+            dt.appendChild(label);
+            if (field.description) {
+                var br = document.createElement('br');
+                var span = document.createElement('span');
+                span.textContent = field.description;
+                dt.appendChild(br);
+                dt.appendChild(span);
+            }
+
+            var dd = document.createElement('dd');
+            var input;
+
+            if (field.type === 'textarea') {
+                input = document.createElement('textarea');
+                input.name = 'custom_fields[' + field.variable + ']';
+                input.className = 'inputbox';
+                input.rows = 5;
+                if (field.placeholder) input.value = field.placeholder;
+            } else if (field.type === 'dropdown') {
+                input = document.createElement('select');
+                input.name = 'custom_fields[' + field.variable + ']';
+
+                var options = field.placeholder ? field.placeholder.split(',') : [];
+                if (options.length === 0) options.push('None');
+
+                options.forEach(function(opt) {
+                    var option = document.createElement('option');
+                    option.value = opt.trim();
+                    option.textContent = opt.trim();
+                    input.appendChild(option);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'custom_fields[' + field.variable + ']';
+                input.className = 'inputbox';
+                if (field.placeholder) input.value = field.placeholder;
+            }
+
+            dd.appendChild(input);
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+            fieldsContainer.appendChild(dl);
+        });
+    }
+}
+
+makePublicCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+        fieldsContainer.style.display = 'block';
+    } else {
+        fieldsContainer.style.display = 'none';
+    }
+});
 </script>
 
 <!-- INCLUDE overall_footer.html -->
