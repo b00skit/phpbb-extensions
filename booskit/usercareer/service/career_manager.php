@@ -218,7 +218,7 @@ class career_manager
 
 	public function get_user_notes($user_id, $limit = 0)
 	{
-		$sql = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . (int) $user_id . ' ORDER BY note_date DESC';
+		$sql = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . (int) $user_id . ' ORDER BY note_date DESC, note_id DESC';
 		if ($limit > 0)
 		{
 			$result = $this->db->sql_query_limit($sql, $limit);

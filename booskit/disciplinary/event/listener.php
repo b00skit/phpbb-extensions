@@ -73,6 +73,9 @@ class listener implements EventSubscriberInterface
 		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
 		$issuer_usernames = $this->disciplinary_manager->get_usernames($issuer_ids);
 
+		$displayed_count = 0;
+		$limit = 5;
+
 		foreach ($records as $record)
 		{
 			$definition = $this->disciplinary_manager->get_definition($record['disciplinary_type_id']);
@@ -82,6 +85,15 @@ class listener implements EventSubscriberInterface
 			if (!$access['allowed'])
 			{
 				continue;
+			}
+
+			$displayed_count++;
+			if ($displayed_count > $limit)
+			{
+				$this->template->assign_vars(array(
+					'U_VIEW_ALL_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_view_all', array('user_id' => $user_id)),
+				));
+				break;
 			}
 
 			$type_name = $definition ? $definition['name'] : $record['disciplinary_type_id'];

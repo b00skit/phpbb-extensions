@@ -15,3 +15,9 @@ booskit_disciplinary_delete_record:
     defaults: { _controller: 'booskit.disciplinary.controller.main:delete_record' }
     requirements:
         record_id: \d+
+
+booskit_disciplinary_view_all:
+    path: /disciplinary/view/{user_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:view_all' }
+    requirements:
+        user_id: \d+

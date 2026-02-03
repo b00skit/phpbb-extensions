@@ -1,0 +1,43 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2>{PAGE_TITLE}</h2>
+
+<a href="{U_BACK}" class="arrow-{S_CONTENT_FLOW_BEGIN}">{L_BACK}</a>
+
+<div class="panel">
+	<div class="inner">
+
+		<div class="disciplinary-list full-list">
+			<!-- BEGIN disciplinary -->
+			<div class="disciplinary-item">
+				<div class="disciplinary-header">
+					<span class="disciplinary-type-badge" style="background-color: {disciplinary.COLOR}">{disciplinary.TYPE}</span>
+					<span class="disciplinary-date">{disciplinary.DATE}</span>
+					<!-- IF disciplinary.U_EDIT -->
+					<div class="disciplinary-actions">
+						<a href="{disciplinary.U_EDIT}" title="{L_EDIT}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+						<a href="{disciplinary.U_DELETE}" title="{L_DELETE}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+					</div>
+					<!-- ENDIF -->
+				</div>
+				<div class="disciplinary-body">
+					<div class="disciplinary-reason">{disciplinary.REASON}</div>
+					<!-- IF disciplinary.EVIDENCE -->
+					<div class="disciplinary-evidence">
+						<strong>{L_EVIDENCE}</strong>
+						{disciplinary.EVIDENCE}
+					</div>
+					<!-- ENDIF -->
+				</div>
+				<div class="disciplinary-footer">
+					<span class="disciplinary-issuer">{L_ISSUED_BY}: <strong>{disciplinary.ISSUER_NAME}</strong></span>
+				</div>
+			</div>
+			<!-- BEGINELSE -->
+			<p>{L_NO_DISCIPLINARY_ACTIONS}</p>
+			<!-- END disciplinary -->
+		</div>
+	</div>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

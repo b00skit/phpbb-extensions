@@ -295,6 +295,74 @@ class main
 		}
 	}
 
+	public function view_all($user_id)
+	{
+		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
+		$this->user->add_lang('common');
+
+		$target_username = $this->disciplinary_manager->get_username_string($user_id);
+		$viewer_id = $this->user->data['user_id'];
+		$viewer_level = $this->disciplinary_manager->get_user_role_level($viewer_id);
+
+		$records = $this->disciplinary_manager->get_user_records($user_id);
+		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
+		$issuer_usernames = $this->disciplinary_manager->get_usernames($issuer_ids);
+
+		foreach ($records as $record)
+		{
+			$definition = $this->disciplinary_manager->get_definition($record['disciplinary_type_id']);
+
+			// Check Access
+			$access = $this->disciplinary_manager->check_view_access($viewer_id, $user_id, $definition);
+			if (!$access['allowed'])
+			{
+				continue;
+			}
+
+			$type_name = $definition ? $definition['name'] : $record['disciplinary_type_id'];
+			$color = isset($definition['color']) ? $definition['color'] : '';
+
+			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
+
+			$can_modify = ($viewer_level == 4 || ($viewer_level > 0 && $this->user->data['user_id'] == $record['issuer_user_id']));
+
+			// Parse BBCode
+			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
+			$reason_bitfield = isset($record['reason_bbcode_bitfield']) ? $record['reason_bbcode_bitfield'] : '';
+			$reason_options = isset($record['reason_bbcode_options']) ? $record['reason_bbcode_options'] : 7;
+			$reason_html = generate_text_for_display($record['reason'], $reason_uid, $reason_bitfield, $reason_options);
+
+			$evidence_html = '';
+			if ($access['show_evidence'])
+			{
+				$evidence_uid = isset($record['evidence_bbcode_uid']) ? $record['evidence_bbcode_uid'] : '';
+				$evidence_bitfield = isset($record['evidence_bbcode_bitfield']) ? $record['evidence_bbcode_bitfield'] : '';
+				$evidence_options = isset($record['evidence_bbcode_options']) ? $record['evidence_bbcode_options'] : 7;
+				$evidence_html = generate_text_for_display($record['evidence'], $evidence_uid, $evidence_bitfield, $evidence_options);
+			}
+
+			$this->template->assign_block_vars('disciplinary', array(
+				'ID' => $record['record_id'],
+				'TYPE' => utf8_htmlspecialchars($type_name),
+				'DATE' => $this->user->format_date($record['issue_date']),
+				'REASON' => $reason_html,
+				'EVIDENCE' => $evidence_html,
+				'ISSUER_ID' => $record['issuer_user_id'],
+				'ISSUER_NAME' => $issuer_name,
+				'COLOR' => $color,
+				'U_EDIT' => $can_modify ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
+				'U_DELETE' => $can_modify ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
+			));
+		}
+
+		$this->template->assign_vars(array(
+			'U_BACK' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
+			'PAGE_TITLE' => $this->user->lang('DISCIPLINARY_ACTIONS'),
+		));
+
+		return $this->helper->render('view_disciplinary.html', $this->user->lang('DISCIPLINARY_ACTIONS'));
+	}
+
 	protected function assign_form_vars($user_id, $record = null, $is_edit = false, $viewer_level = 0)
 	{
 		$definitions = $this->disciplinary_manager->get_definitions();
