@@ -46,4 +46,6 @@ $lang = array_merge($lang, array(
 	'LOG_AWARD_REMOVED' => '<strong>Removed award from user</strong><br>» %s',
 
 	'NO_AWARDS_FOUND' => 'No awards found for this user',
+	'PUBLIC_POST_SETTINGS' => 'Public Post Settings',
+	'MAKE_PUBLIC_POST' => 'Make Public Post',
 ));
