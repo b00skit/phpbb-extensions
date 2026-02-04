@@ -79,16 +79,17 @@
 <script>
 (function() {
     var awardsData = {{ AWARDS_JSON | raw }};
-    var typeSelect = document.getElementById('award_definition_id');
-    var settingsPanel = document.getElementById('public_post_settings');
-    var makePublicCheckbox = document.getElementById('make_public_post');
-    var fieldsContainer = document.getElementById('custom_fields_container');
-    var previewContainer = document.getElementById('preview_container');
-    var previewName = document.getElementById('preview_name');
-    var previewImage = document.getElementById('preview_image');
-    var previewDesc = document.getElementById('preview_desc');
 
     function updatePreview() {
+        var typeSelect = document.getElementById('award_definition_id');
+        var settingsPanel = document.getElementById('public_post_settings');
+        var makePublicCheckbox = document.getElementById('make_public_post');
+        var fieldsContainer = document.getElementById('custom_fields_container');
+        var previewContainer = document.getElementById('preview_container');
+        var previewName = document.getElementById('preview_name');
+        var previewImage = document.getElementById('preview_image');
+        var previewDesc = document.getElementById('preview_desc');
+
         var selectedId = typeSelect ? typeSelect.value : '';
         var award = null;
 
@@ -136,6 +137,9 @@
     }
 
     function updateFields(def) {
+        var fieldsContainer = document.getElementById('custom_fields_container');
+        var makePublicCheckbox = document.getElementById('make_public_post');
+
         if (!fieldsContainer) return;
 
         var fields = [];
@@ -207,19 +211,20 @@
         }
     }
 
-    if (typeSelect) {
-        typeSelect.addEventListener('change', updatePreview);
-    }
+    document.addEventListener('change', function(e) {
+        if (!e.target) return;
 
-    if (makePublicCheckbox) {
-        makePublicCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                if (fieldsContainer) fieldsContainer.style.display = 'block';
-            } else {
-                if (fieldsContainer) fieldsContainer.style.display = 'none';
-            }
-        });
-    }
+        if (e.target.id === 'award_definition_id') {
+            updatePreview();
+        } else if (e.target.id === 'make_public_post') {
+            var fieldsContainer = document.getElementById('custom_fields_container');
+		if (e.target.checked) {
+			if (fieldsContainer) fieldsContainer.style.display = 'block';
+		} else {
+			if (fieldsContainer) fieldsContainer.style.display = 'none';
+		}
+        }
+    });
 
     // Initial call
     updatePreview();

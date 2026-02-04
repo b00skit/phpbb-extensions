@@ -97,18 +97,6 @@
 (function() {
 	var definitions = {{ DEFINITIONS_JSON|raw }};
 	var groupNames = {{ GROUP_NAMES_JSON|raw }};
-	var typeSelect = document.getElementById('career_type_id');
-
-	// Public Post vars
-	var settingsPanel = document.getElementById('public_post_settings');
-	var makePublicCheckbox = document.getElementById('make_public_post');
-	var fieldsContainer = document.getElementById('custom_fields_container');
-
-	// Group Action vars
-	var groupActionPanel = document.getElementById('group_action_settings');
-	var executeGroupActionCheckbox = document.getElementById('execute_group_action');
-	var groupsAddList = document.getElementById('groups_add_list');
-	var groupsRemoveList = document.getElementById('groups_remove_list');
 
 	function getDefinition(id) {
         if (!definitions) return null;
@@ -124,6 +112,13 @@
 	}
 
 	function updateVisibility() {
+        var typeSelect = document.getElementById('career_type_id');
+        var settingsPanel = document.getElementById('public_post_settings');
+        var makePublicCheckbox = document.getElementById('make_public_post');
+        var fieldsContainer = document.getElementById('custom_fields_container');
+        var groupActionPanel = document.getElementById('group_action_settings');
+        var executeGroupActionCheckbox = document.getElementById('execute_group_action');
+
 		var selectedId = typeSelect ? typeSelect.value : '';
 		var def = getDefinition(selectedId);
 
@@ -152,6 +147,9 @@
 	}
 
 	function updateGroupLists(def) {
+        var groupsAddList = document.getElementById('groups_add_list');
+        var groupsRemoveList = document.getElementById('groups_remove_list');
+
 		var addStr = String(def.group_action_add || '');
 		var removeStr = String(def.group_action_remove || '');
 
@@ -179,6 +177,9 @@
 	}
 
 	function updateFields(def) {
+        var fieldsContainer = document.getElementById('custom_fields_container');
+        var makePublicCheckbox = document.getElementById('make_public_post');
+
         if (!fieldsContainer) return;
 
 		var fields = [];
@@ -249,19 +250,20 @@
 		}
 	}
 
-    if (typeSelect) {
-	typeSelect.addEventListener('change', updateVisibility);
-    }
+    document.addEventListener('change', function(e) {
+        if (!e.target) return;
 
-    if (makePublicCheckbox) {
-	makePublicCheckbox.addEventListener('change', function() {
-		if (this.checked) {
+        if (e.target.id === 'career_type_id') {
+            updateVisibility();
+        } else if (e.target.id === 'make_public_post') {
+            var fieldsContainer = document.getElementById('custom_fields_container');
+		if (e.target.checked) {
 			if (fieldsContainer) fieldsContainer.style.display = 'block';
 		} else {
 			if (fieldsContainer) fieldsContainer.style.display = 'none';
 		}
-	});
-    }
+        }
+    });
 
 	// Initial state
 	updateVisibility();
