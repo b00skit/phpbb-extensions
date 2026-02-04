@@ -92,11 +92,14 @@
         var selectedId = typeSelect ? typeSelect.value : '';
         var award = null;
 
-        if (selectedId) {
-            for (var i = 0; i < awardsData.length; i++) {
-                if (awardsData[i].id == selectedId) {
-                    award = awardsData[i];
-                    break;
+        if (selectedId && awardsData) {
+            for (var key in awardsData) {
+                if (awardsData.hasOwnProperty(key)) {
+                    var a = awardsData[key];
+                    if (a.id == selectedId) {
+                        award = a;
+                        break;
+                    }
                 }
             }
         }

@@ -111,11 +111,15 @@
 	var groupsRemoveList = document.getElementById('groups_remove_list');
 
 	function getDefinition(id) {
-		for (var i = 0; i < definitions.length; i++) {
-			if (definitions[i].id == id) {
-				return definitions[i];
-			}
-		}
+        if (!definitions) return null;
+        for (var key in definitions) {
+            if (definitions.hasOwnProperty(key)) {
+                var def = definitions[key];
+                if (def.id == id) {
+                    return def;
+                }
+            }
+        }
 		return null;
 	}
 
@@ -148,8 +152,8 @@
 	}
 
 	function updateGroupLists(def) {
-		var addStr = def.group_action_add || '';
-		var removeStr = def.group_action_remove || '';
+		var addStr = String(def.group_action_add || '');
+		var removeStr = String(def.group_action_remove || '');
 
 		var addList = [];
 		if (addStr) {
