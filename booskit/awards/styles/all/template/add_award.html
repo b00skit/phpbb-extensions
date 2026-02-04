@@ -211,23 +211,44 @@
         }
     }
 
-    document.addEventListener('change', function(e) {
-        if (!e.target) return;
+    function init() {
+        if (typeof jQuery !== 'undefined') {
+            jQuery('#award_definition_id').on('change', updatePreview);
+            jQuery('#make_public_post').on('change', function() {
+                var fieldsContainer = document.getElementById('custom_fields_container');
+                if (this.checked) {
+                    if (fieldsContainer) fieldsContainer.style.display = 'block';
+                } else {
+                    if (fieldsContainer) fieldsContainer.style.display = 'none';
+                }
+            });
+        } else {
+            var typeSelect = document.getElementById('award_definition_id');
+            var makePublicCheckbox = document.getElementById('make_public_post');
 
-        if (e.target.id === 'award_definition_id') {
-            updatePreview();
-        } else if (e.target.id === 'make_public_post') {
-            var fieldsContainer = document.getElementById('custom_fields_container');
-		if (e.target.checked) {
-			if (fieldsContainer) fieldsContainer.style.display = 'block';
-		} else {
-			if (fieldsContainer) fieldsContainer.style.display = 'none';
-		}
+            if (typeSelect) {
+                typeSelect.addEventListener('change', updatePreview);
+            }
+            if (makePublicCheckbox) {
+                makePublicCheckbox.addEventListener('change', function() {
+                    var fieldsContainer = document.getElementById('custom_fields_container');
+                    if (this.checked) {
+                        if (fieldsContainer) fieldsContainer.style.display = 'block';
+                    } else {
+                        if (fieldsContainer) fieldsContainer.style.display = 'none';
+                    }
+                });
+            }
         }
-    });
 
-    // Initial call
-    updatePreview();
+        updatePreview();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 </script>
 
