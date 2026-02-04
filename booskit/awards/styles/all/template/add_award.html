@@ -22,7 +22,7 @@
 				<dl>
 					<dt><label for="award_definition_id">{{ lang('AWARD_SELECT') }}{{ lang('COLON') }}</label></dt>
 					<dd>
-						<select name="award_definition_id" id="award_definition_id" onchange="updatePreview()">
+						<select name="award_definition_id" id="award_definition_id">
 							<option value="">{{ lang('SELECT_OPTION') }}</option>
 							<!-- BEGIN awards -->
 							<option value="{{ awards.ID }}">{{ awards.NAME }}</option>
@@ -77,122 +77,150 @@
 </form>
 
 <script>
-var awardsData = {{ AWARDS_JSON | raw }};
-var typeSelect = document.getElementById('award_definition_id');
-var settingsPanel = document.getElementById('public_post_settings');
-var makePublicCheckbox = document.getElementById('make_public_post');
-var fieldsContainer = document.getElementById('custom_fields_container');
+(function() {
+    var awardsData = {{ AWARDS_JSON | raw }};
+    var typeSelect = document.getElementById('award_definition_id');
+    var settingsPanel = document.getElementById('public_post_settings');
+    var makePublicCheckbox = document.getElementById('make_public_post');
+    var fieldsContainer = document.getElementById('custom_fields_container');
+    var previewContainer = document.getElementById('preview_container');
+    var previewName = document.getElementById('preview_name');
+    var previewImage = document.getElementById('preview_image');
+    var previewDesc = document.getElementById('preview_desc');
 
-function updatePreview() {
-    var selectedId = typeSelect.value;
-    var container = document.getElementById('preview_container');
-    var award = null;
+    function updatePreview() {
+        var selectedId = typeSelect ? typeSelect.value : '';
+        var award = null;
 
-    if (selectedId) {
-        award = awardsData.find(function(a) { return a.id == selectedId; });
-    }
-
-    // Preview Logic
-    if (award) {
-        document.getElementById('preview_name').textContent = award.name;
-        var img = document.getElementById('preview_image');
-        img.src = award.image;
-        img.alt = award.name;
-
-        if (award['max-width']) img.style.maxWidth = award['max-width'];
-        else img.style.maxWidth = '';
-
-        if (award['max-height']) img.style.maxHeight = award['max-height'];
-        else img.style.maxHeight = '';
-
-        document.getElementById('preview_desc').textContent = award.description || '';
-
-        container.style.display = 'block';
-    } else {
-        container.style.display = 'none';
-    }
-
-    // Public Post Logic
-    if (award && award.enable_public_posting) {
-        settingsPanel.style.display = 'block';
-        updateFields(award);
-    } else {
-        settingsPanel.style.display = 'none';
-        makePublicCheckbox.checked = false;
-        fieldsContainer.style.display = 'none';
-    }
-}
-
-function updateFields(def) {
-    var fields = [];
-    try {
-        if (def.public_posting_fields) {
-            fields = JSON.parse(def.public_posting_fields);
+        if (selectedId) {
+            for (var i = 0; i < awardsData.length; i++) {
+                if (awardsData[i].id == selectedId) {
+                    award = awardsData[i];
+                    break;
+                }
+            }
         }
-    } catch (e) { }
 
-    fieldsContainer.innerHTML = '';
+        // Preview Logic
+        if (award && previewContainer) {
+            if (previewName) previewName.textContent = award.name;
+            if (previewImage) {
+                previewImage.src = award.image;
+                previewImage.alt = award.name;
 
-    if (fields.length > 0) {
-        fields.forEach(function(field) {
-            var dl = document.createElement('dl');
-            var dt = document.createElement('dt');
-            var label = document.createElement('label');
-            label.textContent = field.name;
-            dt.appendChild(label);
-            if (field.description) {
-                var br = document.createElement('br');
-                var span = document.createElement('span');
-                span.textContent = field.description;
-                dt.appendChild(br);
-                dt.appendChild(span);
+                if (award['max-width']) previewImage.style.maxWidth = award['max-width'];
+                else previewImage.style.maxWidth = '';
+
+                if (award['max-height']) previewImage.style.maxHeight = award['max-height'];
+                else previewImage.style.maxHeight = '';
             }
+            if (previewDesc) previewDesc.textContent = award.description || '';
 
-            var dd = document.createElement('dd');
-            var input;
+            previewContainer.style.display = 'block';
+        } else if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
 
-            if (field.type === 'textarea') {
-                input = document.createElement('textarea');
-                input.name = 'custom_fields[' + field.variable + ']';
-                input.className = 'inputbox';
-                input.rows = 5;
-                if (field.placeholder) input.value = field.placeholder;
-            } else if (field.type === 'dropdown') {
-                input = document.createElement('select');
-                input.name = 'custom_fields[' + field.variable + ']';
+        // Public Post Logic
+        if (award && award.enable_public_posting) {
+            if (settingsPanel) settingsPanel.style.display = 'block';
+            updateFields(award);
+        } else {
+            if (settingsPanel) settingsPanel.style.display = 'none';
+            if (makePublicCheckbox) makePublicCheckbox.checked = false;
+            if (fieldsContainer) fieldsContainer.style.display = 'none';
+        }
+    }
 
-                var options = field.placeholder ? field.placeholder.split(',') : [];
-                if (options.length === 0) options.push('None');
+    function updateFields(def) {
+        if (!fieldsContainer) return;
 
-                options.forEach(function(opt) {
-                    var option = document.createElement('option');
-                    option.value = opt.trim();
-                    option.textContent = opt.trim();
-                    input.appendChild(option);
-                });
+        var fields = [];
+        try {
+            if (def.public_posting_fields) {
+                fields = JSON.parse(def.public_posting_fields);
+            }
+        } catch (e) {
+            console.error('Error parsing fields JSON', e);
+        }
+
+        fieldsContainer.innerHTML = '';
+
+        if (fields.length > 0) {
+            fields.forEach(function(field) {
+                var dl = document.createElement('dl');
+                var dt = document.createElement('dt');
+                var label = document.createElement('label');
+                label.textContent = field.name;
+                dt.appendChild(label);
+                if (field.description) {
+                    var br = document.createElement('br');
+                    var span = document.createElement('span');
+                    span.textContent = field.description;
+                    dt.appendChild(br);
+                    dt.appendChild(span);
+                }
+
+                var dd = document.createElement('dd');
+                var input;
+
+                if (field.type === 'textarea') {
+                    input = document.createElement('textarea');
+                    input.name = 'custom_fields[' + field.variable + ']';
+                    input.className = 'inputbox';
+                    input.rows = 5;
+                    if (field.placeholder) input.value = field.placeholder;
+                } else if (field.type === 'dropdown') {
+                    input = document.createElement('select');
+                    input.name = 'custom_fields[' + field.variable + ']';
+
+                    var options = field.placeholder ? field.placeholder.split(',') : [];
+                    if (options.length === 0) options.push('None');
+
+                    options.forEach(function(opt) {
+                        var option = document.createElement('option');
+                        option.value = opt.trim();
+                        option.textContent = opt.trim();
+                        input.appendChild(option);
+                    });
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = 'custom_fields[' + field.variable + ']';
+                    input.className = 'inputbox';
+                    if (field.placeholder) input.value = field.placeholder;
+                }
+
+                dd.appendChild(input);
+                dl.appendChild(dt);
+                dl.appendChild(dd);
+                fieldsContainer.appendChild(dl);
+            });
+
+            // Restore visibility if checkbox is checked
+            if (makePublicCheckbox && makePublicCheckbox.checked) {
+                fieldsContainer.style.display = 'block';
+            }
+        }
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', updatePreview);
+    }
+
+    if (makePublicCheckbox) {
+        makePublicCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                if (fieldsContainer) fieldsContainer.style.display = 'block';
             } else {
-                input = document.createElement('input');
-                input.type = 'text';
-                input.name = 'custom_fields[' + field.variable + ']';
-                input.className = 'inputbox';
-                if (field.placeholder) input.value = field.placeholder;
+                if (fieldsContainer) fieldsContainer.style.display = 'none';
             }
-
-            dd.appendChild(input);
-            dl.appendChild(dt);
-            dl.appendChild(dd);
-            fieldsContainer.appendChild(dl);
         });
     }
-}
 
-makePublicCheckbox.addEventListener('change', function() {
-    if (this.checked) {
-        fieldsContainer.style.display = 'block';
-    } else {
-        fieldsContainer.style.display = 'none';
-    }
-});
+    // Initial call
+    updatePreview();
+})();
 </script>
 
 <!-- INCLUDE overall_footer.html -->

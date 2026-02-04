@@ -120,26 +120,26 @@
 	}
 
 	function updateVisibility() {
-		var selectedId = typeSelect.value;
+		var selectedId = typeSelect ? typeSelect.value : '';
 		var def = getDefinition(selectedId);
 
 		// Public Posting
 		if (def && def.enable_public_posting) {
-			settingsPanel.style.display = 'block';
+			if (settingsPanel) settingsPanel.style.display = 'block';
 			updateFields(def);
 		} else {
-			settingsPanel.style.display = 'none';
-			makePublicCheckbox.checked = false;
-			fieldsContainer.style.display = 'none';
+			if (settingsPanel) settingsPanel.style.display = 'none';
+			if (makePublicCheckbox) makePublicCheckbox.checked = false;
+			if (fieldsContainer) fieldsContainer.style.display = 'none';
 		}
 
 		// Group Actions
 		if (def && def.enable_group_action) {
-			groupActionPanel.style.display = 'block';
+			if (groupActionPanel) groupActionPanel.style.display = 'block';
 			updateGroupLists(def);
 		} else {
-			groupActionPanel.style.display = 'none';
-			executeGroupActionCheckbox.checked = false;
+			if (groupActionPanel) groupActionPanel.style.display = 'none';
+			if (executeGroupActionCheckbox) executeGroupActionCheckbox.checked = false;
 		}
 	}
 
@@ -158,7 +158,7 @@
 				if (id) addList.push(getGroupName(id));
 			});
 		}
-		groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
+        if (groupsAddList) groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
 
 		var removeList = [];
 		if (removeStr) {
@@ -171,16 +171,20 @@
 				}
 			});
 		}
-		groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
+        if (groupsRemoveList) groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
 	}
 
 	function updateFields(def) {
+        if (!fieldsContainer) return;
+
 		var fields = [];
 		try {
 			if (def.public_posting_fields) {
 				fields = JSON.parse(def.public_posting_fields);
 			}
-		} catch (e) { }
+		} catch (e) {
+            console.error('Error parsing fields JSON', e);
+        }
 
 		fieldsContainer.innerHTML = '';
 
@@ -234,24 +238,29 @@
 				dl.appendChild(dd);
 				fieldsContainer.appendChild(dl);
 			});
+
+            if (makePublicCheckbox && makePublicCheckbox.checked) {
+                fieldsContainer.style.display = 'block';
+            }
 		}
 	}
 
+    if (typeSelect) {
 	typeSelect.addEventListener('change', updateVisibility);
+    }
 
+    if (makePublicCheckbox) {
 	makePublicCheckbox.addEventListener('change', function() {
 		if (this.checked) {
-			fieldsContainer.style.display = 'block';
+			if (fieldsContainer) fieldsContainer.style.display = 'block';
 		} else {
-			fieldsContainer.style.display = 'none';
+			if (fieldsContainer) fieldsContainer.style.display = 'none';
 		}
 	});
+    }
 
 	// Initial state
 	updateVisibility();
-	if (makePublicCheckbox.checked) {
-		fieldsContainer.style.display = 'block';
-	}
 })();
 </script>
 
