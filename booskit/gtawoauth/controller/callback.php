@@ -53,12 +53,17 @@ class callback
         // so we don't need to set a custom one (unless we want to verify it matches).
         // The provider uses get_redirect_uri() inside request_access_token().
 
-        $token = $this->provider->perform_token_exchange($code);
-        if (!$token) {
+        $token_data = $this->provider->perform_token_exchange($code);
+        if (!$token_data || !isset($token_data['access_token'])) {
             trigger_error($this->language->lang('GTAW_LINK_FAILED_TOKEN'), E_USER_WARNING);
         }
 
-        $user_info = $this->provider->fetch_user_info($token);
+        $access_token = $token_data['access_token'];
+        $refresh_token = isset($token_data['refresh_token']) ? $token_data['refresh_token'] : '';
+        $expires_in = isset($token_data['expires_in']) ? (int) $token_data['expires_in'] : 3600;
+        $expires_at = time() + $expires_in;
+
+        $user_info = $this->provider->fetch_user_info($access_token);
         if (!$user_info) {
              trigger_error($this->language->lang('GTAW_LINK_FAILED_USER'), E_USER_WARNING);
         }
@@ -101,6 +106,24 @@ class callback
             $this->db->sql_query($sql);
         }
 
+        // Store Token Data
+        // Remove old tokens
+        $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_tokens
+            WHERE user_id = ' . (int) $this->user->data['user_id'] . '
+            AND provider = \'gtaw\'';
+        $this->db->sql_query($sql);
+
+        // Add new tokens
+        $sql_ary = [
+            'user_id'       => (int) $this->user->data['user_id'],
+            'provider'      => 'gtaw',
+            'access_token'  => (string) $access_token,
+            'refresh_token' => (string) $refresh_token,
+            'expires_at'    => (int) $expires_at,
+        ];
+        $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_tokens ' . $this->db->sql_build_array('INSERT', $sql_ary);
+        $this->db->sql_query($sql);
+
         // Redirect back to UCP
         global $phpEx;
         // Construct UCP URL for the module
@@ -116,17 +139,30 @@ class callback
 
     protected function handle_login()
     {
-        // Use the provider to exchange code for external user ID
-        try {
-            // perform_auth_login will exchange code and return the external user ID
-            $external_id = $this->provider->perform_auth_login();
-        } catch (\Exception $e) {
+        // Manual token exchange to capture tokens
+        $code = $this->request->variable('code', '');
+
+        $token_data = $this->provider->perform_token_exchange($code);
+        if (!$token_data || !isset($token_data['access_token'])) {
             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
         }
 
-        if (!$external_id) {
-            trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
+        $access_token = $token_data['access_token'];
+        $refresh_token = isset($token_data['refresh_token']) ? $token_data['refresh_token'] : '';
+        $expires_in = isset($token_data['expires_in']) ? (int) $token_data['expires_in'] : 3600;
+        $expires_at = time() + $expires_in;
+
+        $user_info = $this->provider->fetch_user_info($access_token);
+        if (!$user_info) {
+             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
         }
+
+        $user_details = $this->provider->get_user_details($user_info);
+        if (!$user_details || !isset($user_details['user_id'])) {
+             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
+        }
+
+        $external_id = $user_details['user_id'];
 
         // Check if there is a local user linked to this external ID
         $sql = 'SELECT user_id FROM ' . $this->table_prefix . 'oauth_accounts
@@ -138,6 +174,24 @@ class callback
         if ($row) {
             // Found a linked user, log them in
             $user_id = (int) $row['user_id'];
+
+            // Save tokens
+            // Remove old tokens
+            $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_tokens
+                WHERE user_id = ' . (int) $user_id . '
+                AND provider = \'gtaw\'';
+            $this->db->sql_query($sql);
+
+            // Add new tokens
+            $sql_ary = [
+                'user_id'       => (int) $user_id,
+                'provider'      => 'gtaw',
+                'access_token'  => (string) $access_token,
+                'refresh_token' => (string) $refresh_token,
+                'expires_at'    => (int) $expires_at,
+            ];
+            $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_tokens ' . $this->db->sql_build_array('INSERT', $sql_ary);
+            $this->db->sql_query($sql);
 
             // Create session
             $result = $this->user->session_create($user_id, false, true, true);

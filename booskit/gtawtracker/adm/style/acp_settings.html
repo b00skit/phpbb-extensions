@@ -1,0 +1,26 @@
+<!-- INCLUDE overall_header.html -->
+
+<h1>{L_ACP_GTAW_TRACKER_SETTINGS}</h1>
+
+<form id="acp_gtawtracker" method="post" action="{U_ACTION}">
+	<fieldset>
+		<legend>{L_SETTINGS}</legend>
+
+		<dl>
+			<dt><label for="booskit_gtawtracker_faction_id">{L_GTAW_FACTION_ID}:</label><br /><span>{L_GTAW_FACTION_ID_EXPLAIN}</span></dt>
+			<dd><input type="number" id="booskit_gtawtracker_faction_id" name="booskit_gtawtracker_faction_id" value="{BOOSKIT_GTAWTRACKER_FACTION_ID}" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_gtawtracker_view_groups">{L_GTAW_VIEW_GROUPS}:</label><br /><span>{L_GTAW_VIEW_GROUPS_EXPLAIN}</span></dt>
+			<dd><input type="text" id="booskit_gtawtracker_view_groups" name="booskit_gtawtracker_view_groups" value="{BOOSKIT_GTAWTRACKER_VIEW_GROUPS}" /></dd>
+		</dl>
+
+		<p class="submit-buttons">
+			<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+			<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		</p>
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

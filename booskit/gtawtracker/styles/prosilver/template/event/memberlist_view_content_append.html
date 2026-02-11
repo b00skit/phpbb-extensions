@@ -1,0 +1,49 @@
+<!-- IF S_GTAW_TRACKER_ENABLED -->
+<div class="panel bg1" id="gtaw_tracker_panel">
+	<div class="inner">
+		<h3>{L_GTAW_TRACKER}</h3>
+		<div id="gtaw_tracker_content">
+			<p>{L_GTAW_TRACKER_LOADING}</p>
+		</div>
+	</div>
+</div>
+
+<script>
+(function($) {
+	'use strict';
+
+	$(document).ready(function() {
+		var url = '{U_GTAW_TRACKER_AJAX}';
+		var container = $('#gtaw_tracker_content');
+
+		$.ajax({
+			url: url,
+			type: 'GET',
+			dataType: 'json',
+			success: function(response) {
+				if (response.characters && response.characters.length > 0) {
+					var html = '<table class="table1" style="width: 100%;"><thead><tr><th>Character</th><th>Rank</th><th>ABAS</th></tr></thead><tbody>';
+
+					$.each(response.characters, function(i, char) {
+						html += '<tr><td>' + char.name + '</td><td>' + char.rank + '</td><td>' + char.abas + '</td></tr>';
+					});
+
+					html += '</tbody><tfoot><tr><td colspan="2" style="text-align: right; font-weight: bold;">{L_GTAW_TRACKER_TOTAL_ABAS}:</td><td style="font-weight: bold;">' + response.total_abas + '</td></tr></tfoot></table>';
+
+					container.html(html);
+				} else {
+					container.html('<p>{L_GTAW_TRACKER_NO_CHARACTER}</p>');
+				}
+			},
+			error: function(xhr, status, error) {
+				var msg = '{L_GTAW_TRACKER_ERROR}';
+				if (xhr.responseJSON && xhr.responseJSON.error) {
+					msg = xhr.responseJSON.error;
+				}
+				container.html('<p class="error">' + msg + '</p>');
+			}
+		});
+	});
+})(jQuery);
+</script>
+<!-- ENDIF -->
