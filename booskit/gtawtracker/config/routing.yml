@@ -1,0 +1,5 @@
+booskit_gtawtracker_ajax:
+    path: /gtaw/tracker/ajax/{user_id}
+    defaults: { _controller: 'booskit.gtawtracker.controller.ajax:fetch_data' }
+    requirements:
+        user_id: \d+
