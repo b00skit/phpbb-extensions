@@ -33,12 +33,10 @@ class callback
         $code = $this->request->variable('code', '');
         $state = $this->request->variable('state', '');
 
-        // Check if this is a known linking state
-        $linking_user_id = $this->get_user_from_state($state);
-
-        if ($linking_user_id) {
-            // It is a Linking attempt
-            $this->handle_linking($code, $linking_user_id);
+        // Determine context: Linking or Login
+        // We assume it's linking if the user is registered AND the state matches the linking hash
+        if ($this->user->data['is_registered'] && check_link_hash($state, 'gtaw_oauth_link')) {
+            $this->handle_linking($code);
         } else {
             // Otherwise, treat it as a login attempt
             $this->handle_login();
@@ -48,58 +46,19 @@ class callback
         return new \Symfony\Component\HttpFoundation\Response('');
     }
 
-    protected function get_user_from_state($state)
+    protected function handle_linking($code)
     {
-        if (empty($state)) {
-            return 0;
-        }
-
-        $sql = 'SELECT user_id, expires_at FROM ' . $this->table_prefix . 'booskit_oauth_states
-                WHERE state = \'' . $this->db->sql_escape($state) . '\'';
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        if ($row) {
-            // Delete used state
-            $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_states
-                    WHERE state = \'' . $this->db->sql_escape($state) . '\'';
-            $this->db->sql_query($sql);
-
-            // Check expiry
-            if (time() > $row['expires_at']) {
-                return 0;
-            }
-            return (int) $row['user_id'];
-        }
-
-        return 0;
-    }
-
-    protected function handle_linking($code, $target_user_id)
-    {
-        // Ensure we are logged in as the correct user
-        if ($this->user->data['user_id'] != $target_user_id) {
-            // Session lost or mismatch. Force login.
-            $this->user->session_create($target_user_id, false, true, true);
-        }
-
         // For linking, we need to perform the token exchange manually using the provider
         // Note: The provider's get_redirect_uri() now returns the unified callback,
         // so we don't need to set a custom one (unless we want to verify it matches).
         // The provider uses get_redirect_uri() inside request_access_token().
 
-        $token_data = $this->provider->perform_token_exchange($code);
-        if (!$token_data || !isset($token_data['access_token'])) {
+        $token = $this->provider->perform_token_exchange($code);
+        if (!$token) {
             trigger_error($this->language->lang('GTAW_LINK_FAILED_TOKEN'), E_USER_WARNING);
         }
 
-        $access_token = $token_data['access_token'];
-        $refresh_token = isset($token_data['refresh_token']) ? $token_data['refresh_token'] : '';
-        $expires_in = isset($token_data['expires_in']) ? (int) $token_data['expires_in'] : 3600;
-        $expires_at = time() + $expires_in;
-
-        $user_info = $this->provider->fetch_user_info($access_token);
+        $user_info = $this->provider->fetch_user_info($token);
         if (!$user_info) {
              trigger_error($this->language->lang('GTAW_LINK_FAILED_USER'), E_USER_WARNING);
         }
@@ -142,24 +101,6 @@ class callback
             $this->db->sql_query($sql);
         }
 
-        // Store Token Data
-        // Remove old tokens
-        $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_tokens
-            WHERE user_id = ' . (int) $this->user->data['user_id'] . '
-            AND provider = \'gtaw\'';
-        $this->db->sql_query($sql);
-
-        // Add new tokens
-        $sql_ary = [
-            'user_id'       => (int) $this->user->data['user_id'],
-            'provider'      => 'gtaw',
-            'access_token'  => (string) $access_token,
-            'refresh_token' => (string) $refresh_token,
-            'expires_at'    => (int) $expires_at,
-        ];
-        $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_tokens ' . $this->db->sql_build_array('INSERT', $sql_ary);
-        $this->db->sql_query($sql);
-
         // Redirect back to UCP
         global $phpEx;
         // Construct UCP URL for the module
@@ -169,36 +110,23 @@ class callback
         // The previous code used: ucp.php?i=-booskit-gtawoauth-ucp-gtaw_module&mode=link
         // Note the hyphens replacing dots.
 
-        $redirect_url = append_sid(generate_board_url() . '/ucp.' . $phpEx, 'i=-booskit-gtawoauth-ucp-gtaw_module&mode=link', true, $this->user->session_id);
+        $redirect_url = append_sid(generate_board_url() . '/ucp.' . $phpEx, 'i=-booskit-gtawoauth-ucp-gtaw_module&mode=link');
         redirect($redirect_url);
     }
 
     protected function handle_login()
     {
-        // Manual token exchange to capture tokens
-        $code = $this->request->variable('code', '');
-
-        $token_data = $this->provider->perform_token_exchange($code);
-        if (!$token_data || !isset($token_data['access_token'])) {
+        // Use the provider to exchange code for external user ID
+        try {
+            // perform_auth_login will exchange code and return the external user ID
+            $external_id = $this->provider->perform_auth_login();
+        } catch (\Exception $e) {
             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
         }
 
-        $access_token = $token_data['access_token'];
-        $refresh_token = isset($token_data['refresh_token']) ? $token_data['refresh_token'] : '';
-        $expires_in = isset($token_data['expires_in']) ? (int) $token_data['expires_in'] : 3600;
-        $expires_at = time() + $expires_in;
-
-        $user_info = $this->provider->fetch_user_info($access_token);
-        if (!$user_info) {
-             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
+        if (!$external_id) {
+            trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
         }
-
-        $user_details = $this->provider->get_user_details($user_info);
-        if (!$user_details || !isset($user_details['user_id'])) {
-             trigger_error('LOGIN_ERROR_EXTERNAL_AUTH', E_USER_WARNING);
-        }
-
-        $external_id = $user_details['user_id'];
 
         // Check if there is a local user linked to this external ID
         $sql = 'SELECT user_id FROM ' . $this->table_prefix . 'oauth_accounts
@@ -211,24 +139,6 @@ class callback
             // Found a linked user, log them in
             $user_id = (int) $row['user_id'];
 
-            // Save tokens
-            // Remove old tokens
-            $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_tokens
-                WHERE user_id = ' . (int) $user_id . '
-                AND provider = \'gtaw\'';
-            $this->db->sql_query($sql);
-
-            // Add new tokens
-            $sql_ary = [
-                'user_id'       => (int) $user_id,
-                'provider'      => 'gtaw',
-                'access_token'  => (string) $access_token,
-                'refresh_token' => (string) $refresh_token,
-                'expires_at'    => (int) $expires_at,
-            ];
-            $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_tokens ' . $this->db->sql_build_array('INSERT', $sql_ary);
-            $this->db->sql_query($sql);
-
             // Create session
             $result = $this->user->session_create($user_id, false, true, true);
 
@@ -237,14 +147,9 @@ class callback
                  global $phpEx;
                  $redirect = $this->request->variable('redirect', "index.$phpEx");
                  $url = redirect($redirect, true);
-
                  if (!$url) {
-                     $url = generate_board_url() . "/index.$phpEx";
+                     $url = append_sid(generate_board_url() . "/index.$phpEx");
                  }
-
-                 // Force SID in URL to handle cross-site cookie restrictions
-                 $url = append_sid($url, false, true, $this->user->session_id);
-
                  redirect($url);
             } else {
                  trigger_error('LOGIN_ERROR_UNKNOWN', E_USER_WARNING);

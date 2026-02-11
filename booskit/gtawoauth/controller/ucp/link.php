@@ -79,25 +79,12 @@ class link
             // Generate Link URL
             // We use the default redirect URI from the provider (which is now the unified callback)
 
-            // Generate custom state for session preservation
-            $state = gen_rand_string(32);
-            $expires_at = time() + 300; // 5 minutes validity
-
-            // Store state
-            $sql_ary = [
-                'state'      => (string) $state,
-                'user_id'    => (int) $this->user->data['user_id'],
-                'expires_at' => (int) $expires_at,
-            ];
-            $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_states ' . $this->db->sql_build_array('INSERT', $sql_ary);
-            $this->db->sql_query($sql);
-
             $url = $this->provider->get_auth_endpoint();
             $params = [
                 'response_type' => 'code',
                 'client_id' => $this->config['auth_oauth_gtaw_key'],
                 'redirect_uri' => $this->provider->get_redirect_uri(),
-                'state' => $state,
+                'state' => generate_link_hash('gtaw_oauth_link'),
             ];
 
             $link_url = $url . '?' . http_build_query($params);

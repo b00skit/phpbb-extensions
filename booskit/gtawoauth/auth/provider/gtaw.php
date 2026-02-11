@@ -64,46 +64,9 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
         return $this->request_access_token($code);
     }
 
-    public function perform_token_refresh($refresh_token)
-    {
-        return $this->refresh_access_token($refresh_token);
-    }
-
     public function fetch_user_info($token)
     {
         return $this->request_user_details($token);
-    }
-
-    public function perform_api_request($url, $token, $method = 'GET', $data = [])
-    {
-        $headers = [
-            "Authorization: Bearer " . $token,
-            "Accept: application/json"
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'phpBB GTA:W OAuth Extension');
-
-        if ($method === 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-            if (!empty($data)) {
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            }
-        }
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($http_code >= 400) {
-            return null;
-        }
-
-        return json_decode($response, true);
     }
 
     /**
@@ -171,38 +134,7 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
         }
 
         $json = json_decode($response, true);
-        return $json;
-    }
-
-    protected function refresh_access_token($refresh_token)
-    {
-        $redirect_uri = $this->get_redirect_uri();
-        $post_data = [
-            'grant_type'    => 'refresh_token',
-            'client_id'     => $this->config['auth_oauth_gtaw_key'],
-            'client_secret' => $this->config['auth_oauth_gtaw_secret'],
-            'refresh_token' => $refresh_token,
-            'redirect_uri'  => $redirect_uri,
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->get_token_endpoint());
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'phpBB GTA:W OAuth Extension');
-
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($error) {
-            return null;
-        }
-
-        $json = json_decode($response, true);
-        return $json;
+        return isset($json['access_token']) ? $json['access_token'] : null;
     }
 
     /**
@@ -278,12 +210,10 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
         // $state = $this->request->variable('state', '');
         // $this->state_manager->check_state($state);
 
-        $token_data = $this->request_access_token($code);
-        if (!$token_data || !isset($token_data['access_token'])) {
+        $access_token = $this->request_access_token($code);
+        if (!$access_token) {
             throw new \phpbb\auth\provider\oauth\service\exception('AUTH_PROVIDER_OAUTH_ERROR_REQUEST');
         }
-
-        $access_token = $token_data['access_token'];
 
         $user_info = $this->request_user_details($access_token);
         if (!$user_info) {
