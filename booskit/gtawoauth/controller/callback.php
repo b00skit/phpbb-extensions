@@ -169,7 +169,7 @@ class callback
         // The previous code used: ucp.php?i=-booskit-gtawoauth-ucp-gtaw_module&mode=link
         // Note the hyphens replacing dots.
 
-        $redirect_url = append_sid(generate_board_url() . '/ucp.' . $phpEx, 'i=-booskit-gtawoauth-ucp-gtaw_module&mode=link');
+        $redirect_url = append_sid(generate_board_url() . '/ucp.' . $phpEx, 'i=-booskit-gtawoauth-ucp-gtaw_module&mode=link', true, $this->user->session_id);
         redirect($redirect_url);
     }
 
@@ -237,9 +237,14 @@ class callback
                  global $phpEx;
                  $redirect = $this->request->variable('redirect', "index.$phpEx");
                  $url = redirect($redirect, true);
+
                  if (!$url) {
-                     $url = append_sid(generate_board_url() . "/index.$phpEx");
+                     $url = generate_board_url() . "/index.$phpEx";
                  }
+
+                 // Force SID in URL to handle cross-site cookie restrictions
+                 $url = append_sid($url, false, true, $this->user->session_id);
+
                  redirect($url);
             } else {
                  trigger_error('LOGIN_ERROR_UNKNOWN', E_USER_WARNING);
