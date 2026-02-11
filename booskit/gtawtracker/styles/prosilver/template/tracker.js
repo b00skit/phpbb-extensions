@@ -17,17 +17,25 @@
 			dataType: 'json',
 			success: function(response) {
 				if (response.characters && response.characters.length > 0) {
-					var html = '<table class="table1" style="width: 100%;"><thead><tr><th>Character</th><th>Rank</th><th>ABAS</th></tr></thead><tbody>';
+					var html = '<table class="gtaw-tracker-table"><thead><tr><th>Character</th><th>Rank</th><th>ABAS</th></tr></thead><tbody>';
 
 					$.each(response.characters, function(i, char) {
-						html += '<tr><td>' + char.name + '</td><td>' + char.rank + '</td><td>' + char.abas + '</td></tr>';
+						var pillClass = 'abas-pill' + (char.is_low ? ' low' : '');
+						html += '<tr><td>' + char.name + '</td><td>' + char.rank + '</td><td><span class="' + pillClass + '">' + char.abas + '</span></td></tr>';
 					});
 
-					html += '</tbody><tfoot><tr><td colspan="2" style="text-align: right; font-weight: bold;">' + langTotal + ':</td><td style="font-weight: bold;">' + response.total_abas + '</td></tr></tfoot></table>';
+					html += '</tbody></table>';
+
+					// Footer
+					var totalClass = 'total-value' + (response.total_abas_low ? ' low' : '');
+					html += '<div class="gtaw-tracker-footer">';
+					html += '<span>Total Characters: <strong>' + response.total_characters + '</strong></span>';
+					html += '<span>' + langTotal + ': <span class="' + totalClass + '">' + response.total_abas + '</span></span>';
+					html += '</div>';
 
 					container.html(html);
 				} else {
-					container.html('<p>' + langNoChar + '</p>');
+					container.html('<div class="gtaw-tracker-error"><span class="error-icon">⚠</span><span class="error-msg">' + langNoChar + '</span></div>');
 				}
 			},
 			error: function(xhr, status, error) {
@@ -35,7 +43,7 @@
 				if (xhr.responseJSON && xhr.responseJSON.error) {
 					msg = xhr.responseJSON.error;
 				}
-				container.html('<p class="error">' + msg + '</p>');
+				container.html('<div class="gtaw-tracker-error"><span class="error-icon">⚠</span><span class="error-msg">' + msg + '</span></div>');
 			}
 		});
 	});
