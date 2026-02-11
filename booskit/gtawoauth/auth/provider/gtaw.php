@@ -53,8 +53,6 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
             $uri = $this->helper->route('booskit_gtawoauth_callback', [], UrlGeneratorInterface::ABSOLUTE_URL);
         }
 
-        $uri = append_sid($uri);
-
         // Ensure parent property is synced
         $this->redirect_uri = $uri;
 

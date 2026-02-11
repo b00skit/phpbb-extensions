@@ -33,10 +33,12 @@ class callback
         $code = $this->request->variable('code', '');
         $state = $this->request->variable('state', '');
 
-        // Determine context: Linking or Login
-        // We assume it's linking if the user is registered AND the state matches the linking hash
-        if ($this->user->data['is_registered'] && check_link_hash($state, 'gtaw_oauth_link')) {
-            $this->handle_linking($code);
+        // Check if this is a known linking state
+        $linking_user_id = $this->get_user_from_state($state);
+
+        if ($linking_user_id) {
+            // It is a Linking attempt
+            $this->handle_linking($code, $linking_user_id);
         } else {
             // Otherwise, treat it as a login attempt
             $this->handle_login();
@@ -46,8 +48,42 @@ class callback
         return new \Symfony\Component\HttpFoundation\Response('');
     }
 
-    protected function handle_linking($code)
+    protected function get_user_from_state($state)
     {
+        if (empty($state)) {
+            return 0;
+        }
+
+        $sql = 'SELECT user_id, expires_at FROM ' . $this->table_prefix . 'booskit_oauth_states
+                WHERE state = \'' . $this->db->sql_escape($state) . '\'';
+        $result = $this->db->sql_query($sql);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if ($row) {
+            // Delete used state
+            $sql = 'DELETE FROM ' . $this->table_prefix . 'booskit_oauth_states
+                    WHERE state = \'' . $this->db->sql_escape($state) . '\'';
+            $this->db->sql_query($sql);
+
+            // Check expiry
+            if (time() > $row['expires_at']) {
+                return 0;
+            }
+            return (int) $row['user_id'];
+        }
+
+        return 0;
+    }
+
+    protected function handle_linking($code, $target_user_id)
+    {
+        // Ensure we are logged in as the correct user
+        if ($this->user->data['user_id'] != $target_user_id) {
+            // Session lost or mismatch. Force login.
+            $this->user->session_create($target_user_id, false, true, true);
+        }
+
         // For linking, we need to perform the token exchange manually using the provider
         // Note: The provider's get_redirect_uri() now returns the unified callback,
         // so we don't need to set a custom one (unless we want to verify it matches).
