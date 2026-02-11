@@ -18,7 +18,7 @@ class add_token_storage extends \phpbb\db\migration\migration
                         'provider'      => array('VCHAR:255', ''),
                         'access_token'  => array('TEXT', ''),
                         'refresh_token' => array('TEXT', ''),
-                        'expires_at'    => array('UINT', 0),
+                        'expires_at'    => array('UINT:11', 0),
                     ),
                     'PRIMARY_KEY' => 'user_id',
                 ),
