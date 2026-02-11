@@ -116,7 +116,7 @@ class listener implements EventSubscriberInterface
         }
 
 		// Permissions for Buttons
-		$can_add_character = ($viewer_level >= 2);
+		$can_add_character = ($viewer_level >= 1);
 		$can_archive_character = ($viewer_level >= 2 && $current_character);
 		$can_delete_character = ($viewer_level >= 4 && $current_character);
 		$can_add_record = ($current_character && ($viewer_level == 4 || $viewer_level > $target_level)); // Logic verified above implies we are already authorized to view, so just need char selected.

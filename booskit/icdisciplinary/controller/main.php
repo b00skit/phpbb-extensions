@@ -53,8 +53,8 @@ class main
 	{
 		$viewer_level = $this->check_auth();
 
-		// Requirement: Level 2 access can create a new character
-		if ($viewer_level < 2)
+		// Requirement: Level 1 access can create a new character
+		if ($viewer_level < 1)
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
