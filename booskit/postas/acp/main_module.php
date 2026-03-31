@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\acp;
+namespace booskit\postas\acp;
 
 /**
  * Post As ACP module.
@@ -30,13 +30,13 @@ class main_module
 	{
 		global $phpbb_container;
 
-		/** @var \phpbb\postas\controller\acp_controller $acp_controller */
-		$acp_controller = $phpbb_container->get('phpbb.postas.controller.acp');
+		/** @var \booskit\postas\controller\acp_controller $acp_controller */
+		$acp_controller = $phpbb_container->get('booskit.postas.controller.acp');
 
 		/** @var \phpbb\language\language $language */
 		$language = $phpbb_container->get('language');
 		// Ensure our language strings are available
-		$language->add_lang('acp_postas', 'phpbb/postas');
+		$language->add_lang('acp_postas', 'booskit/postas');
 
 		// Load a template from adm/style for our ACP page
 		$this->tpl_name = 'acp_postas_body';

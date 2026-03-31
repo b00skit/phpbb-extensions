@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\migrations;
+namespace booskit\postas\migrations;
 
 class add_config extends \phpbb\db\migration\migration
 {
@@ -19,7 +19,7 @@ class add_config extends \phpbb\db\migration\migration
 
 	public static function depends_on()
 	{
-		return ['\phpbb\postas\migrations\install_postas_table'];
+		return ['\booskit\postas\migrations\install_postas_table'];
 	}
 
 	public function update_data()

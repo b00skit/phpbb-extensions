@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\event;
+namespace booskit\postas\event;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -66,7 +66,7 @@ class listener implements EventSubscriberInterface
 	public function inject_postas_dropdown($event)
 	{
 		// Load language file
-		$this->user->add_lang_ext('phpbb/postas', 'postas');
+		$this->user->add_lang_ext('booskit/postas', 'postas');
 
 		// Get mode and post_id from request
 		$mode = $this->request->variable('mode', '');
@@ -161,7 +161,7 @@ class listener implements EventSubscriberInterface
 
 	public function inject_postas_dropdown_pm($event)
 	{
-		$this->user->add_lang_ext('phpbb/postas', 'postas');
+		$this->user->add_lang_ext('booskit/postas', 'postas');
 		$altchars = $this->get_user_altchars($this->user->data['user_id']);
 		if (empty($altchars))
 		{

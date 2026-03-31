@@ -3,7 +3,7 @@
  * Install ACP module for Post As
  */
 
-namespace phpbb\postas\migrations;
+namespace booskit\postas\migrations;
 
 class install_acp_module extends \phpbb\db\migration\migration
 {
@@ -22,7 +22,7 @@ class install_acp_module extends \phpbb\db\migration\migration
 
     public static function depends_on()
     {
-        return ['\\phpbb\\postas\\migrations\\install_postas_table'];
+        return ['\\booskit\\postas\\migrations\\install_postas_table'];
     }
 
     public function update_data()
@@ -32,7 +32,7 @@ class install_acp_module extends \phpbb\db\migration\migration
             ['module.add', ['acp', 'ACP_CAT_DOT_MODS', 'ACP_POSTAS_TITLE']],
             // Add settings mode for our module
             ['module.add', ['acp', 'ACP_POSTAS_TITLE', [
-                'module_basename' => '\\phpbb\\postas\\acp\\main_module',
+                'module_basename' => '\\booskit\\postas\\acp\\main_module',
                 'module_langname' => 'ACP_POSTAS_SETTINGS',
                 'module_mode'     => 'settings',
                 'module_auth'     => 'acl_a_board',

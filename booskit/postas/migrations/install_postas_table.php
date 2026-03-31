@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\migrations;
+namespace booskit\postas\migrations;
 
 /**
  * Migration to create postas table

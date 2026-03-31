@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\migrations;
+namespace booskit\postas\migrations;
 
 /**
  * Migration to add reverted column to postas table
@@ -22,7 +22,7 @@ class add_reverted_column extends \phpbb\db\migration\migration
 
 	public static function depends_on()
 	{
-		return ['\phpbb\postas\migrations\install_postas_table'];
+		return ['\booskit\postas\migrations\install_postas_table'];
 	}
 
 	public function update_schema()

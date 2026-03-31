@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas;
+namespace booskit\postas;
 
 /**
  * Post As extension.

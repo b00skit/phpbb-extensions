@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\controller;
+namespace booskit\postas\controller;
 
 /**
  * Post As ACP controller.
@@ -75,7 +75,7 @@ class acp_controller
 	public function display_options()
 	{
 		// Add our extension language file
-		$this->language->add_lang('acp_postas', 'phpbb/postas');
+		$this->language->add_lang('acp_postas', 'booskit/postas');
 
 		// Create a form key for preventing CSRF attacks
 		add_form_key('postas_acp_config');

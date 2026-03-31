@@ -8,7 +8,7 @@
  *
  */
 
-namespace phpbb\postas\acp;
+namespace booskit\postas\acp;
 
 /**
  * Post As ACP module info.
@@ -18,7 +18,7 @@ class main_info
 	public function module()
 	{
 		return array(
-			'filename'	=> '\\phpbb\\postas\\acp\\main_module',
+			'filename'	=> '\\booskit\\postas\\acp\\main_module',
 			'title' => 'ACP_POSTAS_TITLE',
 			'modes' => array(
 				'settings' => array(

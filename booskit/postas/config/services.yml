@@ -1,9 +1,9 @@
 parameters:
-    phpbb.postas.postas_table: '%core.table_prefix%phpbb_postas'
+    booskit.postas.postas_table: '%core.table_prefix%phpbb_postas'
 
 services:
-    phpbb.postas.listener:
-        class: phpbb\postas\event\listener
+    booskit.postas.listener:
+        class: booskit\postas\event\listener
         arguments:
             - '@dbal.conn'
             - '@user'
@@ -13,8 +13,8 @@ services:
             - '@config'
         tags:
             - { name: event.listener }
-    phpbb.postas.controller.acp:
-        class: phpbb\postas\controller\acp_controller
+    booskit.postas.controller.acp:
+        class: booskit\postas\controller\acp_controller
         arguments:
             - '@config'
             - '@language'

@@ -1,5 +1,5 @@
 {
-    "name": "phpbb/postas",
+    "name": "booskit/postas",
     "type": "phpbb-extension",
     "description": "Post as alternative characters - shows alt char name color and rank image while keeping main user attributes",
     "homepage": "",
