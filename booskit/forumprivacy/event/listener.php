@@ -229,17 +229,49 @@ class listener implements EventSubscriberInterface
 	{
 		$forum_id = (int) $event['forum_id'];
 		$topic_data = $event['topic_data'];
-		
+		$auth_ary = $event['auth_ary'];
+		$mode = $this->request->variable('mode', '');
+
+		// If we don't have topic_data but we have a topic_id in request, try to fetch it
+		if (!$topic_data)
+		{
+			$topic_id = $this->request->variable('t', 0);
+			if (!$topic_id && $this->request->variable('p', 0))
+			{
+				$post_id = $this->request->variable('p', 0);
+				$sql = 'SELECT topic_id FROM ' . POSTS_TABLE . ' WHERE post_id = ' . (int) $post_id;
+				$result = $this->db->sql_query($sql);
+				$topic_id = (int) $this->db->sql_fetchfield('topic_id');
+				$this->db->sql_freeresult($result);
+			}
+
+			if ($topic_id)
+			{
+				$sql = 'SELECT topic_poster, topic_type FROM ' . TOPICS_TABLE . ' WHERE topic_id = ' . (int) $topic_id;
+				$result = $this->db->sql_query($sql);
+				$topic_data = $this->db->sql_fetchrow($result);
+				$this->db->sql_freeresult($result);
+			}
+		}
+
 		if ($topic_data && isset($topic_data['topic_poster']))
 		{
 			if (!$this->auth->acl_get('f_post_others_topics', $forum_id))
 			{
 				if ($topic_data['topic_type'] == 0 && $topic_data['topic_poster'] != $this->user->data['user_id'])
 				{
-					$event['auth_ary'] = array_merge($event['auth_ary'], ['f_reply' => false]);
+					// If we are actually in posting.php and trying to reply/quote, stop it
+					if (in_array($mode, ['reply', 'quote']))
+					{
+						trigger_error('NOT_AUTHORISED');
+					}
+
+					$auth_ary['f_reply'] = false;
 				}
 			}
 		}
+
+		$event['auth_ary'] = $auth_ary;
 	}
 
 	public function modify_display_forums_sql($event)
