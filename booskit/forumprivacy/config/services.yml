@@ -1,0 +1,12 @@
+services:
+    booskit.forumprivacy.listener:
+        class: booskit\forumprivacy\event\listener
+        arguments:
+            - '@auth'
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
