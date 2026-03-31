@@ -49,23 +49,23 @@
 	</dl>
 
 	<dl>
-		<dt><label for="booskit_disciplinary_access_view_local">Local View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dt><label for="booskit_disciplinary_access_view_local">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL_EXPLAIN') }}</span></dt>
 		<dd><input type="text" id="booskit_disciplinary_access_view_local" name="booskit_disciplinary_access_view_local" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL }}" size="50"></dd>
 	</dl>
 	<dl>
-		<dt><label for="booskit_disciplinary_access_view_exempted">Exempted Local View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dt><label for="booskit_disciplinary_access_view_exempted">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED_EXPLAIN') }}</span></dt>
 		<dd><input type="text" id="booskit_disciplinary_access_view_exempted" name="booskit_disciplinary_access_view_exempted" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED }}" size="50"></dd>
 	</dl>
 	<dl>
-		<dt><label for="booskit_disciplinary_access_view_limited">Limited View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dt><label for="booskit_disciplinary_access_view_limited">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_EXPLAIN') }}</span></dt>
 		<dd><input type="text" id="booskit_disciplinary_access_view_limited" name="booskit_disciplinary_access_view_limited" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED }}" size="50"></dd>
 	</dl>
 	<dl>
-		<dt><label for="booskit_disciplinary_access_view_global">Global View Access{{ lang('COLON') }}</label><br><span>Comma separated group IDs.</span></dt>
+		<dt><label for="booskit_disciplinary_access_view_global">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
 		<dd><input type="text" id="booskit_disciplinary_access_view_global" name="booskit_disciplinary_access_view_global" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
 	</dl>
 	<dl>
-		<dt><label for="booskit_disciplinary_access_view_limited_map">Limited View Mapping{{ lang('COLON') }}</label><br><span>Format: ViewerGroupID:TargetGroupID,TargetGroupID (one per line).</span></dt>
+		<dt><label for="booskit_disciplinary_access_view_limited_map">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP_EXPLAIN') }}</span></dt>
 		<dd><textarea name="booskit_disciplinary_access_view_limited_map" id="booskit_disciplinary_access_view_limited_map" rows="5" cols="60">{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP }}</textarea></dd>
 	</dl>
 
@@ -87,8 +87,8 @@
 			<th>{{ lang('DESCRIPTION') }}</th>
 			<th>{{ lang('COLOR') }}</th>
 			<th>{{ lang('ACCESS_LEVEL') }}</th>
-			<th>Locally Viewable</th>
-			<th>Globally Viewable</th>
+			<th>{{ lang('BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE') }}</th>
+			<th>{{ lang('BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE') }}</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
 		</thead>
@@ -135,11 +135,11 @@
 			<dd><input type="number" name="new_access_level" value="0" min="0" max="4" style="width: 50px;" /></dd>
 		</dl>
 		<dl>
-			<dt>Locally Viewable</dt>
+			<dt>{{ lang('BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE') }}</dt>
 			<dd><input type="checkbox" name="new_locally_viewable" value="1" /></dd>
 		</dl>
 		<dl>
-			<dt>Globally Viewable</dt>
+			<dt>{{ lang('BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE') }}</dt>
 			<dd><input type="checkbox" name="new_globally_viewable" value="1" /></dd>
 		</dl>
 		<p class="submit-buttons">

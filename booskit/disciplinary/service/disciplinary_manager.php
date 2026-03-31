@@ -372,20 +372,17 @@ class disciplinary_manager
 		$access_limited = $this->get_config_groups('booskit_disciplinary_access_view_limited');
 		$access_global = $this->get_config_groups('booskit_disciplinary_access_view_global');
 
-		// Exempted Local View -> All records, no evidence
-		if (array_intersect($viewer_groups, $access_exempted))
+		// 2.1 Self View Access (Full/Exempted) -> Own records, WITH evidence, must be locally viewable
+		if ($viewer_id == $target_user_id && array_intersect($viewer_groups, $access_exempted))
 		{
-			return ['allowed' => true, 'show_evidence' => false];
+			if (!empty($definition['locally_viewable']))
+			{
+				return ['allowed' => true, 'show_evidence' => true];
+			}
 		}
 
-		// Global View -> All records, no evidence
-		if (array_intersect($viewer_groups, $access_global))
-		{
-			return ['allowed' => true, 'show_evidence' => false];
-		}
-
-		// Local View -> Locally Viewable records, no evidence
-		if (array_intersect($viewer_groups, $access_local))
+		// 2.2 Self View Access (No Evidence/Local) -> Own records, NO evidence, must be locally viewable
+		if ($viewer_id == $target_user_id && array_intersect($viewer_groups, $access_local))
 		{
 			if (!empty($definition['locally_viewable']))
 			{
@@ -393,7 +390,13 @@ class disciplinary_manager
 			}
 		}
 
-		// Limited View -> Globally Viewable records AND target in mapped group, no evidence
+		// 2.3 Unrestricted View Access (Global) -> All records for any user, NO evidence
+		if (array_intersect($viewer_groups, $access_global))
+		{
+			return ['allowed' => true, 'show_evidence' => false];
+		}
+
+		// 2.4 Mapped View Access (Limited) -> Globally Viewable records AND target in mapped group, NO evidence
 		if (array_intersect($viewer_groups, $access_limited))
 		{
 			if (!empty($definition['globally_viewable']))

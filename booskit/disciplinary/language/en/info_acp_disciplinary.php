@@ -43,6 +43,17 @@ $lang = array_merge($lang, array(
 	'BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS' => 'Local Definitions',
 	'BOOSKIT_DISCIPLINARY_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the disciplinary definitions here when "Local Settings" is selected.',
 
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL'			=> 'Self View Access (No Evidence)',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL_EXPLAIN'	=> 'Comma separated group IDs. Members can view their OWN disciplinary actions marked as "Locally Viewable" (evidence hidden).',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED'			=> 'Self View Access (Full)',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED_EXPLAIN'	=> 'Comma separated group IDs. Members can view their OWN disciplinary actions marked as "Locally Viewable" (evidence shown).',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED'			=> 'Mapped Group View Access',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_EXPLAIN'	=> 'Comma separated group IDs. Members can view actions marked as "Globally Viewable" ONLY if the target user is in a group mapped to the viewer\'s group in the "Limited View Mapping" (evidence hidden).',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL'			=> 'Unrestricted View Access',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL_EXPLAIN'	=> 'Comma separated group IDs. Members can view ALL disciplinary actions for any user (evidence hidden).',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP'			=> 'Mapped View Mapping',
+	'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP_EXPLAIN'	=> 'Format: ViewerGroupID:TargetGroupID,TargetGroupID (one per line). Defines which target groups a "Mapped Group View Access" group is allowed to see. Example: 5:10,11 means Group 5 can see actions for members of Group 10 and 11.',
+
 	'ID' => 'ID',
 	'NAME' => 'Name',
 	'DESCRIPTION' => 'Description',
@@ -52,4 +63,7 @@ $lang = array_merge($lang, array(
 	'ADD' => 'Add',
 	'UPDATE' => 'Update',
 	'DELETE' => 'Delete',
+
+	'BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE' => 'Self Viewable',
+	'BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE' => 'Mapped Viewable',
 ));
