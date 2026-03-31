@@ -1,0 +1,10 @@
+services:
+    booskit.privacyforums.listener:
+        class: booskit\privacyforums\event\listener
+        arguments:
+            - '@auth'
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+        tags:
+            - { name: event.listener }
