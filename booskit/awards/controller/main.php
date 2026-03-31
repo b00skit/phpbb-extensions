@@ -104,6 +104,7 @@ class main
 					if (is_array($fields_config))
 					{
 						$custom_fields_data = $this->request->variable('custom_fields', array('' => ''), true);
+						$poster_id = !empty($def['public_posting_poster_id']) ? (int) $def['public_posting_poster_id'] : (int) $this->user->data['user_id'];
 
 						$replacements = [
 							'{#type}' => $def['name'],
@@ -111,7 +112,7 @@ class main
 							'{#date}' => strtoupper(date('d/M/Y', $issue_date)),
 							'{#target}' => $this->award_manager->get_username_string($user_id),
 							'{#userGroup}' => $this->award_manager->get_primary_group_name($user_id),
-							'{#posterGroup}' => $this->award_manager->get_primary_group_name($def['public_posting_poster_id']),
+							'{#posterGroup}' => $this->award_manager->get_primary_group_name($poster_id),
 						];
 
 						foreach ($fields_config as $field)
@@ -124,7 +125,7 @@ class main
 						$subject = strtr($def['public_posting_subject_tpl'], $replacements);
 						$body = strtr($def['public_posting_body_tpl'], $replacements);
 
-						$this->award_manager->create_public_post($def['public_posting_forum_id'], $def['public_posting_poster_id'], $subject, $body);
+						$this->award_manager->create_public_post($def['public_posting_forum_id'], $poster_id, $subject, $body);
 					}
 				}
 			}

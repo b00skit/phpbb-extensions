@@ -537,6 +537,11 @@ class career_manager
 
 	public function create_public_post($forum_id, $poster_id, $subject, $body)
 	{
+		if (empty($poster_id))
+		{
+			$poster_id = $this->user->data['user_id'];
+		}
+
 		if (!function_exists('submit_post'))
 		{
 			include($this->root_path . 'includes/functions_posting.' . $this->php_ext);
@@ -589,25 +594,29 @@ class career_manager
 			'notify'				=> false,
 		];
 
-		// If poster_id is different from current user, submit_post might log it as current user unless we trick it.
-		// submit_post calculates permissions based on $user->data.
-		// If we want to post as another user, the cleanest way in phpBB is usually to overwrite $user->data temporarily or ensure $data['poster_id'] is set (which it is).
-		// However, submit_post uses $user->data['username'] for the author name if poster_id is current user.
-		// If poster_id != current user, we might need to fetch the username.
+		// If poster_id is different from current user, we need to temporarily swap user data
+		// so submit_post uses the correct poster_id and permissions.
+		$user_data_backup = $this->user->data;
 
 		if ($poster_id != $this->user->data['user_id'])
 		{
-			$sql = 'SELECT username FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $poster_id;
+			$sql = 'SELECT * FROM ' . USERS_TABLE . ' WHERE user_id = ' . (int) $poster_id;
 			$result = $this->db->sql_query($sql);
-			$username = $this->db->sql_fetchfield('username');
+			$poster_row = $this->db->sql_fetchrow($result);
 			$this->db->sql_freeresult($result);
-		}
-		else
-		{
-			$username = $this->user->data['username'];
+
+			if ($poster_row)
+			{
+				$this->user->data = array_merge($this->user->data, $poster_row);
+			}
 		}
 
+		$username = $this->user->data['username'];
+
 		submit_post('post', $subject, $username, POST_NORMAL, $poll, $data);
+
+		// Restore original user data
+		$this->user->data = $user_data_backup;
 
 		return $data['post_id'];
 	}
