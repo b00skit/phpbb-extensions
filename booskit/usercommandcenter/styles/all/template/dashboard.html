@@ -1,0 +1,157 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h2 class="forum-title">{{ lang('UCC_DASHBOARD') }}</h2>
+
+<div id="ucc-dashboard">
+	{% if S_SHOW_AWARDS %}
+	<div class="ucc-card">
+		<div class="ucc-card-header">
+			{{ lang('UCC_AWARDS_TITLE') }}
+		</div>
+		<div class="ucc-card-body">
+			{% for award in awards %}
+			<div class="ucc-item">
+				<div class="ucc-item-user">
+					<a href="{{ award.U_VIEW }}">{{ award.USERNAME }}</a>
+				</div>
+				<div class="ucc-item-main">
+					<div class="ucc-item-type">{{ award.TYPE }}</div>
+					<div class="ucc-item-content">{{ award.CONTENT }}</div>
+				</div>
+				<div class="ucc-item-meta">
+					<span class="ucc-item-meta-issuer">{{ award.ISSUER }}</span>
+					<span class="ucc-item-meta-date">{{ award.DATE }}</span>
+				</div>
+			</div>
+			{% else %}
+			<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+			{% endfor %}
+		</div>
+		<div class="ucc-card-footer">
+			<a href="{{ U_VIEW_ALL_AWARDS }}" class="button-secondary">{{ lang('UCC_VIEW_ALL') }}</a>
+		</div>
+	</div>
+	{% endif %}
+
+	{% if S_SHOW_CAREER %}
+	<div class="ucc-card">
+		<div class="ucc-card-header">
+			{{ lang('UCC_CAREER_TITLE') }}
+		</div>
+		<div class="ucc-card-body">
+			{% for item in career %}
+			<div class="ucc-item">
+				<div class="ucc-item-user">
+					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
+				</div>
+				<div class="ucc-item-main">
+					<div class="ucc-item-type">{{ item.TYPE }}</div>
+					<div class="ucc-item-content">{{ item.CONTENT }}</div>
+				</div>
+				<div class="ucc-item-meta">
+					<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
+					<span class="ucc-item-meta-date">{{ item.DATE }}</span>
+				</div>
+			</div>
+			{% else %}
+			<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+			{% endfor %}
+		</div>
+		<div class="ucc-card-footer">
+			<a href="{{ U_VIEW_ALL_CAREER }}" class="button-secondary">{{ lang('UCC_VIEW_ALL') }}</a>
+		</div>
+	</div>
+	{% endif %}
+
+	{% if S_SHOW_COMMENDATIONS %}
+	<div class="ucc-card">
+		<div class="ucc-card-header">
+			{{ lang('UCC_COMMENDATIONS_TITLE') }}
+		</div>
+		<div class="ucc-card-body">
+			{% for item in commendations %}
+			<div class="ucc-item">
+				<div class="ucc-item-user">
+					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
+				</div>
+				<div class="ucc-item-main">
+					<div class="ucc-item-type">{{ item.TYPE }}</div>
+					<div class="ucc-item-content">{{ item.CONTENT }}</div>
+				</div>
+				<div class="ucc-item-meta">
+					<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
+					<span class="ucc-item-meta-date">{{ item.DATE }}</span>
+				</div>
+			</div>
+			{% else %}
+			<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+			{% endfor %}
+		</div>
+		<div class="ucc-card-footer">
+			<a href="{{ U_VIEW_ALL_COMMENDATIONS }}" class="button-secondary">{{ lang('UCC_VIEW_ALL') }}</a>
+		</div>
+	</div>
+	{% endif %}
+
+	{% if S_SHOW_DISCIPLINARY %}
+	<div class="ucc-card">
+		<div class="ucc-card-header">
+			{{ lang('UCC_DISCIPLINARY_TITLE') }}
+		</div>
+		<div class="ucc-card-body">
+			{% for item in disciplinary %}
+			<div class="ucc-item">
+				<div class="ucc-item-user">
+					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
+				</div>
+				<div class="ucc-item-main">
+					<div class="ucc-item-type">{{ item.TYPE }}</div>
+					<div class="ucc-item-content">{{ item.CONTENT }}</div>
+				</div>
+				<div class="ucc-item-meta">
+					<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
+					<span class="ucc-item-meta-date">{{ item.DATE }}</span>
+				</div>
+			</div>
+			{% else %}
+			<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+			{% endfor %}
+		</div>
+		<div class="ucc-card-footer">
+			<a href="{{ U_VIEW_ALL_DISCIPLINARY }}" class="button-secondary">{{ lang('UCC_VIEW_ALL') }}</a>
+		</div>
+	</div>
+	{% endif %}
+
+	{% if S_SHOW_IC_DISCIPLINARY %}
+	<div class="ucc-card">
+		<div class="ucc-card-header">
+			{{ lang('UCC_IC_DISCIPLINARY_TITLE') }}
+		</div>
+		<div class="ucc-card-body">
+			{% for item in ic_disciplinary %}
+			<div class="ucc-item">
+				<div class="ucc-item-user">
+					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
+				</div>
+				<div class="ucc-item-main">
+					<div class="ucc-item-type">{{ item.TYPE }} ({{ item.CHARACTER }})</div>
+					<div class="ucc-item-content">{{ item.CONTENT }}</div>
+				</div>
+				<div class="ucc-item-meta">
+					<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
+					<span class="ucc-item-meta-date">{{ item.DATE }}</span>
+				</div>
+			</div>
+			{% else %}
+			<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+			{% endfor %}
+		</div>
+		<div class="ucc-card-footer">
+			<a href="{{ U_VIEW_ALL_IC_DISCIPLINARY }}" class="button-secondary">{{ lang('UCC_VIEW_ALL') }}</a>
+		</div>
+	</div>
+	{% endif %}
+</div>
+
+{% INCLUDE 'overall_footer.html' %}

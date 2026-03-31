@@ -1,0 +1,37 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<h1>{L_ACP_POSTAS_TITLE}</h1>
+
+<p>{L_ACP_POSTAS_EXPLAIN}</p>
+
+<!-- IF ERROR_MSG -->
+<div class="errorbox">
+	<h3>{L_WARNING}</h3>
+	<p>{ERROR_MSG}</p>
+</div>
+<!-- ENDIF -->
+
+<form id="acp_postas" method="post" action="{U_ACTION}">
+
+	<fieldset>
+		<legend>{L_ACP_POSTAS_SETTINGS}</legend>
+		<dl>
+			<dt><label for="postas_show_original">{L_ACP_POSTAS_SHOW_ORIGINAL}</label><br /><span>{L_ACP_POSTAS_SHOW_ORIGINAL_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="postas_show_original" value="1"<!-- IF POSTAS_SHOW_ORIGINAL --> checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="postas_show_original" value="0"<!-- IF not POSTAS_SHOW_ORIGINAL --> checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<legend>{L_SUBMIT}</legend>
+		<input class="button1" type="submit" id="submit_config" name="submit_config" value="{L_SUBMIT}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

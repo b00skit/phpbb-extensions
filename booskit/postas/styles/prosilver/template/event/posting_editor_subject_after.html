@@ -1,0 +1,22 @@
+<!-- IF S_POSTAS_AVAILABLE -->
+<dl class="postas-select">
+	<dt><label for="postas_altchar_id">{L_POSTAS_SELECT}</label><br /><span>{L_POSTAS_EXPLAIN}</span></dt>
+	<dd>
+		<select name="postas_altchar_id" id="postas_altchar_id">
+			<!-- BEGIN postas_options -->
+			<option value="{postas_options.VALUE}" style="<!-- IF postas_options.COLOR -->color: {postas_options.COLOR};<!-- ENDIF -->">
+				{postas_options.NAME}
+			</option>
+			<!-- END postas_options -->
+		</select>
+	</dd>
+</dl>
+<!-- ENDIF -->
+<!-- IF S_POSTAS_REVERT_AVAILABLE -->
+<dl class="postas-revert">
+	<dt><label for="postas_revert_to_original">{L_POSTAS_REVERT_TO_ORIGINAL}</label><br /><span>{L_POSTAS_REVERT_EXPLAIN}</span></dt>
+	<dd>
+		<input type="checkbox" name="postas_revert_to_original" id="postas_revert_to_original" value="1"<!-- IF S_POSTAS_REVERT_CHECKED --> checked="checked"<!-- ENDIF --> />
+	</dd>
+</dl>
+<!-- ENDIF -->

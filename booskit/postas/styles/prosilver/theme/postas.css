@@ -1,0 +1,26 @@
+/* Post As dropdown styling */
+.postas-select dt {
+	width: 20%;
+}
+
+.postas-select dd {
+	margin-left: 20%;
+}
+
+.postas-select select {
+	width: auto;
+	min-width: 200px;
+}
+
+/* Ensure proper spacing in posting form */
+.postas-select {
+	margin-bottom: 10px;
+}
+
+.postprofile dt .postas-realname {
+	display: none;
+}
+
+.postbody .author .postas-realname {
+	display: inline;
+}

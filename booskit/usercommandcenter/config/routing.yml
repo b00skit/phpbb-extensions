@@ -1,0 +1,15 @@
+booskit_ucc_dashboard:
+    path: /ucc
+    defaults:
+        _controller: 'booskit.usercommandcenter.controller.main:dashboard'
+
+booskit_ucc_test:
+    path: /ucc/test
+    defaults:
+        _controller: 'booskit.usercommandcenter.controller.main:dashboard'
+
+booskit_ucc_view_list:
+    path: /ucc/view/all/{module}
+    defaults:
+        _controller: 'booskit.usercommandcenter.controller.main:view_all'
+

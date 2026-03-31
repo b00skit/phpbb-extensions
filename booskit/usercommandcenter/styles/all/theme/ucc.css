@@ -1,0 +1,106 @@
+.ucc-card {
+	margin-bottom: 20px;
+	border: 1px solid #e1e1e1;
+	border-radius: 8px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.ucc-card-header {
+	background: #f8f9fa;
+	padding: 12px 20px;
+	border-bottom: 1px solid #e1e1e1;
+	font-weight: bold;
+	font-size: 1.1em;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ucc-card-body {
+	padding: 0;
+}
+
+.ucc-item {
+	padding: 15px 20px;
+	border-bottom: 1px solid #f1f1f1;
+	display: flex;
+	align-items: flex-start;
+}
+
+.ucc-item:last-child {
+	border-bottom: none;
+}
+
+.ucc-item-user {
+	flex: 0 0 150px;
+	font-weight: bold;
+}
+
+.ucc-item-main {
+	flex: 1;
+	padding: 0 15px;
+}
+
+.ucc-item-type {
+	font-weight: bold;
+	color: #333;
+	margin-bottom: 5px;
+}
+
+.ucc-item-content {
+	color: #666;
+	font-size: 0.9em;
+	line-height: 1.4;
+}
+
+.ucc-item-meta {
+	flex: 0 0 200px;
+	text-align: right;
+	font-size: 0.85em;
+	color: #888;
+}
+
+.ucc-item-meta-issuer {
+	display: block;
+	color: #555;
+	margin-bottom: 3px;
+}
+
+.ucc-card-footer {
+	background: #fafafa;
+	padding: 10px 20px;
+	border-top: 1px solid #e1e1e1;
+	text-align: right;
+}
+
+.ucc-no-data {
+	padding: 30px;
+	text-align: center;
+	color: #999;
+	font-style: italic;
+}
+
+/* Secondary Button Styling */
+.button-secondary {
+	display: inline-block;
+	padding: 6px 12px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	background: #fff;
+	color: #555;
+	text-decoration: none;
+	font-size: 0.9em;
+	transition: all 0.2s ease;
+}
+
+.button-secondary:hover {
+	background: #f0f0f0;
+	border-color: #bbb;
+	color: #333;
+}
+
+.ucc-view-all-container {
+	margin-bottom: 15px;
+}

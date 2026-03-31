@@ -1,0 +1,38 @@
+{% INCLUDE 'overall_header.html' %}
+
+<div class="ucc-view-all-container">
+	<a href="{{ U_BACK }}" class="button-secondary">{{ lang('UCC_BACK_TO_DASHBOARD') }}</a>
+</div>
+
+<div class="ucc-card">
+	<div class="ucc-card-header">
+		{{ UCC_VIEW_ALL_TITLE }}
+	</div>
+	<div class="ucc-card-body">
+		{% for item in items %}
+		<div class="ucc-item">
+			<div class="ucc-item-user">
+				<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
+			</div>
+			<div class="ucc-item-main">
+				<div class="ucc-item-type">{{ item.TYPE }} {% if S_IC_DISCIPLINARY %}({{ item.CHARACTER }}){% endif %}</div>
+				<div class="ucc-item-content">{{ item.CONTENT }}</div>
+			</div>
+			<div class="ucc-item-meta">
+				<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
+				<span class="ucc-item-meta-date">{{ item.DATE }}</span>
+			</div>
+		</div>
+		{% else %}
+		<div class="ucc-no-data">{{ lang('UCC_NO_DATA') }}</div>
+		{% endfor %}
+	</div>
+</div>
+
+<div class="action-bar bottom">
+	<div class="pagination">
+		{% INCLUDE 'pagination.html' %}
+	</div>
+</div>
+
+{% INCLUDE 'overall_footer.html' %}

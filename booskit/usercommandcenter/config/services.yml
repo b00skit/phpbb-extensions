@@ -1,0 +1,25 @@
+services:
+    booskit.usercommandcenter.manager:
+        class: booskit\usercommandcenter\service\ucc_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@ext.manager'
+            - '@cache.driver'
+            - '%core.table_prefix%'
+
+    booskit.usercommandcenter.controller.main:
+        class: booskit\usercommandcenter\controller\main
+        arguments:
+            - '@config'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@request'
+            - '@pagination'
+            - '@booskit.usercommandcenter.manager'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    booskit.usercommandcenter.acp.main_module:
+        class: booskit\usercommandcenter\acp\main_module

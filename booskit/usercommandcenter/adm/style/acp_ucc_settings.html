@@ -1,0 +1,69 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_UCC_TITLE') }}</h1>
+
+<form id="acp_ucc" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('UCC_GENERAL_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_ucc_enabled">{{ lang('UCC_ENABLED') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_enabled" value="1" {% if BOOSKIT_UCC_ENABLED %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_enabled" value="0" {% if not BOOSKIT_UCC_ENABLED %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_ucc_allowed_groups">{{ lang('UCC_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('UCC_ALLOWED_GROUPS_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_ucc_allowed_groups" name="booskit_ucc_allowed_groups" value="{{ BOOSKIT_UCC_ALLOWED_GROUPS }}" size="50"></dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('UCC_MODULE_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_ucc_include_awards">{{ lang('UCC_INCLUDE_AWARDS') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_awards" value="1" {% if BOOSKIT_UCC_INCLUDE_AWARDS %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_awards" value="0" {% if not BOOSKIT_UCC_INCLUDE_AWARDS %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_ucc_include_career">{{ lang('UCC_INCLUDE_CAREER') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_career" value="1" {% if BOOSKIT_UCC_INCLUDE_CAREER %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_career" value="0" {% if not BOOSKIT_UCC_INCLUDE_CAREER %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_ucc_include_commendations">{{ lang('UCC_INCLUDE_COMMENDATIONS') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_commendations" value="1" {% if BOOSKIT_UCC_INCLUDE_COMMENDATIONS %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_commendations" value="0" {% if not BOOSKIT_UCC_INCLUDE_COMMENDATIONS %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_ucc_include_disciplinary">{{ lang('UCC_INCLUDE_DISCIPLINARY') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_disciplinary" value="1" {% if BOOSKIT_UCC_INCLUDE_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_disciplinary" value="0" {% if not BOOSKIT_UCC_INCLUDE_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_ucc_include_ic_disciplinary">{{ lang('UCC_INCLUDE_IC_DISCIPLINARY') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_ic_disciplinary" value="1" {% if BOOSKIT_UCC_INCLUDE_IC_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_ucc_include_ic_disciplinary" value="0" {% if not BOOSKIT_UCC_INCLUDE_IC_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset class="submit-buttons">
+	<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+	<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
+	{{ S_FORM_TOKEN }}
+</fieldset>
+
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

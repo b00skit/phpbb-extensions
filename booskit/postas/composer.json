@@ -1,0 +1,32 @@
+{
+    "name": "phpbb/postas",
+    "type": "phpbb-extension",
+    "description": "Post as alternative characters - shows alt char name color and rank image while keeping main user attributes",
+    "homepage": "",
+    "version": "1.0.0",
+    "time": "2026-02-06",
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Big Pengu",
+            "email": "discord: pengnotlose",
+            "homepage": "https://bigpengu.pages.dev",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4",
+        "composer/installers": "~1.0"
+    },
+    "require-dev": {
+        "phpbb/epv": "~1.0",
+        "squizlabs/php_codesniffer": "2.*",
+        "phing/phing": "2.*"
+    },
+    "extra": {
+        "display-name": "Post As",
+        "soft-require": {
+            "phpbb/phpbb": ">=3.2.0"
+        }
+    }
+}
