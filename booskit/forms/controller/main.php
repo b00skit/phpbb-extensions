@@ -57,7 +57,7 @@ class main
 			$current_value = $this->request->variable($field['field_name'], '', true);
 			if (empty($current_value))
 			{
-				$current_value = $this->request->variable($field['field_name'], []);
+				$current_value = $this->request->variable($field['field_name'], array(''), true);
 			}
 
 			$this->template->assign_block_vars('fields', [
@@ -76,27 +76,7 @@ class main
 				'S_DATE'		=> $field['field_type'] == 'date',
 			]);
 
-			$options = $field['field_options'];
-			$decoded_options = json_decode($options, true);
-			
-			if (json_last_error() === JSON_ERROR_NONE && is_array($decoded_options))
-			{
-				$options = $decoded_options;
-			}
-			else if (strpos($options, ':') !== false)
-			{
-				// Fallback to manual parsing if it's stored as Val:Label,Val2:Label2
-				$pairs = explode(',', $options);
-				$options = [];
-				foreach ($pairs as $p)
-				{
-					$kv = explode(':', $p);
-					if (count($kv) == 2)
-					{
-						$options[trim($kv[0])] = trim($kv[1]);
-					}
-				}
-			}
+			$options = $this->get_field_options($field);
 
 			if (is_array($options))
 			{
@@ -105,17 +85,9 @@ class main
 					$this->template->assign_block_vars('fields.options', [
 						'VALUE'		=> $val,
 						'LABEL'		=> $label,
-						'S_SELECTED' => is_array($current_value) ? in_array($val, $current_value) : ($val == $current_value),
+						'S_SELECTED' => is_array($current_value) ? in_array((string)$val, $current_value) : ((string)$val == (string)$current_value),
 					]);
 				}
-			}
-			elseif (!empty($options))
-			{
-				$this->template->assign_block_vars('fields.options', [
-					'VALUE' => $options,
-					'LABEL' => $options,
-					'S_SELECTED' => ($options == $current_value),
-				]);
 			}
 		}
 
@@ -131,6 +103,33 @@ class main
 		]);
 
 		return $this->helper->render('form_display.html', $form['form_name']);
+	}
+
+	protected function get_field_options($field)
+	{
+		$options = $field['field_options'];
+		$decoded_options = json_decode($options, true);
+		
+		if (json_last_error() === JSON_ERROR_NONE && is_array($decoded_options))
+		{
+			return $decoded_options;
+		}
+		else if (strpos($options, ':') !== false)
+		{
+			$pairs = explode(',', $options);
+			$options = [];
+			foreach ($pairs as $p)
+			{
+				$kv = explode(':', $p);
+				if (count($kv) == 2)
+				{
+					$options[trim($kv[0])] = trim($kv[1]);
+				}
+			}
+			return $options;
+		}
+
+		return [$options => $options];
 	}
 
 	public function submit($form_id)
@@ -163,34 +162,75 @@ class main
 
 		$fields = $this->form_manager->get_form_fields($form['form_id']);
 
+		// 1. Initial system replacements
 		$replacements = [
-			'username' => ($this->user->data['user_id'] == ANONYMOUS) ? $this->user->lang['GUEST'] : $this->user->data['username'],
-			'user_id'  => $this->user->data['user_id'],
+			'USERNAME'  => ($this->user->data['user_id'] == ANONYMOUS) ? $this->user->lang['GUEST'] : $this->user->data['username'],
+			'USER_ID'   => $this->user->data['user_id'],
+			'FORM_NAME' => $form['form_name'],
+			'FORM_ID'   => $form['form_id'],
+			'DATE'      => $this->user->format_date(time(), 'D M d, Y'),
+			'TIME'      => $this->user->format_date(time(), 'H:i'),
 		];
+		
+		// Legacy lowercase aliases (will be overwritten if user has field with same name)
+		$replacements['username'] = $replacements['USERNAME'];
+		$replacements['date'] = $replacements['DATE'];
+		$replacements['time'] = $replacements['TIME'];
 
+		$raw_values = [];
 		$errors = [];
+
+		// 2. Process User Fields (Overwrites legacy aliases if collision occurs)
 		foreach ($fields as $field)
 		{
 			$name = $field['field_name'];
-			$value = '';
+			$selected_values = [];
 
 			if ($field['field_type'] == 'checkbox')
 			{
-				$value = $this->request->variable($name, []);
-				$value = implode(', ', $value);
+				$selected_values = $this->request->variable($name, array(''), true);
+				$selected_values = array_filter($selected_values, function($v) { return $v !== ''; });
+				$selected_values = array_values($selected_values);
 			}
 			else
 			{
-				$value = $this->request->variable($name, '', true);
+				$val = $this->request->variable($name, '', true);
+				if ($val !== '')
+				{
+					$selected_values = [$val];
+				}
 			}
 
-			if ($field['field_required'] && empty($value))
+			$raw_values[$name] = $selected_values;
+			
+			$field_options = $this->get_field_options($field);
+			$selected_labels = [];
+			foreach ($selected_values as $v)
+			{
+				$selected_labels[] = isset($field_options[$v]) ? $field_options[$v] : (string)$v;
+			}
+			
+			$replacements[$name] = implode(', ', $selected_labels);
+
+			if ($field['field_required'] && empty($selected_values))
 			{
 				$errors[] = sprintf($this->user->lang['FIELD_REQUIRED'], $field['field_label']);
 			}
-
-			$replacements[$name] = $value;
 		}
+
+		// 3. Generate Summary Tags
+		$all_fields_text = '';
+		foreach ($fields as $field)
+		{
+			$val_text = isset($replacements[$field['field_name']]) ? $replacements[$field['field_name']] : '';
+			$all_fields_text .= '[b]' . $field['field_label'] . ':[/b] ' . $val_text . "\n";
+		}
+		$replacements['SUMMARY'] = $all_fields_text;
+		$replacements['ALL_FIELDS'] = $all_fields_text;
+		
+		// Only use 'fields' or 'all_fields' if it doesn't collide with a user field
+		if (!isset($raw_values['all_fields'])) $replacements['all_fields'] = $all_fields_text;
+		if (!isset($raw_values['fields'])) $replacements['fields'] = $all_fields_text;
 
 		if (!empty($errors))
 		{
@@ -202,10 +242,77 @@ class main
 		$subject = $form['form_subject_tpl'];
 		$body = $form['form_template'];
 
+		// 4. Process Field Loops: {{#fieldname}} ... {{/fieldname}}
+		foreach ($fields as $field)
+		{
+			$name = $field['field_name'];
+			$selected_values = $raw_values[$name];
+			$field_options = $this->get_field_options($field);
+			
+			$selected_data = [];
+			foreach ($selected_values as $v)
+			{
+				$selected_data[] = [
+					'value' => (string)$v,
+					'label' => isset($field_options[$v]) ? $field_options[$v] : (string)$v,
+				];
+			}
+
+			$pattern = '/\{\{\s*#' . preg_quote($name, '/') . '\s*\}\}(.*?)\{\{\s*\/' . preg_quote($name, '/') . '\s*\}\}/s';
+			
+			$replacement_func = function($matches) use ($selected_data) {
+				$loop_content = $matches[1];
+				$result = '';
+				foreach ($selected_data as $data)
+				{
+					$temp = preg_replace_callback('/\{\{\s*value\s*\}\}/i', function() use ($data) { return $data['value']; }, $loop_content);
+					$temp = preg_replace_callback('/\{\{\s*label\s*\}\}/i', function() use ($data) { return $data['label']; }, $temp);
+					$result .= $temp;
+				}
+				return $result;
+			};
+
+			$body = preg_replace_callback($pattern, $replacement_func, $body);
+			$subject = preg_replace_callback($pattern, $replacement_func, $subject);
+		}
+
+		// 5. Global Fields Loop: {{#fields}} ... {{/fields}}
+		if (!isset($raw_values['fields']))
+		{
+			$all_fields_data = [];
+			foreach ($fields as $field)
+			{
+				$all_fields_data[] = [
+					'name'  => $field['field_name'],
+					'label' => $field['field_label'],
+					'value' => isset($replacements[$field['field_name']]) ? $replacements[$field['field_name']] : '',
+				];
+			}
+			
+			$fields_loop_callback = function($matches) use ($all_fields_data) {
+				$loop_content = $matches[1];
+				$result = '';
+				foreach ($all_fields_data as $data)
+				{
+					$temp = preg_replace_callback('/\{\{\s*name\s*\}\}/i', function() use ($data) { return $data['name']; }, $loop_content);
+					$temp = preg_replace_callback('/\{\{\s*label\s*\}\}/i', function() use ($data) { return $data['label']; }, $temp);
+					$temp = preg_replace_callback('/\{\{\s*value\s*\}\}/i', function() use ($data) { return $data['value']; }, $temp);
+					$result .= $temp;
+				}
+				return $result;
+			};
+			
+			$body = preg_replace_callback('/\{\{\s*#fields\s*\}\}(.*?)\{\{\s*\/fields\s*\}\}/si', $fields_loop_callback, $body);
+			$subject = preg_replace_callback('/\{\{\s*#fields\s*\}\}(.*?)\{\{\s*\/fields\s*\}\}/si', $fields_loop_callback, $subject);
+		}
+
+		// 6. Final Simple Tags: {{variable}}
 		foreach ($replacements as $key => $val)
 		{
-			$subject = str_replace('{{' . $key . '}}', $val, $subject);
-			$body = str_replace('{{' . $key . '}}', $val, $body);
+			$pattern = '/\{\{\s*' . preg_quote($key, '/') . '\s*\}\}/i';
+			$callback = function() use ($val) { return $val; };
+			$subject = preg_replace_callback($pattern, $callback, $subject);
+			$body = preg_replace_callback($pattern, $callback, $body);
 		}
 
 		if (!$this->request->is_set_post('confirm'))
@@ -217,13 +324,28 @@ class main
 			generate_text_for_storage($preview_body, $uid, $bitfield, $options, true, true, true);
 			$preview_body = generate_text_for_display($preview_body, $uid, $bitfield, $options);
 
-			foreach ($replacements as $key => $val)
+			foreach ($fields as $field)
 			{
-				if ($key == 'username' || $key == 'user_id') continue;
-				$this->template->assign_block_vars('hidden_fields', [
-					'NAME'  => $key,
-					'VALUE' => $val,
-				]);
+				$key = $field['field_name'];
+				$val = $raw_values[$key];
+
+				if ($field['field_type'] == 'checkbox')
+				{
+					foreach ($val as $v)
+					{
+						$this->template->assign_block_vars('hidden_fields', [
+							'NAME'  => $key . '[]',
+							'VALUE' => $v,
+						]);
+					}
+				}
+				else
+				{
+					$this->template->assign_block_vars('hidden_fields', [
+						'NAME'  => $key,
+						'VALUE' => isset($val[0]) ? $val[0] : '',
+					]);
+				}
 			}
 
 			$this->template->assign_vars([

@@ -31,9 +31,10 @@ $lang = array_merge($lang, array(
 	'FORM_DESC'							=> 'Form Description',
 	'FORM_HEADER'						=> 'Form Header/Instructions',
 	'FORM_SUBJECT_TPL'					=> 'Subject Template',
-	'FORM_SUBJECT_TPL_EXPLAIN'			=> 'The subject of the created topic. Use {{variable_name}} for field values.',
+	'FORM_SUBJECT_TPL_EXPLAIN'			=> 'The subject of the created topic. Use {{variable_name}} for field values. For checkboxes, you can use loops: {{#variable_name}}{{value}}{{/variable_name}}.',
 	'FORM_TEMPLATE'						=> 'Body Template',
 	'FORM_TEMPLATE_EXPLAIN'				=> 'The content of the created post. Use {{variable_name}} for field values.',
+	'FORM_LOOPS_HELP'					=> '<strong>Loop Usage for Checkboxes:</strong><br />For fields like checkboxes that can have multiple values, you can use loops in your subject or body template:<br /><code>{{#variable_name}} - {{label}}<br />{{/variable_name}}</code><br />Inside the loop, you can use <code>{{label}}</code> for the display name and <code>{{value}}</code> for the raw value.',
 	
 	'FORM_FIELDS'						=> 'Form Fields',
 	'FORM_FIELDS_EXPLAIN'				=> 'Define the fields for this form.',
