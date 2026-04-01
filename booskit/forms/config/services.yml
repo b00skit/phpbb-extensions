@@ -1,0 +1,28 @@
+services:
+    booskit.forms.service.form_manager:
+        class: booskit\forms\service\form_manager
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '%core.table_prefix%booskit_forms'
+            - '%core.table_prefix%booskit_form_fields'
+
+    booskit.forms.controller.main:
+        class: booskit\forms\controller\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.forms.service.form_manager'
+
+    booskit.forms.controller.acp.main:
+        class: booskit\forms\controller\acp\main
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+            - '@booskit.forms.service.form_manager'

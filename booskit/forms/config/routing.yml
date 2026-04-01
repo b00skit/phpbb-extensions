@@ -1,0 +1,13 @@
+booskit_forms_view:
+    path: /forms/{form_id}
+    defaults: { _controller: booskit.forms.controller.main:display }
+    methods: [GET]
+    requirements:
+        form_id: '[a-zA-Z0-9_-]+'
+
+booskit_forms_submit:
+    path: /forms/{form_id}
+    defaults: { _controller: booskit.forms.controller.main:submit }
+    methods: [POST]
+    requirements:
+        form_id: '[a-zA-Z0-9_-]+'

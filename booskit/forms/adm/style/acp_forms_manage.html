@@ -1,0 +1,224 @@
+{% INCLUDE 'overall_header.html' %}
+
+<a name="main"></a>
+
+<h1>{{ lang('ACP_BOOSKIT_FORMS_TITLE') }}</h1>
+
+<p>{{ lang('ACP_BOOSKIT_FORMS_EXPLAIN') }}</p>
+
+<!-- IF S_EDIT -->
+	<a href="{U_ACTION}" style="float: right;">&laquo; {{ lang('BACK') }}</a>
+
+	<form id="acp_booskit_forms" method="post" action="{U_ACTION}">
+		<fieldset>
+			<legend>{{ lang('FORM_SETTINGS') }}</legend>
+			<dl>
+				<dt><label for="form_name">{{ lang('FORM_NAME') }}:</label></dt>
+				<dd><input type="text" id="form_name" name="form_name" value="{FORM_NAME}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_slug">{{ lang('FORM_SLUG') }}:</label><br /><span>{{ lang('FORM_SLUG_EXPLAIN') }}</span></dt>
+				<dd><input type="text" id="form_slug" name="form_slug" value="{FORM_SLUG}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_groups">{{ lang('FORM_GROUPS') }}:</label><br /><span>{{ lang('FORM_GROUPS_EXPLAIN') }}</span></dt>
+				<dd><input type="text" id="form_groups" name="form_groups" value="{FORM_GROUPS}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_public">{{ lang('FORM_PUBLIC') }}:</label><br /><span>{{ lang('FORM_PUBLIC_EXPLAIN') }}</span></dt>
+				<dd>
+					<label><input type="radio" class="radio" name="form_public" value="1"<!-- IF FORM_PUBLIC --> checked="checked"<!-- ENDIF --> /> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="form_public" value="0"<!-- IF not FORM_PUBLIC --> checked="checked"<!-- ENDIF --> /> {{ lang('NO') }}</label>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="form_desc">{{ lang('FORM_DESC') }}:</label></dt>
+				<dd><textarea id="form_desc" name="form_desc" rows="3" cols="40">{FORM_DESC}</textarea></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_header">{{ lang('FORM_HEADER') }}:</label></dt>
+				<dd><textarea id="form_header" name="form_header" rows="5" cols="40">{FORM_HEADER}</textarea></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_subject_tpl">{{ lang('FORM_SUBJECT_TPL') }}:</label><br /><span>{{ lang('FORM_SUBJECT_TPL_EXPLAIN') }}</span></dt>
+				<dd><input type="text" id="form_subject_tpl" name="form_subject_tpl" value="{FORM_SUBJECT_TPL}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_template">{{ lang('FORM_TEMPLATE') }}:</label><br /><span>{{ lang('FORM_TEMPLATE_EXPLAIN') }}</span></dt>
+				<dd><textarea id="form_template" name="form_template" rows="10" cols="40">{FORM_TEMPLATE}</textarea></dd>
+			</dl>
+			<dl>
+				<dt><label for="form_fields">{{ lang('FORM_FIELDS') }}:</label><br /><span>{{ lang('FORM_FIELDS_EXPLAIN') }}</span></dt>
+				<dd>
+					<table class="table1" id="fields-table">
+						<thead>
+							<tr>
+								<th>{{ lang('FIELD_LABEL') }}</th>
+								<th>{{ lang('FIELD_NAME') }}</th>
+								<th>{{ lang('FIELD_DESC') }}</th>
+								<th>{{ lang('FIELD_TYPE') }}</th>
+								<th>{{ lang('FIELD_OPTIONS') }}</th>
+								<th>{{ lang('FIELD_REQUIRED') }}</th>
+								<th>{{ lang('ACTION') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- Rows will be added by JS -->
+						</tbody>
+					</table>
+					<p class="quick">
+						<button type="button" class="button2" onclick="addFieldRow()">{{ lang('ADD_FIELD') }}</button>
+					</p>
+					<input type="hidden" id="form_fields" name="form_fields" value="{FORM_FIELDS}" />
+				</dd>
+			</dl>
+
+			<dl>
+				<dt><label for="forum_id">{{ lang('FORUM_ID') }}:</label></dt>
+				<dd><input type="number" id="forum_id" name="forum_id" value="{FORUM_ID}" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="poster_id">{{ lang('POSTER_ID') }}:</label><br /><span>{{ lang('POSTER_ID_EXPLAIN') }}</span></dt>
+				<dd><input type="number" id="poster_id" name="poster_id" value="{POSTER_ID}" /></dd>
+			</dl>
+			<dl>
+				<dt><label for="enabled">{{ lang('ENABLED') }}:</label></dt>
+				<dd>
+					<label><input type="radio" class="radio" name="enabled" value="1"<!-- IF ENABLED --> checked="checked"<!-- ENDIF --> /> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="enabled" value="0"<!-- IF not ENABLED --> checked="checked"<!-- ENDIF --> /> {{ lang('NO') }}</label>
+				</dd>
+			</dl>
+
+			<p class="submit-buttons">
+				<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+				<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
+				{S_FORM_TOKEN}
+			</p>
+		</fieldset>
+	</form>
+
+<!-- ELSE -->
+
+	<table class="table1">
+		<thead>
+		<tr>
+			<th>{{ lang('FORM_NAME') }}</th>
+			<th>{{ lang('ENABLED') }}</th>
+			<th>{{ lang('ACTION') }}</th>
+		</tr>
+		</thead>
+		<tbody>
+		<!-- BEGIN forms -->
+		<tr>
+			<td style="text-align: center;">{forms.NAME}</td>
+			<td style="text-align: center;"><!-- IF forms.ENABLED -->{{ lang('YES') }}<!-- ELSE -->{{ lang('NO') }}<!-- ENDIF --></td>
+			<td style="text-align: center;">
+				<a href="{forms.U_EDIT}">{ICON_EDIT}</a>
+				<a href="{forms.U_DELETE}" data-ajax="row_delete">{ICON_DELETE}</a>
+			</td>
+		</tr>
+		<!-- BEGINELSE -->
+		<tr>
+			<td colspan="3" style="text-align: center;">{{ lang('NO_FORMS') }}</td>
+		</tr>
+		<!-- END forms -->
+		</tbody>
+	</table>
+
+	<p class="quick">
+		<a href="{U_ADD}" class="button2">{{ lang('ADD_FORM') }}</a>
+	</p>
+
+<!-- ENDIF -->
+
+{% INCLUDE 'overall_footer.html' %}
+
+<script>
+(function() {
+	if (!document.getElementById('fields-table')) return;
+
+	var jsonInput = document.getElementById('form_fields');
+	var tableBody = document.querySelector('#fields-table tbody');
+
+	function init() {
+		var data = [];
+		try {
+			if (jsonInput.value) data = JSON.parse(jsonInput.value);
+		} catch (e) { console.error('Invalid JSON', e); }
+
+		if (Array.isArray(data)) {
+			data.forEach(function(field) {
+				addFieldRow(field);
+			});
+		}
+	}
+
+	window.addFieldRow = function(data) {
+		var row = document.createElement('tr');
+		var label = data ? data.label.replace(/'/g, "&#39;") : '';
+		var name = data ? data.name.replace(/'/g, "&#39;") : '';
+		var description = data ? data.description.replace(/'/g, "&#39;") : '';
+		var type = data ? data.type : 'text';
+		var options = data && data.options ? (typeof data.options === 'string' ? data.options.replace(/'/g, "&#39;") : JSON.stringify(data.options).replace(/'/g, "&#39;")) : '';
+		var required = data ? data.required : false;
+
+		row.innerHTML = '<td><input type="text" class="field-label" value=\'' + label + '\' onchange="updateJson()" /></td>' +
+			'<td><input type="text" class="field-name" value=\'' + name + '\' onchange="updateJson()" /></td>' +
+			'<td><input type="text" class="field-description" value=\'' + description + '\' onchange="updateJson()" /></td>' +
+			'<td><select class="field-type" onchange="updateJson()">' +
+				'<option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option>' +
+				'<option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option>' +
+				'<option value="select"' + (type === 'select' ? ' selected' : '') + '>Select</option>' +
+				'<option value="checkbox"' + (type === 'checkbox' ? ' selected' : '') + '>Checkbox</option>' +
+				'<option value="radio"' + (type === 'radio' ? ' selected' : '') + '>Radio</option>' +
+				'<option value="number"' + (type === 'number' ? ' selected' : '') + '>Number</option>' +
+				'<option value="date"' + (type === 'date' ? ' selected' : '') + '>Date</option>' +
+			'</select></td>' +
+			'<td><input type="text" class="field-options" value=\'' + options + '\' placeholder="Val1:Label1,Val2:Label2" onchange="updateJson()" /></td>' +
+			'<td><input type="checkbox" class="field-required"' + (required ? ' checked' : '') + ' onchange="updateJson()" /></td>' +
+			'<td><button type="button" class="button2" onclick="removeFieldRow(this)">{{ lang('DELETE') }}</button></td>';
+
+		tableBody.appendChild(row);
+		updateJson();
+	};
+
+	window.removeFieldRow = function(btn) {
+		btn.closest('tr').remove();
+		updateJson();
+	};
+
+	window.updateJson = function() {
+		var rows = tableBody.querySelectorAll('tr');
+		var data = [];
+
+		rows.forEach(function(row) {
+			var optionsRaw = row.querySelector('.field-options').value;
+			var optionsParsed = optionsRaw;
+			
+			// Try to parse options if they look like JSON, otherwise keep as string or parse comma separated
+			if (optionsRaw.indexOf(':') !== -1 && optionsRaw.indexOf('{') === -1) {
+				var pairs = optionsRaw.split(',');
+				var obj = {};
+				pairs.forEach(function(p) {
+					var kv = p.split(':');
+					if (kv.length === 2) obj[kv[0].trim()] = kv[1].trim();
+				});
+				optionsParsed = obj;
+			}
+
+			data.push({
+				label: row.querySelector('.field-label').value,
+				name: row.querySelector('.field-name').value,
+				description: row.querySelector('.field-description').value,
+				type: row.querySelector('.field-type').value,
+				options: optionsParsed,
+				required: row.querySelector('.field-required').checked
+			});
+		});
+
+		jsonInput.value = JSON.stringify(data);
+	};
+
+	init();
+})();
+</script>

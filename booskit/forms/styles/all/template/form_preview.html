@@ -1,0 +1,34 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2 class="form-title">{L_PREVIEW}: {FORM_NAME}</h2>
+
+<div class="panel">
+	<div class="inner">
+		<div class="content">
+			<h3>{L_TOPIC_SUBJECT}: {PREVIEW_SUBJECT}</h3>
+			<hr />
+			<div class="postbody">
+				<div class="content">
+					{PREVIEW_BODY}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<form id="postform" method="post" action="{U_ACTION}">
+	<div class="panel">
+		<div class="inner">
+			<fieldset class="submit-buttons">
+				<!-- BEGIN hidden_fields -->
+					<input type="hidden" name="{hidden_fields.NAME}" value="{hidden_fields.VALUE}" />
+				<!-- END hidden_fields -->
+				<input type="submit" name="back" value="{L_BACK}" class="button2" />
+				<input type="submit" name="confirm" value="{L_CONFIRM}" class="button1" />
+				{S_FORM_TOKEN}
+			</fieldset>
+		</div>
+	</div>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

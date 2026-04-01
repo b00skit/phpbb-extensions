@@ -1,0 +1,76 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2 class="form-title">{FORM_NAME}</h2>
+
+<!-- IF FORM_DESC -->
+<div class="panel">
+	<div class="inner">
+		<div class="content">
+			{FORM_DESC}
+		</div>
+	</div>
+</div>
+<!-- ENDIF -->
+
+<!-- IF FORM_HEADER -->
+<div class="panel">
+	<div class="inner">
+		<div class="content">
+			{FORM_HEADER}
+		</div>
+	</div>
+</div>
+<!-- ENDIF -->
+
+<form id="postform" method="post" action="{U_ACTION}">
+
+<div class="panel">
+	<div class="inner">
+		<fieldset class="fields2">
+			<!-- BEGIN fields -->
+			<dl style="clear: left;">
+				<dt><label for="{fields.NAME}">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label><!-- IF fields.EXPLAIN --><br /><span>{fields.EXPLAIN}</span><!-- ENDIF --></dt>
+				<dd>
+					<!-- IF fields.S_TEXT -->
+						<input type="text" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ELSEIF fields.S_TEXTAREA -->
+						<textarea name="{fields.NAME}" id="{fields.NAME}" rows="5" cols="45" class="inputbox">{fields.DEFAULT_VALUE}</textarea>
+					<!-- ELSEIF fields.S_SELECT -->
+						<select name="{fields.NAME}" id="{fields.NAME}">
+							<!-- BEGIN options -->
+								<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
+							<!-- END options -->
+						</select>
+					<!-- ELSEIF fields.S_CHECKBOX -->
+						<!-- BEGIN options -->
+							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="checkbox" name="{fields.NAME}[]" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+						<!-- END options -->
+					<!-- ELSEIF fields.S_RADIO -->
+						<!-- BEGIN options -->
+							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="radio" name="{fields.NAME}" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+						<!-- END options -->
+					<!-- ELSEIF fields.S_NUMBER -->
+						<input type="number" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ELSEIF fields.S_DATE -->
+						<input type="date" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ENDIF -->
+				</dd>
+			</dl>
+			<!-- END fields -->
+		</fieldset>
+	</div>
+</div>
+
+<div class="panel">
+	<div class="inner">
+		<fieldset class="submit-buttons">
+			<input type="submit" name="submit" value="{L_SUBMIT}" class="button1" />
+			{S_FORM_TOKEN}
+		</fieldset>
+		<p style="text-align: right; font-size: 0.9em; color: #666;">* {L_REQUIRED_FIELDS_EXPLAIN}</p>
+	</div>
+</div>
+
+</form>
+
+<!-- INCLUDE overall_footer.html -->
