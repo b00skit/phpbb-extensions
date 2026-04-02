@@ -59,7 +59,7 @@ class listener implements EventSubscriberInterface
 			'core.search_get_topic_data'			=> 'filter_search_topics',
 			'core.modify_posting_auth'				=> 'filter_posting_auth',
 			'core.display_forums_modify_sql'		=> 'modify_display_forums_sql',
-			'core.display_forums_modify_forum_rows'	=> 'filter_index_last_post',
+			'core.display_forums_before'			=> 'filter_index_last_post',
 		);
 	}
 
@@ -276,12 +276,15 @@ class listener implements EventSubscriberInterface
 
 	public function modify_display_forums_sql($event)
 	{
+		// Only join if the user doesn't have the permission globally.
+		// If they have it globally, they might have it everywhere, but it's safer to check per forum later.
+		// However, the join is the main bottleneck, so we include forum_id to use the index.
 		$sql_ary = $event['sql_ary'];
 		
 		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type';
 		$sql_ary['LEFT_JOIN'][] = array(
 			'FROM'	=> array(TOPICS_TABLE => 't'),
-			'ON'	=> 'f.forum_last_post_id = t.topic_last_post_id'
+			'ON'	=> 'f.forum_id = t.forum_id AND f.forum_last_post_id = t.topic_last_post_id'
 		);
 		
 		$event['sql_ary'] = $sql_ary;
@@ -292,10 +295,15 @@ class listener implements EventSubscriberInterface
 		$forum_rows = $event['forum_rows'];
 		$user_id = (int) $this->user->data['user_id'];
 		
+		// Batch load permissions for better performance
+		$view_others_topics = $this->auth->acl_getf('f_view_others_topics', true);
+
 		foreach ($forum_rows as $key => $row)
 		{
 			$forum_id = (int) $row['forum_id'];
-			if (!$this->auth->acl_get('f_view_others_topics', $forum_id))
+			
+			// If not in allowed list, then we need to filter
+			if (!isset($view_others_topics[$forum_id]))
 			{
 				// We only hide if it's a normal topic AND not from the user
 				if (isset($row['forum_last_topic_type']) && $row['forum_last_topic_type'] !== null && (int) $row['forum_last_topic_type'] === 0)
