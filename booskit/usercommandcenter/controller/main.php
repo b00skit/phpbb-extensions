@@ -73,7 +73,7 @@ class main
 
 		// Awards
 		$awards_defs = $this->ucc_manager->get_definitions('booskit/awards');
-		$awards = $this->ucc_manager->get_latest_awards();
+		$awards = $this->ucc_manager->get_latest_awards($this->user->data['user_id']);
 		foreach ($awards as $row)
 		{
 			$this->template->assign_block_vars('awards', [
@@ -88,7 +88,7 @@ class main
 
 		// Career
 		$career_defs = $this->ucc_manager->get_definitions('booskit/usercareer');
-		$career = $this->ucc_manager->get_latest_career();
+		$career = $this->ucc_manager->get_latest_career($this->user->data['user_id']);
 		foreach ($career as $row)
 		{
 			$this->template->assign_block_vars('career', [
@@ -102,7 +102,7 @@ class main
 		}
 
 		// Commendations
-		$commendations = $this->ucc_manager->get_latest_commendations();
+		$commendations = $this->ucc_manager->get_latest_commendations($this->user->data['user_id']);
 		foreach ($commendations as $row)
 		{
 			$this->template->assign_block_vars('commendations', [
@@ -117,7 +117,7 @@ class main
 
 		// Disciplinary
 		$disc_defs = $this->ucc_manager->get_definitions('booskit/disciplinary');
-		$disciplinary = $this->ucc_manager->get_latest_disciplinary();
+		$disciplinary = $this->ucc_manager->get_latest_disciplinary($this->user->data['user_id']);
 		foreach ($disciplinary as $row)
 		{
 			$this->template->assign_block_vars('disciplinary', [
@@ -132,7 +132,7 @@ class main
 
 		// IC Disciplinary
 		$ic_defs = $this->ucc_manager->get_definitions('booskit/icdisciplinary');
-		$ic_disciplinary = $this->ucc_manager->get_latest_ic_disciplinary();
+		$ic_disciplinary = $this->ucc_manager->get_latest_ic_disciplinary($this->user->data['user_id']);
 		foreach ($ic_disciplinary as $row)
 		{
 			$this->template->assign_block_vars('ic_disciplinary', [
@@ -178,8 +178,8 @@ class main
 		switch ($module)
 		{
 			case 'awards':
-				$total = $this->ucc_manager->get_total_awards();
-				$items = $this->ucc_manager->get_latest_awards($limit, $start);
+				$total = $this->ucc_manager->get_total_awards($this->user->data['user_id']);
+				$items = $this->ucc_manager->get_latest_awards($this->user->data['user_id'], $limit, $start);
 				$defs = $this->ucc_manager->get_definitions('booskit/awards');
 				$title = $this->user->lang['UCC_AWARDS_TITLE'];
 				foreach ($items as $row)
@@ -195,8 +195,8 @@ class main
 				}
 				break;
 			case 'career':
-				$total = $this->ucc_manager->get_total_career();
-				$items = $this->ucc_manager->get_latest_career($limit, $start);
+				$total = $this->ucc_manager->get_total_career($this->user->data['user_id']);
+				$items = $this->ucc_manager->get_latest_career($this->user->data['user_id'], $limit, $start);
 				$defs = $this->ucc_manager->get_definitions('booskit/usercareer');
 				$title = $this->user->lang['UCC_CAREER_TITLE'];
 				foreach ($items as $row)
@@ -212,8 +212,8 @@ class main
 				}
 				break;
 			case 'commendations':
-				$total = $this->ucc_manager->get_total_commendations();
-				$items = $this->ucc_manager->get_latest_commendations($limit, $start);
+				$total = $this->ucc_manager->get_total_commendations($this->user->data['user_id']);
+				$items = $this->ucc_manager->get_latest_commendations($this->user->data['user_id'], $limit, $start);
 				$title = $this->user->lang['UCC_COMMENDATIONS_TITLE'];
 				foreach ($items as $row)
 				{
@@ -228,8 +228,8 @@ class main
 				}
 				break;
 			case 'disciplinary':
-				$total = $this->ucc_manager->get_total_disciplinary();
-				$items = $this->ucc_manager->get_latest_disciplinary($limit, $start);
+				$total = $this->ucc_manager->get_total_disciplinary($this->user->data['user_id']);
+				$items = $this->ucc_manager->get_latest_disciplinary($this->user->data['user_id'], $limit, $start);
 				$defs = $this->ucc_manager->get_definitions('booskit/disciplinary');
 				$title = $this->user->lang['UCC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
@@ -245,8 +245,8 @@ class main
 				}
 				break;
 			case 'ic_disciplinary':
-				$total = $this->ucc_manager->get_total_ic_disciplinary();
-				$items = $this->ucc_manager->get_latest_ic_disciplinary($limit, $start);
+				$total = $this->ucc_manager->get_total_ic_disciplinary($this->user->data['user_id']);
+				$items = $this->ucc_manager->get_latest_ic_disciplinary($this->user->data['user_id'], $limit, $start);
 				$defs = $this->ucc_manager->get_definitions('booskit/icdisciplinary');
 				$title = $this->user->lang['UCC_IC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
