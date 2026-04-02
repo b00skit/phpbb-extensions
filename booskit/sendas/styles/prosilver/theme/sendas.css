@@ -1,0 +1,25 @@
+/* Send As dropdown styling */
+.sendas-select dt {
+	width: 20%;
+}
+
+.sendas-select dd {
+	margin-left: 20%;
+}
+
+.sendas-select select {
+	width: auto;
+	min-width: 200px;
+}
+
+.sendas-select {
+	margin-bottom: 10px;
+}
+
+.postprofile dt .sendas-realname {
+	display: none;
+}
+
+.postbody .author .sendas-realname {
+	display: inline;
+}

@@ -1,0 +1,7 @@
+.postprofile .sendas-realname {
+	display: none;
+}
+
+.postbody .author .sendas-realname {
+	display: inline;
+}

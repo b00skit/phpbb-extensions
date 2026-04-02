@@ -1,0 +1,14 @@
+<!-- IF S_COMPOSE_PM and S_SENDAS_AVAILABLE -->
+<dl class="sendas-select">
+	<dt><label for="sendas_altchar_id">{L_SENDAS_SELECT}</label><br /><span>{L_SENDAS_EXPLAIN}</span></dt>
+	<dd>
+		<select name="sendas_altchar_id" id="sendas_altchar_id">
+			<!-- BEGIN sendas_options -->
+			<option value="{sendas_options.VALUE}" style="<!-- IF sendas_options.COLOR -->color: {sendas_options.COLOR};<!-- ENDIF -->">
+				{sendas_options.NAME}
+			</option>
+			<!-- END sendas_options -->
+		</select>
+	</dd>
+</dl>
+<!-- ENDIF -->

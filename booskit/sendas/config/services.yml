@@ -1,0 +1,24 @@
+parameters:
+    booskit.sendas.sendas_table: '%core.table_prefix%booskit_sendas'
+
+services:
+    booskit.sendas.listener:
+        class: booskit\sendas\event\listener
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@template'
+            - '@request'
+            - '%core.table_prefix%'
+            - '@config'
+        tags:
+            - { name: event.listener }
+    booskit.sendas.controller.acp:
+        class: booskit\sendas\controller\acp_controller
+        arguments:
+            - '@config'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@template'
+            - '@user'
