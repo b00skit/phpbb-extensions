@@ -168,6 +168,7 @@ class ucc_manager
 				FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
 				JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON d.issuer_user_id = i.user_id
+				LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
 				WHERE ' . $where . '
 				ORDER BY d.issue_date DESC';
 		$result = $this->db->sql_query_limit($sql, $limit, $start);
@@ -185,6 +186,8 @@ class ucc_manager
 
 		$sql = 'SELECT COUNT(d.record_id) as total 
 				FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
+				JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
+				LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
 				WHERE ' . $where;
 		$result = $this->db->sql_query($sql);
 		$total = (int) $this->db->sql_fetchfield('total');
@@ -240,16 +243,42 @@ class ucc_manager
 				$l1 = $this->get_config_groups('booskit_awards_access_l1');
 				$l2 = $this->get_config_groups('booskit_awards_access_l2');
 				$full = $this->get_config_groups('booskit_awards_access_full');
-				if (array_intersect($user_groups, array_merge($l1, $l2, $full))) return '1=1';
-				return 'u.user_id = ' . $viewer_id;
+				
+				$viewer_level = 0;
+				if (array_intersect($user_groups, $full)) $viewer_level = 3;
+				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
+				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+
+				if ($viewer_level >= 3) return '1=1';
+				
+				$where = 'u.user_id = ' . $viewer_id;
+				if ($viewer_level > 0)
+				{
+					// Staff can see targets with lower level
+					$protected_groups = $full;
+					if ($viewer_level == 1) $protected_groups = array_merge($protected_groups, $l2, $l1);
+					else if ($viewer_level == 2) $protected_groups = array_merge($protected_groups, $l2);
+
+					$where .= ' OR (u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
+				}
+				return $where;
 
 			case 'career':
 				$l1 = $this->get_config_groups('booskit_career_access_l1');
 				$l2 = $this->get_config_groups('booskit_career_access_l2');
 				$l3 = $this->get_config_groups('booskit_career_access_l3');
 				$full = $this->get_config_groups('booskit_career_access_full');
+				
+				$viewer_level = 0;
+				if (array_intersect($user_groups, $full)) $viewer_level = 4;
+				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
+				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
+				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+
+				if ($viewer_level >= 1) return '1=1';
+
 				$global = $this->get_config_groups('booskit_career_access_view_global');
-				if (array_intersect($user_groups, array_merge($l1, $l2, $l3, $full, $global))) return '1=1';
+				if (array_intersect($user_groups, $global)) return '1=1';
 
 				$local = $this->get_config_groups('booskit_career_access_view');
 				if (array_intersect($user_groups, $local)) return 'u.user_id = ' . $viewer_id;
@@ -260,8 +289,17 @@ class ucc_manager
 				$l2 = $this->get_config_groups('booskit_commendations_access_l2');
 				$l3 = $this->get_config_groups('booskit_commendations_access_l3');
 				$full = $this->get_config_groups('booskit_commendations_access_full');
+				
+				$viewer_level = 0;
+				if (array_intersect($user_groups, $full)) $viewer_level = 4;
+				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
+				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
+				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+
+				if ($viewer_level >= 1) return '1=1';
+
 				$global = $this->get_config_groups('booskit_commendations_access_view_global');
-				if (array_intersect($user_groups, array_merge($l1, $l2, $l3, $full, $global))) return '1=1';
+				if (array_intersect($user_groups, $global)) return '1=1';
 
 				$local = $this->get_config_groups('booskit_commendations_access_view');
 				if (array_intersect($user_groups, $local)) return 'u.user_id = ' . $viewer_id;
@@ -272,32 +310,85 @@ class ucc_manager
 				$l2 = $this->get_config_groups('booskit_disciplinary_access_l2');
 				$l3 = $this->get_config_groups('booskit_disciplinary_access_l3');
 				$full = $this->get_config_groups('booskit_disciplinary_access_full');
-				$global = $this->get_config_groups('booskit_disciplinary_access_view_global');
 				
-				// Level 1-4 and Global view groups see all
-				if (array_intersect($user_groups, array_merge($l1, $l2, $l3, $full, $global))) return '1=1';
+				$viewer_level = 0;
+				if (array_intersect($user_groups, $full)) $viewer_level = 4;
+				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
+				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
+				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
 
+				// Staff Tiered Access (L1-4) sees everything (authorized by level)
+				if ($viewer_level == 4) return '1=1';
+
+				$where_parts = [];
+				if ($viewer_level > 0)
+				{
+					// Tiered access: Viewer Level > Target Level. Sees everything (OOC).
+					$protected_groups = $full;
+					if ($viewer_level <= 3) $protected_groups = array_merge($protected_groups, $l3);
+					if ($viewer_level <= 2) $protected_groups = array_merge($protected_groups, $l2);
+					if ($viewer_level <= 1) $protected_groups = array_merge($protected_groups, $l1);
+					
+					$where_parts[] = '(u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
+				}
+
+				// Global View Access -> Sees all records (OOC), NO evidence (handled in template/controller if needed, but here we just filter rows)
+				$global = $this->get_config_groups('booskit_disciplinary_access_view_global');
+				if (array_intersect($user_groups, $global)) return '1=1';
+
+				// Self View Access (Local/Exempted) -> Own records, must be locally viewable
 				$exempted = $this->get_config_groups('booskit_disciplinary_access_view_exempted');
 				$local = $this->get_config_groups('booskit_disciplinary_access_view_local');
-				if (array_intersect($user_groups, array_merge($exempted, $local))) return 'u.user_id = ' . $viewer_id;
+				if (array_intersect($user_groups, array_merge($exempted, $local))) 
+				{
+					// Must be locally viewable. If def is NULL (URL source), we might not know, so we'll be safe and hide if we don't know? 
+					// Actually, the user says "not locally viewable", so they use local defs.
+					$where_parts[] = '(u.user_id = ' . $viewer_id . ' AND (def.locally_viewable = 1 OR def.locally_viewable IS NULL))';
+				}
 
-				// Limited view map (simplified for UCC)
+				// Limited View Mapping -> Globally viewable records AND target in mapped group
 				$limited = $this->get_config_groups('booskit_disciplinary_access_view_limited');
 				if (array_intersect($user_groups, $limited))
 				{
-					// We can't easily do the map in a simple where clause without more joins,
-					// but for now let's at least filter by character if they have no global access.
-					// Actually, for staff, they usually have global or nothing.
-					return 'u.user_id = ' . $viewer_id;
+					$map = $this->get_limited_view_map();
+					$target_group_ids = [];
+					foreach ($user_groups as $g_id)
+					{
+						if (isset($map[$g_id]))
+						{
+							$target_group_ids = array_merge($target_group_ids, $map[$g_id]);
+						}
+					}
+					
+					if (!empty($target_group_ids))
+					{
+						$target_group_ids = array_unique($target_group_ids);
+						$where_parts[] = '(def.globally_viewable = 1 AND u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $target_group_ids) . '))';
+					}
 				}
-				return false;
+
+				if (empty($where_parts)) return false;
+				return '(' . implode(' OR ', $where_parts) . ')';
 
 			case 'ic_disciplinary':
 				$l1 = $this->get_config_groups('booskit_icdisciplinary_access_l1');
 				$l2 = $this->get_config_groups('booskit_icdisciplinary_access_l2');
 				$full = $this->get_config_groups('booskit_icdisciplinary_access_full');
-				if (array_intersect($user_groups, array_merge($l1, $l2, $full))) return '1=1';
-				return 'u.user_id = ' . $viewer_id;
+
+				$viewer_level = 0;
+				if (array_intersect($user_groups, $full)) $viewer_level = 4;
+				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
+				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+
+				if ($viewer_level == 4) return '1=1';
+				if ($viewer_level == 0) return false; // IC module blocks non-staff from seeing even their own records
+
+				$protected_groups = $full;
+				if ($viewer_level <= 2) $protected_groups = array_merge($protected_groups, $l2);
+				if ($viewer_level <= 1) $protected_groups = array_merge($protected_groups, $l1);
+
+				// Staff can only see targets with a strictly lower level.
+				return '(u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
 		}
 
 		return '1=1';
@@ -321,6 +412,25 @@ class ucc_manager
 		$raw = isset($this->config[$key]) ? $this->config[$key] : '';
 		if (empty($raw)) return [];
 		return array_map('intval', array_map('trim', explode(',', $raw)));
+	}
+
+	protected function get_limited_view_map()
+	{
+		$raw = isset($this->config['booskit_disciplinary_access_view_limited_map']) ? $this->config['booskit_disciplinary_access_view_limited_map'] : '';
+		$lines = explode("\n", $raw);
+		$map = [];
+		foreach ($lines as $line)
+		{
+			// Format: ViewerGroupID:TargetGroupID,TargetGroupID
+			$parts = explode(':', $line);
+			if (count($parts) == 2)
+			{
+				$viewer_gid = (int)trim($parts[0]);
+				$targets = array_map('intval', array_map('trim', explode(',', $parts[1])));
+				$map[$viewer_gid] = $targets;
+			}
+		}
+		return $map;
 	}
 
 	public function get_definitions($ext_name)
