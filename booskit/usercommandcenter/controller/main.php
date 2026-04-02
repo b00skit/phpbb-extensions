@@ -184,12 +184,13 @@ class main
 				$title = $this->user->lang['UCC_AWARDS_TITLE'];
 				foreach ($items as $row)
 				{
+					$content = generate_text_for_display($row['comment'], $row['bbcode_uid'], $row['bbcode_bitfield'], $row['bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/awards', $row['award_definition_id'], $defs),
-						'CONTENT' => $row['comment'],
+						'CONTENT' => $content,
 						'U_VIEW' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $row['user_id']),
 					]);
 				}
@@ -201,12 +202,13 @@ class main
 				$title = $this->user->lang['UCC_CAREER_TITLE'];
 				foreach ($items as $row)
 				{
+					$content = generate_text_for_display($row['description'], $row['bbcode_uid'], $row['bbcode_bitfield'], $row['bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['note_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/usercareer', $row['career_type_id'], $defs),
-						'CONTENT' => $row['description'],
+						'CONTENT' => $content,
 						'U_VIEW' => $this->helper->route('booskit_usercareer_view_timeline', ['user_id' => $row['user_id']]),
 					]);
 				}
@@ -217,12 +219,13 @@ class main
 				$title = $this->user->lang['UCC_COMMENDATIONS_TITLE'];
 				foreach ($items as $row)
 				{
+					$content = generate_text_for_display($row['reason'], $row['bbcode_uid'], $row['bbcode_bitfield'], $row['bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['commendation_date']),
 						'TYPE' => $row['commendation_type'],
-						'CONTENT' => $row['reason'],
+						'CONTENT' => $content,
 						'U_VIEW' => $this->helper->route('booskit_commendations_view_all', ['user_id' => $row['user_id']]),
 					]);
 				}
@@ -234,12 +237,13 @@ class main
 				$title = $this->user->lang['UCC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
 				{
+					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/disciplinary', $row['disciplinary_type_id'], $defs),
-						'CONTENT' => $row['reason'],
+						'CONTENT' => $content,
 						'U_VIEW' => $this->helper->route('booskit_disciplinary_view_all', ['user_id' => $row['user_id']]),
 					]);
 				}
@@ -251,13 +255,14 @@ class main
 				$title = $this->user->lang['UCC_IC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
 				{
+					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'CHARACTER' => $row['character_name'],
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/icdisciplinary', $row['disciplinary_type_id'], $defs),
-						'CONTENT' => $row['reason'],
+						'CONTENT' => $content,
 						'U_VIEW' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $row['user_id'] . '&character_id=' . $row['character_id']),
 					]);
 				}

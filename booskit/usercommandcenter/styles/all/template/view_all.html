@@ -16,7 +16,7 @@
 			</div>
 			<div class="ucc-item-main">
 				<div class="ucc-item-type">{{ item.TYPE }} {% if S_IC_DISCIPLINARY %}({{ item.CHARACTER }}){% endif %}</div>
-				<div class="ucc-item-content">{{ item.CONTENT }}</div>
+				<div class="ucc-item-content">{{ item.CONTENT | raw }}</div>
 			</div>
 			<div class="ucc-item-meta">
 				<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>
