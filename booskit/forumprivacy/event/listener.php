@@ -58,7 +58,6 @@ class listener implements EventSubscriberInterface
 			'core.search_get_posts_data'			=> 'filter_search_posts',
 			'core.search_get_topic_data'			=> 'filter_search_topics',
 			'core.modify_posting_auth'				=> 'filter_posting_auth',
-			'core.display_forums_modify_sql'		=> 'modify_display_forums_sql',
 			'core.display_forums_before'			=> 'filter_index_last_post',
 		);
 	}
@@ -274,56 +273,83 @@ class listener implements EventSubscriberInterface
 		$event['auth_ary'] = $auth_ary;
 	}
 
-	public function modify_display_forums_sql($event)
-	{
-		$sql_ary = $event['sql_ary'];
-		
-		// Capture both the topic_type and the actual subforum's ID where the topic resides
-		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type, t.forum_id as actual_topic_forum_id';
-		
-		// Join POSTS_TABLE to bridge the gap using PRIMARY KEYS for max performance
-		$sql_ary['LEFT_JOIN'][] = array(
-			'FROM'	=> array(POSTS_TABLE => 'p'),
-			'ON'	=> 'f.forum_last_post_id = p.post_id'
-		);
-		$sql_ary['LEFT_JOIN'][] = array(
-			'FROM'	=> array(TOPICS_TABLE => 't'),
-			'ON'	=> 'p.topic_id = t.topic_id'
-		);
-		
-		$event['sql_ary'] = $sql_ary;
-	}
-
 	public function filter_index_last_post($event)
 	{
 		$forum_rows = $event['forum_rows'];
 		$user_id = (int) $this->user->data['user_id'];
 		
-		// Batch load permissions for better performance
+		// 1. Gather all the last post IDs that phpBB is trying to display
+		$post_ids = array();
+		foreach ($forum_rows as $row)
+		{
+			if (!empty($row['forum_last_post_id']))
+			{
+				$post_ids[] = (int) $row['forum_last_post_id'];
+			}
+		}
+		
+		if (empty($post_ids))
+		{
+			return;
+		}
+		
+		// 2. Fetch the absolute truth for these posts directly from the DB (immune to extension conflicts)
+		$sql = 'SELECT p.post_id, p.forum_id AS actual_forum_id, t.topic_type, t.topic_poster 
+			FROM ' . POSTS_TABLE . ' p
+			LEFT JOIN ' . TOPICS_TABLE . ' t ON (p.topic_id = t.topic_id)
+			WHERE ' . $this->db->sql_in_set('p.post_id', array_unique($post_ids));
+			
+		$result = $this->db->sql_query($sql);
+		
+		$post_data = array();
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$post_data[(int) $row['post_id']] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		
+		// 3. Batch load permissions for maximum performance
 		$view_others_topics = $this->auth->acl_getf('f_view_others_topics', true);
 
+		// 4. Validate every single row being displayed
 		foreach ($forum_rows as $key => $row)
 		{
-			// Check against the subforum's ID if the post rolled up, otherwise fallback to the row's forum ID
-			$check_forum_id = (isset($row['actual_topic_forum_id']) && $row['actual_topic_forum_id']) ? (int) $row['actual_topic_forum_id'] : (int) $row['forum_id'];
+			$last_post_id = (int) $row['forum_last_post_id'];
 			
-			// If not in allowed list, then we need to filter
-			if (!isset($view_others_topics[$check_forum_id]))
+			if (!$last_post_id)
 			{
-				// We only hide if it's a normal topic AND not from the user
-				if (isset($row['forum_last_topic_type']) && $row['forum_last_topic_type'] !== null && (int) $row['forum_last_topic_type'] === 0)
+				continue;
+			}
+			
+			// Extract the true origin of the post
+			if (isset($post_data[$last_post_id]))
+			{
+				$actual_forum_id = (int) $post_data[$last_post_id]['actual_forum_id'];
+				$topic_type = (int) $post_data[$last_post_id]['topic_type'];
+				$topic_poster = (int) $post_data[$last_post_id]['topic_poster'];
+			}
+			else
+			{
+				// Fail secure: if data is missing, we assume we must restrict it
+				$actual_forum_id = (int) $row['forum_id'];
+				$topic_type = 0;
+				$topic_poster = 0;
+			}
+
+			// Check the permission against the ACTUAL subforum where the topic resides
+			if (!isset($view_others_topics[$actual_forum_id]))
+			{
+				// Hide it if it's a normal topic AND not written by the viewing user
+				if ($topic_type === 0 && $topic_poster !== $user_id)
 				{
-					if ($row['forum_last_poster_id'] != $user_id)
-					{
-						$row['forum_last_post_id'] = 0;
-						$row['forum_last_post_subject'] = '';
-						$row['forum_last_post_time'] = 0;
-						$row['forum_last_poster_id'] = 0;
-						$row['forum_last_poster_name'] = '';
-						$row['forum_last_poster_colour'] = '';
-						
-						$forum_rows[$key] = $row;
-					}
+					$row['forum_last_post_id'] = 0;
+					$row['forum_last_post_subject'] = '';
+					$row['forum_last_post_time'] = 0;
+					$row['forum_last_poster_id'] = 0;
+					$row['forum_last_poster_name'] = '';
+					$row['forum_last_poster_colour'] = '';
+					
+					$forum_rows[$key] = $row;
 				}
 			}
 		}
