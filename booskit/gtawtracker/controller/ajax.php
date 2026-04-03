@@ -87,30 +87,38 @@ class ajax
 
         $data = $details['data'];
 
+        // Get Min ABAS config
+        $min_abas = (float) str_replace(',', '.', $this->config['booskit_gtawtracker_min_abas']);
+
         // Calculate Total ABAS
         $total_abas = (float) str_replace(',', '', $data['abas']);
         $characters = [];
 
         $characters[] = [
-            'name' => $data['firstname'] . ' ' . $data['lastname'],
-            'rank' => $data['rank_name'],
-            'abas' => $data['abas'],
+            'name'   => $data['firstname'] . ' ' . $data['lastname'],
+            'rank'   => $data['rank_name'],
+            'abas'   => $data['abas'],
+            'is_low' => ((float) str_replace(',', '', $data['abas']) < $min_abas),
         ];
 
         if (!empty($data['alternative_characters'])) {
             foreach ($data['alternative_characters'] as $alt) {
-                $total_abas += (float) str_replace(',', '', $alt['abas']);
+                $abas_val = (float) str_replace(',', '', $alt['abas']);
+                $total_abas += $abas_val;
                 $characters[] = [
-                    'name' => $alt['character_name'],
-                    'rank' => $alt['rank_name'],
-                    'abas' => $alt['abas'],
+                    'name'   => $alt['character_name'],
+                    'rank'   => $alt['rank_name'],
+                    'abas'   => $alt['abas'],
+                    'is_low' => ($abas_val < $min_abas),
                 ];
             }
         }
 
         return new JsonResponse([
-            'characters' => $characters,
-            'total_abas' => number_format($total_abas, 2),
+            'characters'       => $characters,
+            'total_abas'       => number_format($total_abas, 2),
+            'total_abas_low'   => ($total_abas < $min_abas),
+            'total_characters' => count($characters),
         ]);
     }
 

@@ -16,6 +16,8 @@ $lang = array_merge($lang, array(
 	'GTAW_FACTION_ID_EXPLAIN'      => 'The ID of the faction to track characters from.',
 	'GTAW_VIEW_GROUPS'             => 'View Access Groups',
 	'GTAW_VIEW_GROUPS_EXPLAIN'     => 'Comma separated list of group IDs that can view the tracker on profiles.',
+    'GTAW_MIN_ABAS'                => 'Minimum ABAS',
+    'GTAW_MIN_ABAS_EXPLAIN'        => 'The minimum ABAS amount required. Values below this will be highlighted in red. Accepts period or comma as decimal separator.',
 
     'GTAW_TRACKER'                 => 'GTA: World Character Tracker',
     'GTAW_TRACKER_LOADING'         => 'Loading character data...',

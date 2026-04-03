@@ -1,4 +1,6 @@
 <!-- IF S_GTAW_TRACKER_ENABLED -->
+<!-- INCLUDECSS @booskit_gtawtracker/tracker.css -->
+
 <div class="panel bg1" id="gtaw_tracker_panel"
     data-ajax-url="{U_GTAW_TRACKER_AJAX}"
     data-lang-total="{L_GTAW_TRACKER_TOTAL_ABAS}"
@@ -7,7 +9,9 @@
 	<div class="inner">
 		<h3>{L_GTAW_TRACKER}</h3>
 		<div id="gtaw_tracker_content">
-			<p>{L_GTAW_TRACKER_LOADING}</p>
+			<div class="gtaw-tracker-loader">
+				{L_GTAW_TRACKER_LOADING}
+			</div>
 		</div>
 	</div>
 </div>

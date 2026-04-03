@@ -1,0 +1,111 @@
+/* Tracker Loader */
+.gtaw-tracker-loader {
+	text-align: center;
+	padding: 20px;
+}
+
+.gtaw-tracker-loader::after {
+	content: " ";
+	display: inline-block;
+	width: 32px;
+	height: 32px;
+	margin: 8px;
+	border-radius: 50%;
+	border: 6px solid #ccc;
+	border-color: #ccc transparent #ccc transparent;
+	animation: gtaw-tracker-spin 1.2s linear infinite;
+}
+
+@keyframes gtaw-tracker-spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* Tracker Error */
+.gtaw-tracker-error {
+	text-align: center;
+	padding: 30px;
+	background-color: #f8f8f8;
+	border: 1px solid #e0e0e0;
+	border-radius: 4px;
+	color: #666;
+}
+
+.gtaw-tracker-error .error-icon {
+	font-size: 32px;
+	margin-bottom: 10px;
+	color: #c00;
+	display: block;
+}
+
+.gtaw-tracker-error .error-msg {
+	font-size: 1.2em;
+	font-weight: bold;
+}
+
+/* Tracker Table Enhancements */
+.gtaw-tracker-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.gtaw-tracker-table th {
+	background-color: #f0f0f0;
+	color: #333;
+	padding: 10px;
+	text-align: left;
+	border-bottom: 2px solid #ddd;
+}
+
+.gtaw-tracker-table td {
+	padding: 8px 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.gtaw-tracker-table tr:hover td {
+	background-color: #fafafa;
+}
+
+/* ABAS Pills */
+.abas-pill {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 12px;
+	background-color: #e4e4e4;
+	color: #333;
+	font-weight: bold;
+	font-size: 0.9em;
+}
+
+.abas-pill.low {
+	background-color: #ffe0e0;
+	color: #c00;
+	border: 1px solid #ffcccc;
+}
+
+.gtaw-tracker-footer {
+	margin-top: 15px;
+	padding-top: 10px;
+	border-top: 2px solid #eee;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 1.1em;
+}
+
+.gtaw-tracker-footer .total-label {
+	font-weight: bold;
+}
+
+.gtaw-tracker-footer .total-value {
+	font-weight: bold;
+	color: #333;
+}
+
+.gtaw-tracker-footer .total-value.low {
+	color: #c00;
+}
