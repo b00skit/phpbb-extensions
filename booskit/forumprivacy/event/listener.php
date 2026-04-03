@@ -276,17 +276,14 @@ class listener implements EventSubscriberInterface
 
 	public function modify_display_forums_sql($event)
 	{
-		// Only join if the user doesn't have the permission globally.
-		// If they have it globally, they might have it everywhere, but it's safer to check per forum later.
-		// However, the join is the main bottleneck, so we include forum_id to use the index.
 		$sql_ary = $event['sql_ary'];
-		
-		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type';
+
+		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type, t.topic_poster as forum_last_topic_poster, t.forum_id as forum_last_topic_forum_id';
 		$sql_ary['LEFT_JOIN'][] = array(
 			'FROM'	=> array(TOPICS_TABLE => 't'),
-			'ON'	=> 'f.forum_id = t.forum_id AND f.forum_last_post_id = t.topic_last_post_id'
+			'ON'	=> 'f.forum_last_post_id > 0 AND f.forum_last_post_id = t.topic_last_post_id'
 		);
-		
+
 		$event['sql_ary'] = $sql_ary;
 	}
 
@@ -294,21 +291,24 @@ class listener implements EventSubscriberInterface
 	{
 		$forum_rows = $event['forum_rows'];
 		$user_id = (int) $this->user->data['user_id'];
-		
+
 		// Batch load permissions for better performance
 		$view_others_topics = $this->auth->acl_getf('f_view_others_topics', true);
 
 		foreach ($forum_rows as $key => $row)
 		{
 			$forum_id = (int) $row['forum_id'];
-			
-			// If not in allowed list, then we need to filter
-			if (!isset($view_others_topics[$forum_id]))
+			$last_post_forum_id = isset($row['forum_last_topic_forum_id']) ? (int) $row['forum_last_topic_forum_id'] : $forum_id;
+
+			// If not in allowed list for the forum where the post actually resides, then we need to filter
+			if (!isset($view_others_topics[$last_post_forum_id]))
 			{
-				// We only hide if it's a normal topic AND not from the user
+				// We only hide if it's a normal topic AND not started by the user
 				if (isset($row['forum_last_topic_type']) && $row['forum_last_topic_type'] !== null && (int) $row['forum_last_topic_type'] === 0)
 				{
-					if ($row['forum_last_poster_id'] != $user_id)
+					$topic_poster = isset($row['forum_last_topic_poster']) ? (int) $row['forum_last_topic_poster'] : 0;
+
+					if ($topic_poster !== $user_id)
 					{
 						$row['forum_last_post_id'] = 0;
 						$row['forum_last_post_subject'] = '';
@@ -316,13 +316,13 @@ class listener implements EventSubscriberInterface
 						$row['forum_last_poster_id'] = 0;
 						$row['forum_last_poster_name'] = '';
 						$row['forum_last_poster_colour'] = '';
-						
+
 						$forum_rows[$key] = $row;
 					}
 				}
 			}
 		}
-		
+
 		$event['forum_rows'] = $forum_rows;
 	}
 }
