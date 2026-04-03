@@ -80,6 +80,7 @@ class ucc_manager
 
 		$sql = 'SELECT COUNT(a.award_id) as total 
 				FROM ' . $this->table_prefix . 'booskit_awards_users a
+				JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
 				WHERE ' . $where;
 		$result = $this->db->sql_query($sql);
 		$total = (int) $this->db->sql_fetchfield('total');
@@ -115,6 +116,7 @@ class ucc_manager
 
 		$sql = 'SELECT COUNT(n.note_id) as total 
 				FROM ' . $this->table_prefix . 'booskit_career_notes n
+				JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id
 				WHERE ' . $where;
 		$result = $this->db->sql_query($sql);
 		$total = (int) $this->db->sql_fetchfield('total');
@@ -150,6 +152,7 @@ class ucc_manager
 
 		$sql = 'SELECT COUNT(c.commendation_id) as total 
 				FROM ' . $this->table_prefix . 'booskit_commendations c
+				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 				WHERE ' . $where;
 		$result = $this->db->sql_query($sql);
 		$total = (int) $this->db->sql_fetchfield('total');
@@ -225,6 +228,7 @@ class ucc_manager
 		$sql = 'SELECT COUNT(r.record_id) as total 
 				FROM ' . $this->table_prefix . 'booskit_ic_records r
 				JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
+				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 				WHERE ' . $where;
 		$result = $this->db->sql_query($sql);
 		$total = (int) $this->db->sql_fetchfield('total');
