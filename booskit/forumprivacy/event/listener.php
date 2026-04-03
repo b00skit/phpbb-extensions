@@ -276,15 +276,19 @@ class listener implements EventSubscriberInterface
 
 	public function modify_display_forums_sql($event)
 	{
-		// Only join if the user doesn't have the permission globally.
-		// If they have it globally, they might have it everywhere, but it's safer to check per forum later.
-		// However, the join is the main bottleneck, so we include forum_id to use the index.
 		$sql_ary = $event['sql_ary'];
 		
-		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type';
+		// Capture both the topic_type and the actual subforum's ID where the topic resides
+		$sql_ary['SELECT'] .= ', t.topic_type as forum_last_topic_type, t.forum_id as actual_topic_forum_id';
+		
+		// Join POSTS_TABLE to bridge the gap using PRIMARY KEYS for max performance
+		$sql_ary['LEFT_JOIN'][] = array(
+			'FROM'	=> array(POSTS_TABLE => 'p'),
+			'ON'	=> 'f.forum_last_post_id = p.post_id'
+		);
 		$sql_ary['LEFT_JOIN'][] = array(
 			'FROM'	=> array(TOPICS_TABLE => 't'),
-			'ON'	=> 'f.forum_id = t.forum_id AND f.forum_last_post_id = t.topic_last_post_id'
+			'ON'	=> 'p.topic_id = t.topic_id'
 		);
 		
 		$event['sql_ary'] = $sql_ary;
@@ -300,10 +304,11 @@ class listener implements EventSubscriberInterface
 
 		foreach ($forum_rows as $key => $row)
 		{
-			$forum_id = (int) $row['forum_id'];
+			// Check against the subforum's ID if the post rolled up, otherwise fallback to the row's forum ID
+			$check_forum_id = (isset($row['actual_topic_forum_id']) && $row['actual_topic_forum_id']) ? (int) $row['actual_topic_forum_id'] : (int) $row['forum_id'];
 			
 			// If not in allowed list, then we need to filter
-			if (!isset($view_others_topics[$forum_id]))
+			if (!isset($view_others_topics[$check_forum_id]))
 			{
 				// We only hide if it's a normal topic AND not from the user
 				if (isset($row['forum_last_topic_type']) && $row['forum_last_topic_type'] !== null && (int) $row['forum_last_topic_type'] === 0)
