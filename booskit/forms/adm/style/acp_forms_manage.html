@@ -63,6 +63,7 @@
 								<th>{{ lang('FIELD_OPTIONS') }}</th>
 								<th>{{ lang('FIELD_REQUIRED') }}</th>
 								<th>{{ lang('ACTION') }}</th>
+								<th>{{ lang('MOVE') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -179,7 +180,9 @@
 			'</select></td>' +
 			'<td><input type="text" class="field-options" value=\'' + options + '\' placeholder="Val1:Label1,Val2:Label2" onchange="updateJson()" /></td>' +
 			'<td><input type="checkbox" class="field-required"' + (required ? ' checked' : '') + ' onchange="updateJson()" /></td>' +
-			'<td><button type="button" class="button2" onclick="removeFieldRow(this)">{{ lang('DELETE') }}</button></td>';
+			'<td><button type="button" class="button2" onclick="removeFieldRow(this)">{{ lang('DELETE') }}</button></td>' +
+			'<td><button type="button" class="button2" onclick="moveFieldUp(this)" title="{{ lang('MOVE_UP') }}">&uarr;</button>' +
+			'<button type="button" class="button2" onclick="moveFieldDown(this)" title="{{ lang('MOVE_DOWN') }}">&darr;</button></td>';
 
 		tableBody.appendChild(row);
 		updateJson();
@@ -188,6 +191,24 @@
 	window.removeFieldRow = function(btn) {
 		btn.closest('tr').remove();
 		updateJson();
+	};
+
+	window.moveFieldUp = function(btn) {
+		var row = btn.closest('tr');
+		var prev = row.previousElementSibling;
+		if (prev) {
+			row.parentNode.insertBefore(row, prev);
+			updateJson();
+		}
+	};
+
+	window.moveFieldDown = function(btn) {
+		var row = btn.closest('tr');
+		var next = row.nextElementSibling;
+		if (next) {
+			row.parentNode.insertBefore(next, row);
+			updateJson();
+		}
 	};
 
 	window.updateJson = function() {

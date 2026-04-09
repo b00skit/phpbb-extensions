@@ -45,6 +45,9 @@ $lang = array_merge($lang, array(
 	'FIELD_OPTIONS'						=> 'Options',
 	'FIELD_REQUIRED'					=> 'Required',
 	'ADD_FIELD'							=> 'Add Field',
+	'MOVE'								=> 'Move',
+	'MOVE_UP'							=> 'Move Up',
+	'MOVE_DOWN'							=> 'Move Down',
 
 	'FORUM_ID'							=> 'Target Forum ID',
 	'POSTER_ID'							=> 'Poster ID',
