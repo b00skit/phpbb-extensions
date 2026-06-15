@@ -24,42 +24,72 @@
 
 <form id="postform" method="post" action="{U_ACTION}">
 
-<div class="panel">
-	<div class="inner">
-		<fieldset class="fields2">
-			<!-- BEGIN fields -->
-			<dl style="clear: left;">
-				<dt><label for="{fields.NAME}">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label><!-- IF fields.EXPLAIN --><br /><span>{fields.EXPLAIN}</span><!-- ENDIF --></dt>
-				<dd>
-					<!-- IF fields.S_TEXT -->
-						<input type="text" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
-					<!-- ELSEIF fields.S_TEXTAREA -->
-						<textarea name="{fields.NAME}" id="{fields.NAME}" rows="5" cols="45" class="inputbox">{fields.DEFAULT_VALUE}</textarea>
-					<!-- ELSEIF fields.S_SELECT -->
-						<select name="{fields.NAME}" id="{fields.NAME}">
-							<!-- BEGIN options -->
-								<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
-							<!-- END options -->
-						</select>
-					<!-- ELSEIF fields.S_CHECKBOX -->
+<!-- DEFINE $PANEL_OPEN = false -->
+
+<!-- BEGIN fields -->
+	<!-- IF fields.S_SECTION_START -->
+		<!-- IF $PANEL_OPEN -->
+			</fieldset>
+			</div>
+			</div>
+			<!-- DEFINE $PANEL_OPEN = false -->
+		<!-- ENDIF -->
+		<div class="panel form-section" style="margin-bottom: 20px; border: 1px solid #c9d2d8; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); background-color: #fcfdfe;">
+			<div class="inner" style="padding: 20px;">
+				<h3 style="margin: 0 0 8px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 1.3em;">{fields.LABEL}</h3>
+				<!-- IF fields.EXPLAIN --><p style="margin: 0 0 20px 0; font-size: 0.9em; color: #64748b; font-style: italic; line-height: 1.4;">{fields.EXPLAIN}</p><!-- ENDIF -->
+				<fieldset class="fields2">
+		<!-- DEFINE $PANEL_OPEN = true -->
+	<!-- ELSEIF fields.S_SECTION_END -->
+		<!-- IF $PANEL_OPEN -->
+			</fieldset>
+			</div>
+			</div>
+			<!-- DEFINE $PANEL_OPEN = false -->
+		<!-- ENDIF -->
+	<!-- ELSE -->
+		<!-- IF not $PANEL_OPEN -->
+			<div class="panel">
+				<div class="inner" style="padding: 20px;">
+					<fieldset class="fields2">
+			<!-- DEFINE $PANEL_OPEN = true -->
+		<!-- ENDIF -->
+		<dl style="clear: left; margin-bottom: 15px;">
+			<dt><label for="{fields.NAME}">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label><!-- IF fields.EXPLAIN --><br /><span>{fields.EXPLAIN}</span><!-- ENDIF --></dt>
+			<dd style="margin-left: 220px;">
+				<!-- IF fields.S_TEXT -->
+					<input type="text" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+				<!-- ELSEIF fields.S_TEXTAREA -->
+					<textarea name="{fields.NAME}" id="{fields.NAME}" rows="5" cols="45" class="inputbox">{fields.DEFAULT_VALUE}</textarea>
+				<!-- ELSEIF fields.S_SELECT -->
+					<select name="{fields.NAME}" id="{fields.NAME}">
 						<!-- BEGIN options -->
-							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="checkbox" name="{fields.NAME}[]" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+							<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
 						<!-- END options -->
-					<!-- ELSEIF fields.S_RADIO -->
-						<!-- BEGIN options -->
-							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="radio" name="{fields.NAME}" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
-						<!-- END options -->
-					<!-- ELSEIF fields.S_NUMBER -->
-						<input type="number" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
-					<!-- ELSEIF fields.S_DATE -->
-						<input type="date" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
-					<!-- ENDIF -->
-				</dd>
-			</dl>
-			<!-- END fields -->
-		</fieldset>
+					</select>
+				<!-- ELSEIF fields.S_CHECKBOX -->
+					<!-- BEGIN options -->
+						<label for="{fields.NAME}_{fields.options.VALUE}"><input type="checkbox" name="{fields.NAME}[]" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+					<!-- END options -->
+				<!-- ELSEIF fields.S_RADIO -->
+					<!-- BEGIN options -->
+						<label for="{fields.NAME}_{fields.options.VALUE}"><input type="radio" name="{fields.NAME}" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+					<!-- END options -->
+				<!-- ELSEIF fields.S_NUMBER -->
+					<input type="number" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+				<!-- ELSEIF fields.S_DATE -->
+					<input type="date" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+				<!-- ENDIF -->
+			</dd>
+		</dl>
+	<!-- ENDIF -->
+<!-- END fields -->
+
+<!-- IF $PANEL_OPEN -->
+	</fieldset>
 	</div>
-</div>
+	</div>
+<!-- ENDIF -->
 
 <div class="panel">
 	<div class="inner">

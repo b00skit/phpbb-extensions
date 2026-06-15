@@ -54,6 +54,28 @@ class main
 
 		foreach ($fields as $field)
 		{
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			{
+				$this->template->assign_block_vars('fields', [
+					'NAME'			=> $field['field_name'],
+					'LABEL'			=> $field['field_label'],
+					'TYPE'			=> $field['field_type'],
+					'REQUIRED'		=> false,
+					'EXPLAIN'		=> $field['field_desc'],
+					'DEFAULT_VALUE'	=> '',
+					'S_TEXT'		=> false,
+					'S_TEXTAREA'	=> false,
+					'S_SELECT'		=> false,
+					'S_CHECKBOX'	=> false,
+					'S_RADIO'		=> false,
+					'S_NUMBER'		=> false,
+					'S_DATE'		=> false,
+					'S_SECTION_START' => $field['field_type'] == 'section_start',
+					'S_SECTION_END'   => $field['field_type'] == 'section_end',
+				]);
+				continue;
+			}
+
 			$current_value = $this->request->variable($field['field_name'], '', true);
 			if (empty($current_value))
 			{
@@ -74,6 +96,8 @@ class main
 				'S_RADIO'		=> $field['field_type'] == 'radio',
 				'S_NUMBER'		=> $field['field_type'] == 'number',
 				'S_DATE'		=> $field['field_type'] == 'date',
+				'S_SECTION_START' => false,
+				'S_SECTION_END'   => false,
 			]);
 
 			$options = $this->get_field_options($field);
@@ -183,6 +207,10 @@ class main
 		// 2. Process User Fields (Overwrites legacy aliases if collision occurs)
 		foreach ($fields as $field)
 		{
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			{
+				continue;
+			}
 			$name = $field['field_name'];
 			$selected_values = [];
 
@@ -222,6 +250,19 @@ class main
 		$all_fields_text = '';
 		foreach ($fields as $field)
 		{
+			if ($field['field_type'] == 'section_end')
+			{
+				continue;
+			}
+			if ($field['field_type'] == 'section_start')
+			{
+				$all_fields_text .= "\n[b][size=120]" . $field['field_label'] . "[/size][/b]\n";
+				if (!empty($field['field_desc']))
+				{
+					$all_fields_text .= "[i]" . $field['field_desc'] . "[/i]\n";
+				}
+				continue;
+			}
 			$val_text = isset($replacements[$field['field_name']]) ? $replacements[$field['field_name']] : '';
 			$all_fields_text .= '[b]' . $field['field_label'] . ':[/b] ' . $val_text . "\n";
 		}
@@ -245,6 +286,10 @@ class main
 		// 4. Process Field Loops: {{#fieldname}} ... {{/fieldname}}
 		foreach ($fields as $field)
 		{
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			{
+				continue;
+			}
 			$name = $field['field_name'];
 			$selected_values = $raw_values[$name];
 			$field_options = $this->get_field_options($field);
@@ -282,6 +327,10 @@ class main
 			$all_fields_data = [];
 			foreach ($fields as $field)
 			{
+				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+				{
+					continue;
+				}
 				$all_fields_data[] = [
 					'name'  => $field['field_name'],
 					'label' => $field['field_label'],
@@ -326,6 +375,10 @@ class main
 
 			foreach ($fields as $field)
 			{
+				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+				{
+					continue;
+				}
 				$key = $field['field_name'];
 				$val = $raw_values[$key];
 

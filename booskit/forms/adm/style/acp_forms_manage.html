@@ -51,28 +51,183 @@
 				<dd><textarea id="form_template" name="form_template" rows="10" cols="40">{FORM_TEMPLATE}</textarea></dd>
 			</dl>
 			<dl>
-				<dt><label for="form_fields">{{ lang('FORM_FIELDS') }}:</label><br /><span>{{ lang('FORM_FIELDS_EXPLAIN') }}</span></dt>
-				<dd>
-					<table class="table1" id="fields-table">
-						<thead>
-							<tr>
-								<th>{{ lang('FIELD_LABEL') }}</th>
-								<th>{{ lang('FIELD_NAME') }}</th>
-								<th>{{ lang('FIELD_DESC') }}</th>
-								<th>{{ lang('FIELD_TYPE') }}</th>
-								<th>{{ lang('FIELD_OPTIONS') }}</th>
-								<th>{{ lang('FIELD_REQUIRED') }}</th>
-								<th>{{ lang('ACTION') }}</th>
-								<th>{{ lang('MOVE') }}</th>
-							</tr>
-						</thead>
-						<tbody>
-							<!-- Rows will be added by JS -->
-						</tbody>
-					</table>
-					<p class="quick">
-						<button type="button" class="button2" onclick="addFieldRow()">{{ lang('ADD_FIELD') }}</button>
-					</p>
+				<dt><label>{{ lang('FORM_FIELDS') }}:</label><br /><span>{{ lang('FORM_FIELDS_EXPLAIN') }}</span></dt>
+				<dd style="margin-left: 0; clear: both; float: none; width: 100%;">
+					<style>
+					.form-builder {
+						margin-top: 15px;
+						margin-bottom: 25px;
+						padding: 20px;
+						background: #ffffff;
+						border: 1px solid #cbd5e1;
+						border-radius: 10px;
+						box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+					}
+					.builder-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 20px;
+						border-bottom: 2px solid #f1f5f9;
+						padding-bottom: 12px;
+					}
+					.builder-title {
+						font-size: 1.25rem;
+						font-weight: bold;
+						color: #0f172a;
+					}
+					.builder-actions {
+						display: flex;
+						gap: 10px;
+					}
+					.btn-primary {
+						background-color: #2563eb !important;
+						color: #ffffff !important;
+						border: none !important;
+						border-radius: 6px !important;
+						padding: 6px 14px !important;
+						font-weight: 600 !important;
+						cursor: pointer !important;
+						transition: background-color 0.2s !important;
+					}
+					.btn-primary:hover {
+						background-color: #1d4ed8 !important;
+					}
+					.btn-secondary {
+						background-color: #f1f5f9 !important;
+						color: #475569 !important;
+						border: 1px solid #cbd5e1 !important;
+						border-radius: 6px !important;
+						padding: 4px 10px !important;
+						font-weight: 500 !important;
+						cursor: pointer !important;
+					}
+					.btn-secondary:hover {
+						background-color: #e2e8f0 !important;
+					}
+					.btn-danger {
+						background-color: #ef4444 !important;
+						color: #ffffff !important;
+						border: none !important;
+						border-radius: 6px !important;
+						padding: 4px 10px !important;
+						font-weight: 500 !important;
+						cursor: pointer !important;
+					}
+					.btn-danger:hover {
+						background-color: #dc2626 !important;
+					}
+					.builder-items-list {
+						display: flex;
+						flex-direction: column;
+						gap: 20px;
+					}
+					.section-card {
+						background: #f8fafc;
+						border: 1px solid #e2e8f0;
+						border-left: 5px solid #2563eb;
+						border-radius: 8px;
+						padding: 15px;
+						box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+					}
+					.section-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 12px;
+						background: #f1f5f9;
+						padding: 8px 12px;
+						border-radius: 6px;
+					}
+					.section-title-wrapper {
+						display: flex;
+						gap: 10px;
+						flex-grow: 1;
+						margin-right: 15px;
+					}
+					.section-title-wrapper input {
+						padding: 6px 10px;
+						border: 1px solid #cbd5e1;
+						border-radius: 4px;
+						font-size: 0.9em;
+					}
+					.section-fields-container {
+						padding-left: 20px;
+						border-left: 2px dashed #cbd5e1;
+						display: flex;
+						flex-direction: column;
+						gap: 12px;
+						margin-bottom: 12px;
+						min-height: 20px;
+					}
+					.field-card {
+						background: #ffffff;
+						border: 1px solid #e2e8f0;
+						border-radius: 8px;
+						padding: 15px;
+						box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+						position: relative;
+					}
+					.field-grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+						gap: 12px;
+						margin-bottom: 10px;
+					}
+					.field-item {
+						display: flex;
+						flex-direction: column;
+						gap: 4px;
+					}
+					.field-item label {
+						font-size: 0.75rem;
+						font-weight: 700;
+						color: #64748b;
+						text-transform: uppercase;
+					}
+					.field-item input[type="text"],
+					.field-item select {
+						padding: 5px 8px;
+						border: 1px solid #cbd5e1;
+						border-radius: 4px;
+						font-size: 0.9em;
+						width: 100%;
+						box-sizing: border-box;
+					}
+					.field-item-checkbox {
+						flex-direction: row;
+						align-items: center;
+						gap: 8px;
+						height: 100%;
+						padding-top: 18px;
+					}
+					.field-controls {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						border-top: 1px solid #f1f5f9;
+						padding-top: 10px;
+						margin-top: 10px;
+					}
+					.control-buttons-group {
+						display: flex;
+						gap: 6px;
+					}
+					</style>
+
+					<div class="form-builder">
+						<div class="builder-header">
+							<span class="builder-title">{{ lang('FORM_FIELDS') }}</span>
+							<div class="builder-actions">
+								<button type="button" class="btn-primary" onclick="addSection()">+ Add Section</button>
+								<button type="button" class="btn-primary" onclick="addFieldToContainer(null)">+ Add Top-Level Question</button>
+							</div>
+						</div>
+						
+						<div id="builder-items-list" class="builder-items-list">
+							<!-- Dynamic content loaded by JS -->
+						</div>
+					</div>
 					<input type="hidden" id="form_fields" name="form_fields" value="{FORM_FIELDS}" />
 				</dd>
 			</dl>
@@ -139,110 +294,327 @@
 
 <script>
 (function() {
-	if (!document.getElementById('fields-table')) return;
-
 	var jsonInput = document.getElementById('form_fields');
-	var tableBody = document.querySelector('#fields-table tbody');
+	var builderContainer = document.getElementById('builder-items-list');
+	if (!jsonInput || !builderContainer) return;
 
-	function init() {
-		var data = [];
+	var formItems = [];
+
+	function deserialize() {
+		var flat = [];
 		try {
-			if (jsonInput.value) data = JSON.parse(jsonInput.value);
-		} catch (e) { console.error('Invalid JSON', e); }
+			if (jsonInput.value) {
+				flat = JSON.parse(jsonInput.value);
+			}
+		} catch (e) {
+			console.error('Invalid JSON', e);
+		}
 
-		if (Array.isArray(data)) {
-			data.forEach(function(field) {
-				addFieldRow(field);
+		formItems = [];
+		var currentSection = null;
+
+		if (Array.isArray(flat)) {
+			flat.forEach(function(f) {
+				if (f.type === 'section_start') {
+					currentSection = {
+						type: 'section',
+						label: f.label || '',
+						description: f.description || '',
+						fields: []
+					};
+					formItems.push(currentSection);
+				} else if (f.type === 'section_end') {
+					currentSection = null;
+				} else {
+					var field = {
+						type: 'field',
+						label: f.label || '',
+						name: f.name || '',
+						description: f.description || '',
+						fieldType: f.type || 'text',
+						options: typeof f.options === 'string' ? f.options : JSON.stringify(f.options || ''),
+						required: !!f.required
+					};
+					if (currentSection) {
+						currentSection.fields.push(field);
+					} else {
+						formItems.push(field);
+					}
+				}
 			});
 		}
 	}
 
-	window.addFieldRow = function(data) {
-		var row = document.createElement('tr');
-		var label = data ? data.label.replace(/'/g, "&#39;") : '';
-		var name = data ? data.name.replace(/'/g, "&#39;") : '';
-		var description = data ? data.description.replace(/'/g, "&#39;") : '';
-		var type = data ? data.type : 'text';
-		var options = data && data.options ? (typeof data.options === 'string' ? data.options.replace(/'/g, "&#39;") : JSON.stringify(data.options).replace(/'/g, "&#39;")) : '';
-		var required = data ? data.required : false;
-
-		row.innerHTML = '<td><input type="text" class="field-label" value=\'' + label + '\' onchange="updateJson()" /></td>' +
-			'<td><input type="text" class="field-name" value=\'' + name + '\' onchange="updateJson()" /></td>' +
-			'<td><input type="text" class="field-description" value=\'' + description + '\' onchange="updateJson()" /></td>' +
-			'<td><select class="field-type" onchange="updateJson()">' +
-				'<option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option>' +
-				'<option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option>' +
-				'<option value="select"' + (type === 'select' ? ' selected' : '') + '>Select</option>' +
-				'<option value="checkbox"' + (type === 'checkbox' ? ' selected' : '') + '>Checkbox</option>' +
-				'<option value="radio"' + (type === 'radio' ? ' selected' : '') + '>Radio</option>' +
-				'<option value="number"' + (type === 'number' ? ' selected' : '') + '>Number</option>' +
-				'<option value="date"' + (type === 'date' ? ' selected' : '') + '>Date</option>' +
-			'</select></td>' +
-			'<td><input type="text" class="field-options" value=\'' + options + '\' placeholder="Val1:Label1,Val2:Label2" onchange="updateJson()" /></td>' +
-			'<td><input type="checkbox" class="field-required"' + (required ? ' checked' : '') + ' onchange="updateJson()" /></td>' +
-			'<td><button type="button" class="button2" onclick="removeFieldRow(this)">{{ lang('DELETE') }}</button></td>' +
-			'<td><button type="button" class="button2" onclick="moveFieldUp(this)" title="{{ lang('MOVE_UP') }}">&uarr;</button>' +
-			'<button type="button" class="button2" onclick="moveFieldDown(this)" title="{{ lang('MOVE_DOWN') }}">&darr;</button></td>';
-
-		tableBody.appendChild(row);
-		updateJson();
-	};
-
-	window.removeFieldRow = function(btn) {
-		btn.closest('tr').remove();
-		updateJson();
-	};
-
-	window.moveFieldUp = function(btn) {
-		var row = btn.closest('tr');
-		var prev = row.previousElementSibling;
-		if (prev) {
-			row.parentNode.insertBefore(row, prev);
-			updateJson();
-		}
-	};
-
-	window.moveFieldDown = function(btn) {
-		var row = btn.closest('tr');
-		var next = row.nextElementSibling;
-		if (next) {
-			row.parentNode.insertBefore(next, row);
-			updateJson();
-		}
-	};
-
-	window.updateJson = function() {
-		var rows = tableBody.querySelectorAll('tr');
-		var data = [];
-
-		rows.forEach(function(row) {
-			var optionsRaw = row.querySelector('.field-options').value;
-			var optionsParsed = optionsRaw;
-			
-			// Try to parse options if they look like JSON, otherwise keep as string or parse comma separated
-			if (optionsRaw.indexOf(':') !== -1 && optionsRaw.indexOf('{') === -1) {
-				var pairs = optionsRaw.split(',');
-				var obj = {};
-				pairs.forEach(function(p) {
-					var kv = p.split(':');
-					if (kv.length === 2) obj[kv[0].trim()] = kv[1].trim();
+	window.serialize = function() {
+		var flat = [];
+		formItems.forEach(function(item) {
+			if (item.type === 'section') {
+				var secId = Math.random().toString(36).substr(2, 6);
+				flat.push({
+					label: item.label,
+					name: 'section_start_' + secId,
+					description: item.description,
+					type: 'section_start',
+					options: '',
+					required: false
 				});
-				optionsParsed = obj;
+				if (Array.isArray(item.fields)) {
+					item.fields.forEach(function(f) {
+						flat.push({
+							label: f.label,
+							name: f.name,
+							description: f.description,
+							type: f.fieldType,
+							options: f.options,
+							required: f.required
+						});
+					});
+				}
+				flat.push({
+					label: '',
+					name: 'section_end_' + secId,
+					description: '',
+					type: 'section_end',
+					options: '',
+					required: false
+				});
+			} else {
+				flat.push({
+					label: item.label,
+					name: item.name,
+					description: item.description,
+					type: item.fieldType,
+					options: item.options,
+					required: item.required
+				});
 			}
+		});
+		jsonInput.value = JSON.stringify(flat);
+	};
 
-			data.push({
-				label: row.querySelector('.field-label').value,
-				name: row.querySelector('.field-name').value,
-				description: row.querySelector('.field-description').value,
-				type: row.querySelector('.field-type').value,
-				options: optionsParsed,
-				required: row.querySelector('.field-required').checked
-			});
+	window.addSection = function() {
+		formItems.push({
+			type: 'section',
+			label: 'New Section',
+			description: '',
+			fields: []
+		});
+		serialize();
+		renderBuilder();
+	};
+
+	window.addFieldToContainer = function(secIdx) {
+		var newField = {
+			type: 'field',
+			label: 'New Question',
+			name: 'question_' + Math.random().toString(36).substr(2, 5),
+			description: '',
+			fieldType: 'text',
+			options: '',
+			required: false
+		};
+
+		if (secIdx === null) {
+			formItems.push(newField);
+		} else {
+			formItems[secIdx].fields.push(newField);
+		}
+		serialize();
+		renderBuilder();
+	};
+
+	window.deleteItem = function(secIdx, fldIdx) {
+		if (secIdx === null) {
+			// Top-level item deletion
+			var item = formItems[fldIdx];
+			if (item.type === 'section') {
+				// Move section fields to top-level so data is not lost
+				if (item.fields && item.fields.length > 0) {
+					formItems.splice(fldIdx, 1, ...item.fields);
+				} else {
+					formItems.splice(fldIdx, 1);
+				}
+			} else {
+				formItems.splice(fldIdx, 1);
+			}
+		} else {
+			// Field inside section deletion
+			formItems[secIdx].fields.splice(fldIdx, 1);
+		}
+		serialize();
+		renderBuilder();
+	};
+
+	window.moveTopLevel = function(idx, dir) {
+		if (idx + dir < 0 || idx + dir >= formItems.length) return;
+		var temp = formItems[idx];
+		formItems[idx] = formItems[idx + dir];
+		formItems[idx + dir] = temp;
+		serialize();
+		renderBuilder();
+	};
+
+	window.moveNested = function(secIdx, fldIdx, dir) {
+		var fields = formItems[secIdx].fields;
+		if (fldIdx + dir < 0 || fldIdx + dir >= fields.length) return;
+		var temp = fields[fldIdx];
+		fields[fldIdx] = fields[fldIdx + dir];
+		fields[fldIdx + dir] = temp;
+		serialize();
+		renderBuilder();
+	};
+
+	window.changeFieldSection = function(currentSecIdx, currentFldIdx, targetSecIdx) {
+		var field;
+		if (currentSecIdx === null) {
+			field = formItems.splice(currentFldIdx, 1)[0];
+		} else {
+			field = formItems[currentSecIdx].fields.splice(currentFldIdx, 1)[0];
+		}
+
+		if (targetSecIdx === 'top') {
+			formItems.push(field);
+		} else {
+			formItems[parseInt(targetSecIdx)].fields.push(field);
+		}
+		serialize();
+		renderBuilder();
+	};
+
+	function renderFieldCard(field, secIdx, fldIdx) {
+		var escLabel = field.label.replace(/'/g, "&#39;");
+		var escName = field.name.replace(/'/g, "&#39;");
+		var escDesc = field.description.replace(/'/g, "&#39;");
+		var escOptions = field.options.replace(/'/g, "&#39;");
+
+		// Build Section assignment options
+		var sectionOptionsHtml = '<option value="top"' + (secIdx === null ? ' selected' : '') + '>[Top-Level / No Section]</option>';
+		formItems.forEach(function(item, idx) {
+			if (item.type === 'section') {
+				var isSelected = (secIdx === idx);
+				sectionOptionsHtml += '<option value="' + idx + '"' + (isSelected ? ' selected' : '') + '>Section: ' + (item.label || 'Unnamed') + '</option>';
+			}
 		});
 
-		jsonInput.value = JSON.stringify(data);
+		var card = document.createElement('div');
+		card.className = 'field-card';
+
+		card.innerHTML = 
+			'<div class="field-grid">' +
+				'<div class="field-item">' +
+					'<label>{{ lang('FIELD_LABEL') }}</label>' +
+					'<input type="text" value=\'' + escLabel + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'label\',this.value)" />' +
+				'</div>' +
+				'<div class="field-item">' +
+					'<label>{{ lang('FIELD_NAME') }}</label>' +
+					'<input type="text" value=\'' + escName + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'name\',this.value)" />' +
+				'</div>' +
+				'<div class="field-item">' +
+					'<label>{{ lang('FIELD_DESC') }}</label>' +
+					'<input type="text" value=\'' + escDesc + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'description\',this.value)" />' +
+				'</div>' +
+				'<div class="field-item">' +
+					'<label>{{ lang('FIELD_TYPE') }}</label>' +
+					'<select onchange="updateFieldData(' + secIdx + ',' + fldIdx + ',\'fieldType\',this.value, true)">' +
+						'<option value="text"' + (field.fieldType === 'text' ? ' selected' : '') + '>Text</option>' +
+						'<option value="textarea"' + (field.fieldType === 'textarea' ? ' selected' : '') + '>Textarea</option>' +
+						'<option value="select"' + (field.fieldType === 'select' ? ' selected' : '') + '>Select</option>' +
+						'<option value="checkbox"' + (field.fieldType === 'checkbox' ? ' selected' : '') + '>Checkbox</option>' +
+						'<option value="radio"' + (field.fieldType === 'radio' ? ' selected' : '') + '>Radio</option>' +
+						'<option value="number"' + (field.fieldType === 'number' ? ' selected' : '') + '>Number</option>' +
+						'<option value="date"' + (field.fieldType === 'date' ? ' selected' : '') + '>Date</option>' +
+					'</select>' +
+				'</div>' +
+				'<div class="field-item">' +
+					'<label>{{ lang('FIELD_OPTIONS') }}</label>' +
+					'<input type="text" value=\'' + escOptions + '\' placeholder="Val1:Label1,Val2:Label2" oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'options\',this.value)" />' +
+				'</div>' +
+				'<div class="field-item field-item-checkbox">' +
+					'<input type="checkbox" ' + (field.required ? 'checked' : '') + ' onchange="updateFieldData(' + secIdx + ',' + fldIdx + ',\'required\',this.checked)" />' +
+					'<label style="margin: 0; cursor: pointer;">{{ lang('FIELD_REQUIRED') }}</label>' +
+				'</div>' +
+			'</div>' +
+			'<div class="field-controls">' +
+				'<div class="control-buttons-group">' +
+					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + fldIdx + ',-1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',-1)') + '">&uarr; Move Up</button>' +
+					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + fldIdx + ',1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',1)') + '">&darr; Move Down</button>' +
+					'<select style="padding: 4px; border-radius: 4px; font-size: 0.85em;" onchange="changeFieldSection(' + secIdx + ',' + fldIdx + ',this.value)">' +
+						sectionOptionsHtml +
+					'</select>' +
+				'</div>' +
+				'<button type="button" class="btn-danger" onclick="deleteItem(' + secIdx + ',' + fldIdx + ')">{{ lang('DELETE') }}</button>' +
+			'</div>';
+
+		return card;
+	}
+
+	window.updateFieldData = function(secIdx, fldIdx, key, val, needsReRender) {
+		var field;
+		if (secIdx === null) {
+			field = formItems[fldIdx];
+		} else {
+			field = formItems[secIdx].fields[fldIdx];
+		}
+		field[key] = val;
+		serialize();
+		if (needsReRender) {
+			renderBuilder();
+		}
 	};
 
-	init();
+	window.updateSectionData = function(secIdx, key, val) {
+		formItems[secIdx][key] = val;
+		serialize();
+	};
+
+	function renderBuilder() {
+		builderContainer.innerHTML = '';
+
+		if (formItems.length === 0) {
+			builderContainer.innerHTML = '<p style="text-align: center; color: #64748b; font-style: italic; padding: 20px;">No fields or sections added yet. Click above to start building your form.</p>';
+			return;
+		}
+
+		formItems.forEach(function(item, idx) {
+			if (item.type === 'section') {
+				var sectionEl = document.createElement('div');
+				sectionEl.className = 'section-card';
+
+				sectionEl.innerHTML = 
+					'<div class="section-header">' +
+						'<div class="section-title-wrapper">' +
+							'<input type="text" value=\'' + item.label.replace(/'/g, "&#39;") + '\' placeholder="Section Title" style="font-weight: bold; width: 40%;" oninput="updateSectionData(' + idx + ',\'label\',this.value)" />' +
+							'<input type="text" value=\'' + item.description.replace(/'/g, "&#39;") + '\' placeholder="Section Description / Help text" style="width: 55%;" oninput="updateSectionData(' + idx + ',\'description\',this.value)" />' +
+						'</div>' +
+						'<div class="control-buttons-group">' +
+							'<button type="button" class="btn-secondary" onclick="moveTopLevel(' + idx + ',-1)">&uarr;</button>' +
+							'<button type="button" class="btn-secondary" onclick="moveTopLevel(' + idx + ',1)">&darr;</button>' +
+							'<button type="button" class="btn-primary" onclick="addFieldToContainer(' + idx + ')">+ Add Question</button>' +
+							'<button type="button" class="btn-danger" onclick="deleteItem(null, ' + idx + ')">Delete Section</button>' +
+						'</div>' +
+					'</div>';
+
+				var fieldsContainer = document.createElement('div');
+				fieldsContainer.className = 'section-fields-container';
+
+				if (item.fields && item.fields.length > 0) {
+					item.fields.forEach(function(field, fldIdx) {
+						fieldsContainer.appendChild(renderFieldCard(field, idx, fldIdx));
+					});
+				} else {
+					fieldsContainer.innerHTML = '<p style="color: #94a3b8; font-style: italic; font-size: 0.85em; margin: 10px 0;">This section is empty. Click "+ Add Question" inside the section to add fields.</p>';
+				}
+
+				sectionEl.appendChild(fieldsContainer);
+				builderContainer.appendChild(sectionEl);
+			} else {
+				// Top-level field
+				builderContainer.appendChild(renderFieldCard(item, null, idx));
+			}
+		});
+	}
+
+	deserialize();
+	renderBuilder();
 })();
 </script>
