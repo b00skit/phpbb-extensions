@@ -83,6 +83,7 @@ class career_manager
 					'enable_group_action' => isset($row['enable_group_action']) ? (bool) $row['enable_group_action'] : false,
 					'group_action_add' => isset($row['group_action_add']) ? $row['group_action_add'] : '',
 					'group_action_remove' => isset($row['group_action_remove']) ? $row['group_action_remove'] : '',
+					'automation_settings' => isset($row['automation_settings']) ? $row['automation_settings'] : '',
 				];
 			}
 			$this->db->sql_freeresult($result);
@@ -152,7 +153,7 @@ class career_manager
 		return $definitions;
 	}
 
-	public function add_local_definition($id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '')
+	public function add_local_definition($id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '')
 	{
 		$sql_ary = [
 			'career_id' => $id,
@@ -168,13 +169,14 @@ class career_manager
 			'enable_group_action' => (int) $enable_group_action,
 			'group_action_add' => $groups_add,
 			'group_action_remove' => $groups_remove,
+			'automation_settings' => $automation_settings,
 		];
 		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
 		$this->db->sql_query($sql);
 		$this->cached_definitions = null; // Clear cache
 	}
 
-	public function update_local_definition($def_id, $id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '')
+	public function update_local_definition($def_id, $id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '')
 	{
 		$sql_ary = [
 			'career_id' => $id,
@@ -190,6 +192,7 @@ class career_manager
 			'enable_group_action' => (int) $enable_group_action,
 			'group_action_add' => $groups_add,
 			'group_action_remove' => $groups_remove,
+			'automation_settings' => $automation_settings,
 		];
 		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
 		$this->db->sql_query($sql);
@@ -619,5 +622,58 @@ class career_manager
 		$this->user->data = $user_data_backup;
 
 		return $data['post_id'];
+	}
+
+	public function set_primary_group($user_id, $group_id)
+	{
+		if (!function_exists('group_set_user_default'))
+		{
+			require($this->root_path . 'includes/functions_user.' . $this->php_ext);
+		}
+
+		\group_set_user_default($group_id, array($user_id));
+	}
+
+	public function change_username($user_id, $new_username)
+	{
+		$new_username = trim($new_username);
+		if (empty($new_username))
+		{
+			return;
+		}
+
+		$old_username = $this->get_username_string($user_id);
+		if (empty($old_username) || $old_username === 'Unknown')
+		{
+			return;
+		}
+
+		// Clean the new username
+		if (!function_exists('utf8_clean_string'))
+		{
+			require($this->root_path . 'includes/utf/utf_tools.' . $this->php_ext);
+		}
+		$clean_name = utf8_clean_string($new_username);
+
+		// Check if username is already taken (excluding current user)
+		$sql = 'SELECT user_id FROM ' . USERS_TABLE . " WHERE username_clean = '" . $this->db->sql_escape($clean_name) . "'";
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		if ($row && (int) $row['user_id'] !== (int) $user_id)
+		{
+			trigger_error('USERNAME_TAKEN', E_USER_WARNING);
+		}
+
+		if (!function_exists('user_update_name'))
+		{
+			require($this->root_path . 'includes/functions_user.' . $this->php_ext);
+		}
+
+		if (function_exists('user_update_name'))
+		{
+			\user_update_name($old_username, $new_username);
+		}
 	}
 }

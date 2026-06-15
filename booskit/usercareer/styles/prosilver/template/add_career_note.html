@@ -68,14 +68,30 @@
 				<dt><label for="execute_group_action">{{ lang('ENABLE_GROUP_ACTION') }}</label></dt>
 				<dd><input type="checkbox" name="execute_group_action" id="execute_group_action" value="1" /></dd>
 			</dl>
-			<div id="group_action_details">
+			<div id="group_action_details" style="display: none;">
 				<dl>
+					<dt><label for="automation_setting_index">{{ lang('SELECT_AUTOMATION_SETTING') }}{{ lang('COLON') }}</label></dt>
+					<dd>
+						<select name="automation_setting_index" id="automation_setting_index">
+							<!-- Dynamically populated -->
+						</select>
+					</dd>
+				</dl>
+				<dl id="automation_groups_add_container">
 					<dt>{{ lang('GROUPS_ADD') }}{{ lang('COLON') }}</dt>
 					<dd id="groups_add_list"></dd>
 				</dl>
-				<dl>
+				<dl id="automation_groups_remove_container">
 					<dt>{{ lang('GROUPS_REMOVE') }}{{ lang('COLON') }}</dt>
 					<dd id="groups_remove_list"></dd>
+				</dl>
+				<dl id="automation_primary_group_container" style="display: none;">
+					<dt>{{ lang('PRIMARY_GROUP') }}{{ lang('COLON') }}</dt>
+					<dd id="primary_group_display"></dd>
+				</dl>
+				<dl id="automation_change_name_container" style="display: none;">
+					<dt><label for="new_username">{{ lang('NEW_USERNAME') }}{{ lang('COLON') }}</label></dt>
+					<dd><input type="text" name="new_username" id="new_username" class="inputbox" placeholder="Enter new username" /></dd>
 				</dl>
 			</div>
 		</fieldset>
@@ -135,10 +151,12 @@
 		// Group Actions
 		if (def && def.enable_group_action) {
 			if (groupActionPanel) groupActionPanel.style.display = 'block';
-			updateGroupLists(def);
+			updateGroupSettingsDropdown(def);
 		} else {
 			if (groupActionPanel) groupActionPanel.style.display = 'none';
 			if (executeGroupActionCheckbox) executeGroupActionCheckbox.checked = false;
+			var groupActionDetails = document.getElementById('group_action_details');
+			if (groupActionDetails) groupActionDetails.style.display = 'none';
 		}
 	}
 
@@ -146,13 +164,77 @@
 		return groupNames[id] ? groupNames[id] : 'ID: ' + id;
 	}
 
-	function updateGroupLists(def) {
-        var groupsAddList = document.getElementById('groups_add_list');
-        var groupsRemoveList = document.getElementById('groups_remove_list');
+	var currentDef = null;
 
-		var addStr = String(def.group_action_add || '');
-		var removeStr = String(def.group_action_remove || '');
+	function updateGroupSettingsDropdown(def) {
+		currentDef = def;
+		var select = document.getElementById('automation_setting_index');
+		if (!select) return;
 
+		select.innerHTML = '';
+
+		// Parse settings
+		var settings = [];
+		try {
+			if (def.automation_settings) {
+				settings = JSON.parse(def.automation_settings);
+			}
+		} catch (e) {
+			console.error('Error parsing automation settings', e);
+		}
+
+		if (settings.length === 0) {
+			// Fallback to legacy structure
+			var opt = document.createElement('option');
+			opt.value = 0;
+			opt.textContent = 'Default Action';
+			select.appendChild(opt);
+		} else {
+			settings.forEach(function(setting, index) {
+				var opt = document.createElement('option');
+				opt.value = index;
+				opt.textContent = setting.name || ('Action ' + (index + 1));
+				select.appendChild(opt);
+			});
+		}
+
+		updateAutomationDetails();
+	}
+
+	function updateAutomationDetails() {
+		if (!currentDef) return;
+
+		var select = document.getElementById('automation_setting_index');
+		if (!select) return;
+
+		var index = parseInt(select.value, 10);
+		if (isNaN(index)) index = 0;
+
+		var settings = [];
+		try {
+			if (currentDef.automation_settings) {
+				settings = JSON.parse(currentDef.automation_settings);
+			}
+		} catch (e) {}
+
+		var setting = null;
+		if (settings.length > 0 && settings[index]) {
+			setting = settings[index];
+		} else {
+			// Fallback to legacy
+			setting = {
+				name: 'Default Action',
+				groups_add: currentDef.group_action_add || '',
+				groups_remove: currentDef.group_action_remove || '',
+				remove_all: (currentDef.group_action_remove || '').indexOf('*') !== -1,
+				primary_group: '',
+				change_name: false
+			};
+		}
+
+		// Update Groups Add List
+		var groupsAddList = document.getElementById('groups_add_list');
+		var addStr = String(setting.groups_add || '');
 		var addList = [];
 		if (addStr) {
 			addStr.split(',').forEach(function(id) {
@@ -160,20 +242,45 @@
 				if (id) addList.push(getGroupName(id));
 			});
 		}
-        if (groupsAddList) groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
+		if (groupsAddList) groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
 
+		// Update Groups Remove List
+		var groupsRemoveList = document.getElementById('groups_remove_list');
+		var removeStr = String(setting.groups_remove || '');
 		var removeList = [];
+		if (setting.remove_all) {
+			removeList.push('All (Except Admins/Global Mods)');
+		}
 		if (removeStr) {
 			removeStr.split(',').forEach(function(id) {
 				id = id.trim();
-				if (id === '*') {
-					removeList.push('All (Except Admins/Global Mods)');
-				} else if (id) {
+				if (id && id !== '*') {
 					removeList.push(getGroupName(id));
 				}
 			});
 		}
-        if (groupsRemoveList) groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
+		if (groupsRemoveList) groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
+
+		// Update Primary Group
+		var primaryGroupContainer = document.getElementById('automation_primary_group_container');
+		var primaryGroupDisplay = document.getElementById('primary_group_display');
+		var primaryGroupId = String(setting.primary_group || '').trim();
+		if (primaryGroupId) {
+			if (primaryGroupContainer) primaryGroupContainer.style.display = 'block';
+			if (primaryGroupDisplay) primaryGroupDisplay.textContent = getGroupName(primaryGroupId);
+		} else {
+			if (primaryGroupContainer) primaryGroupContainer.style.display = 'none';
+		}
+
+		// Update Change Name Input Visibility
+		var changeNameContainer = document.getElementById('automation_change_name_container');
+		var newUsernameInput = document.getElementById('new_username');
+		if (setting.change_name) {
+			if (changeNameContainer) changeNameContainer.style.display = 'block';
+		} else {
+			if (changeNameContainer) changeNameContainer.style.display = 'none';
+			if (newUsernameInput) newUsernameInput.value = '';
+		}
 	}
 
 	function updateFields(def) {
@@ -278,6 +385,25 @@
                     }
                 });
             }
+        }
+
+        // Setup details toggle and dropdown change listeners
+        var execActionCheckbox = document.getElementById('execute_group_action');
+        var settingIndexSelect = document.getElementById('automation_setting_index');
+
+        if (execActionCheckbox) {
+            var toggleDetails = function() {
+                var details = document.getElementById('group_action_details');
+                if (details) {
+                    details.style.display = execActionCheckbox.checked ? 'block' : 'none';
+                }
+            };
+            execActionCheckbox.addEventListener('change', toggleDetails);
+            toggleDetails();
+        }
+
+        if (settingIndexSelect) {
+            settingIndexSelect.addEventListener('change', updateAutomationDetails);
         }
 
         updateVisibility();

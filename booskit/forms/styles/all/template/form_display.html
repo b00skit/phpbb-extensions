@@ -25,6 +25,11 @@
 <form id="postform" method="post" action="{U_ACTION}">
 
 <!-- DEFINE $PANEL_OPEN = false -->
+<!-- DEFINE $IN_SECTION = false -->
+<!-- DEFINE $GROUP_OPEN = false -->
+<!-- DEFINE $GROUP_MULTI = false -->
+<!-- DEFINE $GROUP_COLUMNS = 2 -->
+<!-- DEFINE $GROUP_NAME = '' -->
 
 <!-- BEGIN fields -->
 	<!-- IF fields.S_SECTION_START -->
@@ -40,6 +45,7 @@
 				<!-- IF fields.EXPLAIN --><p style="margin: 0 0 20px 0; font-size: 0.9em; color: #64748b; font-style: italic; line-height: 1.4;">{fields.EXPLAIN}</p><!-- ENDIF -->
 				<fieldset class="fields2">
 		<!-- DEFINE $PANEL_OPEN = true -->
+		<!-- DEFINE $IN_SECTION = true -->
 	<!-- ELSEIF fields.S_SECTION_END -->
 		<!-- IF $PANEL_OPEN -->
 			</fieldset>
@@ -47,41 +53,105 @@
 			</div>
 			<!-- DEFINE $PANEL_OPEN = false -->
 		<!-- ENDIF -->
-	<!-- ELSE -->
-		<!-- IF not $PANEL_OPEN -->
-			<div class="panel">
-				<div class="inner" style="padding: 20px;">
-					<fieldset class="fields2">
-			<!-- DEFINE $PANEL_OPEN = true -->
+		<!-- DEFINE $IN_SECTION = false -->
+	<!-- ELSEIF fields.S_INPUT_GROUP_START -->
+		<!-- IF $PANEL_OPEN -->
+			</fieldset>
+			<!-- IF not $IN_SECTION -->
+				</div>
+				</div>
+			<!-- ENDIF -->
+			<!-- DEFINE $PANEL_OPEN = false -->
 		<!-- ENDIF -->
-		<dl style="clear: left; margin-bottom: 15px;">
-			<dt><label for="{fields.NAME}">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label><!-- IF fields.EXPLAIN --><br /><span>{fields.EXPLAIN}</span><!-- ENDIF --></dt>
-			<dd style="margin-left: 220px;">
-				<!-- IF fields.S_TEXT -->
-					<input type="text" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
-				<!-- ELSEIF fields.S_TEXTAREA -->
-					<textarea name="{fields.NAME}" id="{fields.NAME}" rows="5" cols="45" class="inputbox">{fields.DEFAULT_VALUE}</textarea>
-				<!-- ELSEIF fields.S_SELECT -->
-					<select name="{fields.NAME}" id="{fields.NAME}">
+		<!-- DEFINE $GROUP_OPEN = true -->
+		<!-- DEFINE $GROUP_MULTI = fields.S_MULTI -->
+		<!-- DEFINE $GROUP_COLUMNS = fields.COLUMNS -->
+		<!-- DEFINE $GROUP_NAME = fields.NAME -->
+		<div class="input-group-wrapper" id="group_wrapper_{fields.NAME}" data-columns="{fields.COLUMNS}" data-multi="<!-- IF fields.S_MULTI -->1<!-- ELSE -->0<!-- ENDIF -->" data-name="{fields.NAME}" style="margin: 15px 0 20px 0; padding: 15px; background-color: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+			<h4 style="margin: 0 0 5px 0; color: #6b21a8; font-size: 1.1em; font-weight: bold; border-bottom: 1px dashed #d8b4fe; padding-bottom: 5px;">{fields.LABEL}</h4>
+			<!-- IF fields.EXPLAIN --><p style="margin: 0 0 12px 0; font-size: 0.85em; color: #7c3aed; font-style: italic;">{fields.EXPLAIN}</p><!-- ENDIF -->
+			<div class="group-rows-container" id="group_rows_{fields.NAME}">
+				<div class="group-row" data-index="0" style="display: grid; grid-template-columns: repeat({fields.COLUMNS}, 1fr); gap: 15px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; background-color: #ffffff; position: relative;">
+	<!-- ELSEIF fields.S_INPUT_GROUP_END -->
+				</div>
+			</div>
+			<!-- IF $GROUP_MULTI -->
+			<div style="margin-top: 5px;">
+				<button type="button" class="button2" onclick="addGroupRow('{$GROUP_NAME}')" style="background-color: #8b5cf6; color: #ffffff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">+ Add Row</button>
+			</div>
+			<!-- ENDIF -->
+		</div>
+		<!-- DEFINE $GROUP_OPEN = false -->
+		<!-- DEFINE $GROUP_MULTI = false -->
+	<!-- ELSE -->
+		<!-- IF $GROUP_OPEN -->
+			<div class="group-field" style="display: flex; flex-direction: column; min-width: 0;">
+				<label for="{fields.NAME}_0" style="font-weight: bold; margin-bottom: 4px; font-size: 0.9em; color: #334155;">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label>
+				<!-- IF fields.EXPLAIN --><span style="font-size: 0.85em; color: #64748b; margin-bottom: 4px; line-height: 1.2;">{fields.EXPLAIN}</span><!-- ENDIF -->
+				<div>
+					<!-- IF fields.S_TEXT -->
+						<input type="text" name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_0" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" style="width: 100%; box-sizing: border-box; padding: 5px;" />
+					<!-- ELSEIF fields.S_TEXTAREA -->
+						<textarea name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_0" rows="3" cols="45" class="inputbox" style="width: 100%; box-sizing: border-box; padding: 5px;">{fields.DEFAULT_VALUE}</textarea>
+					<!-- ELSEIF fields.S_SELECT -->
+						<select name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_0" style="width: 100%; box-sizing: border-box; padding: 4px;">
+							<!-- BEGIN options -->
+								<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
+							<!-- END options -->
+						</select>
+					<!-- ELSEIF fields.S_CHECKBOX -->
 						<!-- BEGIN options -->
-							<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
+							<label for="{fields.NAME}_{fields.options.VALUE}_0" style="font-weight: normal; margin-bottom: 2px; display: inline-block;"><input type="checkbox" name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0][]<!-- ELSE -->{fields.NAME}[]<!-- ENDIF -->" id="{fields.NAME}_{fields.options.VALUE}_0" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
 						<!-- END options -->
-					</select>
-				<!-- ELSEIF fields.S_CHECKBOX -->
-					<!-- BEGIN options -->
-						<label for="{fields.NAME}_{fields.options.VALUE}"><input type="checkbox" name="{fields.NAME}[]" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
-					<!-- END options -->
-				<!-- ELSEIF fields.S_RADIO -->
-					<!-- BEGIN options -->
-						<label for="{fields.NAME}_{fields.options.VALUE}"><input type="radio" name="{fields.NAME}" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
-					<!-- END options -->
-				<!-- ELSEIF fields.S_NUMBER -->
-					<input type="number" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
-				<!-- ELSEIF fields.S_DATE -->
-					<input type="date" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ELSEIF fields.S_RADIO -->
+						<!-- BEGIN options -->
+							<label for="{fields.NAME}_{fields.options.VALUE}_0" style="font-weight: normal; margin-bottom: 2px; display: inline-block;"><input type="radio" name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_{fields.options.VALUE}_0" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+						<!-- END options -->
+					<!-- ELSEIF fields.S_NUMBER -->
+						<input type="number" name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_0" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" style="width: 100%; box-sizing: border-box; padding: 5px;" />
+					<!-- ELSEIF fields.S_DATE -->
+						<input type="date" name="<!-- IF $GROUP_MULTI -->{fields.NAME}[0]<!-- ELSE -->{fields.NAME}<!-- ENDIF -->" id="{fields.NAME}_0" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" style="width: 100%; box-sizing: border-box; padding: 5px;" />
+					<!-- ENDIF -->
+				</div>
+			</div>
+		<!-- ELSE -->
+			<!-- IF not $PANEL_OPEN -->
+				<!-- IF not $IN_SECTION -->
+					<div class="panel">
+						<div class="inner" style="padding: 20px;">
 				<!-- ENDIF -->
-			</dd>
-		</dl>
+				<fieldset class="fields2">
+				<!-- DEFINE $PANEL_OPEN = true -->
+			<!-- ENDIF -->
+			<dl style="clear: left; margin-bottom: 15px;">
+				<dt><label for="{fields.NAME}">{fields.LABEL}<!-- IF fields.REQUIRED -->*<!-- ENDIF -->:</label><!-- IF fields.EXPLAIN --><br /><span>{fields.EXPLAIN}</span><!-- ENDIF --></dt>
+				<dd style="margin-left: 220px;">
+					<!-- IF fields.S_TEXT -->
+						<input type="text" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ELSEIF fields.S_TEXTAREA -->
+						<textarea name="{fields.NAME}" id="{fields.NAME}" rows="5" cols="45" class="inputbox">{fields.DEFAULT_VALUE}</textarea>
+					<!-- ELSEIF fields.S_SELECT -->
+						<select name="{fields.NAME}" id="{fields.NAME}">
+							<!-- BEGIN options -->
+								<option value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> selected="selected"<!-- ENDIF -->>{fields.options.LABEL}</option>
+							<!-- END options -->
+						</select>
+					<!-- ELSEIF fields.S_CHECKBOX -->
+						<!-- BEGIN options -->
+							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="checkbox" name="{fields.NAME}[]" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+						<!-- END options -->
+					<!-- ELSEIF fields.S_RADIO -->
+						<!-- BEGIN options -->
+							<label for="{fields.NAME}_{fields.options.VALUE}"><input type="radio" name="{fields.NAME}" id="{fields.NAME}_{fields.options.VALUE}" value="{fields.options.VALUE}"<!-- IF fields.options.S_SELECTED --> checked="checked"<!-- ENDIF --> /> {fields.options.LABEL}</label><br />
+						<!-- END options -->
+					<!-- ELSEIF fields.S_NUMBER -->
+						<input type="number" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ELSEIF fields.S_DATE -->
+						<input type="date" name="{fields.NAME}" id="{fields.NAME}" value="{fields.DEFAULT_VALUE}" class="inputbox autowidth" />
+					<!-- ENDIF -->
+				</dd>
+			</dl>
+		<!-- ENDIF -->
 	<!-- ENDIF -->
 <!-- END fields -->
 
@@ -102,5 +172,159 @@
 </div>
 
 </form>
+
+<style>
+.input-group-wrapper h4 {
+	color: #6b21a8;
+}
+.group-row {
+	transition: all 0.2s ease-in-out;
+}
+.group-row:hover {
+	border-color: #a855f7 !important;
+}
+@media (max-width: 700px) {
+	.group-row {
+		grid-template-columns: 1fr !important;
+	}
+}
+</style>
+
+<script>
+function addGroupRow(groupName) {
+	var container = document.getElementById('group_rows_' + groupName);
+	if (!container) return;
+	var rows = container.querySelectorAll('.group-row');
+	var lastRow = rows[rows.length - 1];
+	var nextIndex = lastRow ? parseInt(lastRow.getAttribute('data-index')) + 1 : 0;
+	
+	var firstRow = container.querySelector('.group-row[data-index="0"]');
+	if (!firstRow) return;
+	
+	var newRow = firstRow.cloneNode(true);
+	newRow.setAttribute('data-index', nextIndex);
+	
+	var inputs = newRow.querySelectorAll('input, textarea, select');
+	inputs.forEach(function(input) {
+		if (input.name) {
+			input.name = input.name.replace(/\[\d+\]/, '[' + nextIndex + ']');
+		}
+		if (input.id) {
+			input.id = input.id.replace(/_0$/, '_' + nextIndex);
+		}
+		if (input.type === 'checkbox' || input.type === 'radio') {
+			input.checked = false;
+		} else {
+			input.value = '';
+		}
+	});
+	
+	var labels = newRow.querySelectorAll('label');
+	labels.forEach(function(label) {
+		if (label.htmlFor) {
+			label.htmlFor = label.htmlFor.replace(/_0$/, '_' + nextIndex);
+		}
+	});
+	
+	var oldBtn = newRow.querySelector('.remove-row-btn');
+	if (oldBtn) oldBtn.parentNode.removeChild(oldBtn);
+	
+	var removeBtn = document.createElement('button');
+	removeBtn.type = 'button';
+	removeBtn.className = 'button2 remove-row-btn';
+	removeBtn.innerHTML = 'Remove';
+	removeBtn.style.position = 'absolute';
+	removeBtn.style.top = '10px';
+	removeBtn.style.right = '10px';
+	removeBtn.style.padding = '2px 8px';
+	removeBtn.style.fontSize = '0.8em';
+	removeBtn.style.backgroundColor = '#f87171';
+	removeBtn.style.color = '#fff';
+	removeBtn.style.border = 'none';
+	removeBtn.style.borderRadius = '4px';
+	removeBtn.style.cursor = 'pointer';
+	removeBtn.onclick = function() {
+		newRow.parentNode.removeChild(newRow);
+	};
+	newRow.appendChild(removeBtn);
+	
+	container.appendChild(newRow);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+	var submittedDataRaw = '{SUBMITTED_DATA_JSON}';
+	if (!submittedDataRaw) return;
+	
+	var submittedData = {};
+	try {
+		submittedData = JSON.parse(submittedDataRaw.replace(/&quot;/g, '"'));
+	} catch (e) {
+		console.error('Failed to parse submitted data JSON', e);
+		return;
+	}
+	
+	var wrappers = document.querySelectorAll('.input-group-wrapper[data-multi="1"]');
+	wrappers.forEach(function(wrapper) {
+		var groupName = wrapper.getAttribute('data-name');
+		var firstRow = wrapper.querySelector('.group-row[data-index="0"]');
+		if (!firstRow) return;
+		
+		var fieldNames = [];
+		var inputs = firstRow.querySelectorAll('input, textarea, select');
+		inputs.forEach(function(input) {
+			var match = input.name.match(/^([^\[]+)\[\d+\]/);
+			if (match) {
+				var cleanName = match[1];
+				if (fieldNames.indexOf(cleanName) === -1) {
+					fieldNames.push(cleanName);
+				}
+			}
+		});
+		
+		var maxRows = 1;
+		fieldNames.forEach(function(name) {
+			if (submittedData[name] && Array.isArray(submittedData[name])) {
+				if (submittedData[name].length > maxRows) {
+					maxRows = submittedData[name].length;
+				}
+			}
+		});
+		
+		for (var i = 1; i < maxRows; i++) {
+			addGroupRow(groupName);
+		}
+		
+		for (var i = 0; i < maxRows; i++) {
+			var row = wrapper.querySelector('.group-row[data-index="' + i + '"]');
+			if (!row) continue;
+			
+			fieldNames.forEach(function(name) {
+				var vals = submittedData[name];
+				if (vals === undefined) return;
+				
+				var val = Array.isArray(vals) ? vals[i] : (i === 0 ? vals : '');
+				if (val === undefined) val = '';
+				
+				var rowInputs = row.querySelectorAll('[name^="' + name + '[' + i + ']"]');
+				rowInputs.forEach(function(input) {
+					if (input.type === 'checkbox') {
+						var cellVal = Array.isArray(vals) ? vals[i] : vals;
+						if (Array.isArray(cellVal)) {
+							input.checked = cellVal.indexOf(input.value) !== -1;
+						} else {
+							input.checked = (String(cellVal) === String(input.value));
+						}
+					} else if (input.type === 'radio') {
+						var cellVal = Array.isArray(vals) ? vals[i] : vals;
+						input.checked = (String(cellVal) === String(input.value));
+					} else {
+						input.value = val;
+					}
+				});
+			});
+		}
+	});
+});
+</script>
 
 <!-- INCLUDE overall_footer.html -->

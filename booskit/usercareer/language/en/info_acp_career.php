@@ -97,4 +97,12 @@ $lang = array_merge($lang, array(
 	'GROUPS_ADD_EXPLAIN' => 'Comma separated list of Group IDs to add the user to.',
 	'GROUPS_REMOVE' => 'Groups to Remove',
 	'GROUPS_REMOVE_EXPLAIN' => 'Comma separated list of Group IDs to remove the user from. Use <code>*</code> to remove from all groups except Administrators and Global Moderators.',
+
+	'AUTOMATION_SETTINGS' => 'Automation Settings',
+	'AUTOMATION_SETTINGS_EXPLAIN' => 'Configure different automation settings for this career type. Each setting can add/remove groups, set primary group, and enable name changing.',
+	'SETTING_NAME' => 'Setting Name',
+	'REMOVE_ALL' => 'Remove All?',
+	'PRIMARY_GROUP' => 'Primary Group ID',
+	'CHANGE_NAME' => 'Change Name?',
+	'ADD_AUTOMATION_SETTING' => 'Add Automation Setting',
 ));

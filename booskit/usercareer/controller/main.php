@@ -141,7 +141,60 @@ class main
 				$def = $this->career_manager->get_definition($type_id);
 				if ($def && !empty($def['enable_group_action']))
 				{
-					$this->career_manager->execute_group_actions($user_id, $def['group_action_add'], $def['group_action_remove']);
+					$settings = [];
+					if (!empty($def['automation_settings']))
+					{
+						$settings = json_decode($def['automation_settings'], true);
+					}
+					if (empty($settings))
+					{
+						// Fallback to legacy
+						$settings = [
+							[
+								'name' => 'Default Action',
+								'groups_add' => $def['group_action_add'],
+								'groups_remove' => $def['group_action_remove'],
+								'remove_all' => (strpos($def['group_action_remove'], '*') !== false),
+								'primary_group' => '',
+								'change_name' => false,
+							]
+						];
+					}
+
+					$setting_index = $this->request->variable('automation_setting_index', 0);
+					if (isset($settings[$setting_index]))
+					{
+						$setting = $settings[$setting_index];
+						$groups_add = isset($setting['groups_add']) ? $setting['groups_add'] : '';
+						$groups_remove = isset($setting['groups_remove']) ? $setting['groups_remove'] : '';
+						if (!empty($setting['remove_all']))
+						{
+							if (strpos($groups_remove, '*') === false)
+							{
+								$groups_remove = empty($groups_remove) ? '*' : $groups_remove . ',*';
+							}
+						}
+
+						// Execute group actions
+						$this->career_manager->execute_group_actions($user_id, $groups_add, $groups_remove);
+
+						// Set Primary Group if configured
+						$primary_group_id = isset($setting['primary_group']) ? (int) $setting['primary_group'] : 0;
+						if ($primary_group_id > 0)
+						{
+							$this->career_manager->set_primary_group($user_id, $primary_group_id);
+						}
+
+						// Change Name if enabled
+						if (!empty($setting['change_name']))
+						{
+							$new_username = $this->request->variable('new_username', '', true);
+							if (!empty($new_username))
+							{
+								$this->career_manager->change_username($user_id, $new_username);
+							}
+						}
+					}
 				}
 			}
 
@@ -408,6 +461,7 @@ class main
 		{
 			if (!empty($def['enable_group_action']))
 			{
+				// Legacy fields
 				$g_add = array_filter(array_map('intval', explode(',', $def['group_action_add'])));
 				$g_remove = array_map('trim', explode(',', $def['group_action_remove']));
 
@@ -415,6 +469,31 @@ class main
 				foreach ($g_remove as $gid)
 				{
 					if (is_numeric($gid) && $gid > 0) $all_group_ids[] = (int) $gid;
+				}
+
+				// Automation settings
+				if (!empty($def['automation_settings']))
+				{
+					$settings = json_decode($def['automation_settings'], true);
+					if (is_array($settings))
+					{
+						foreach ($settings as $setting)
+						{
+							$sa = isset($setting['groups_add']) ? array_filter(array_map('intval', explode(',', $setting['groups_add']))) : [];
+							$sr = isset($setting['groups_remove']) ? array_map('trim', explode(',', $setting['groups_remove'])) : [];
+							$pg = isset($setting['primary_group']) ? (int) $setting['primary_group'] : 0;
+
+							foreach ($sa as $gid) $all_group_ids[] = $gid;
+							foreach ($sr as $gid)
+							{
+								if (is_numeric($gid) && $gid > 0) $all_group_ids[] = (int) $gid;
+							}
+							if ($pg > 0)
+							{
+								$all_group_ids[] = $pg;
+							}
+						}
+					}
 				}
 			}
 		}

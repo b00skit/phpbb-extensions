@@ -213,6 +213,33 @@
 						display: flex;
 						gap: 6px;
 					}
+					.input-group-card {
+						background: #faf5ff;
+						border: 1px solid #e9d5ff;
+						border-left: 5px solid #8b5cf6;
+						border-radius: 8px;
+						padding: 15px;
+						box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+						margin-bottom: 12px;
+					}
+					.input-group-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 12px;
+						background: #f3e8ff;
+						padding: 8px 12px;
+						border-radius: 6px;
+					}
+					.input-group-fields-container {
+						padding-left: 20px;
+						border-left: 2px dashed #d8b4fe;
+						display: flex;
+						flex-direction: column;
+						gap: 12px;
+						margin-bottom: 12px;
+						min-height: 20px;
+					}
 					</style>
 
 					<div class="form-builder">
@@ -220,6 +247,7 @@
 							<span class="builder-title">{{ lang('FORM_FIELDS') }}</span>
 							<div class="builder-actions">
 								<button type="button" class="btn-primary" onclick="addSection()">+ Add Section</button>
+								<button type="button" class="btn-primary" onclick="addInputGroup(null)">+ Add Top-Level Group</button>
 								<button type="button" class="btn-primary" onclick="addFieldToContainer(null)">+ Add Top-Level Question</button>
 							</div>
 						</div>
@@ -312,6 +340,7 @@
 
 		formItems = [];
 		var currentSection = null;
+		var currentInputGroup = null;
 
 		if (Array.isArray(flat)) {
 			flat.forEach(function(f) {
@@ -325,6 +354,33 @@
 					formItems.push(currentSection);
 				} else if (f.type === 'section_end') {
 					currentSection = null;
+				} else if (f.type === 'input_group_start') {
+					var opts = { columns: 2, multi: false };
+					try {
+						if (f.options) {
+							var parsed = JSON.parse(f.options);
+							if (parsed) {
+								opts.columns = parsed.columns || 2;
+								opts.multi = !!parsed.multi;
+							}
+						}
+					} catch(err) {}
+					currentInputGroup = {
+						type: 'input_group',
+						label: f.label || '',
+						name: f.name || '',
+						description: f.description || '',
+						columns: opts.columns,
+						multi: opts.multi,
+						fields: []
+					};
+					if (currentSection) {
+						currentSection.fields.push(currentInputGroup);
+					} else {
+						formItems.push(currentInputGroup);
+					}
+				} else if (f.type === 'input_group_end') {
+					currentInputGroup = null;
 				} else {
 					var field = {
 						type: 'field',
@@ -335,7 +391,9 @@
 						options: typeof f.options === 'string' ? f.options : JSON.stringify(f.options || ''),
 						required: !!f.required
 					};
-					if (currentSection) {
+					if (currentInputGroup) {
+						currentInputGroup.fields.push(field);
+					} else if (currentSection) {
 						currentSection.fields.push(field);
 					} else {
 						formItems.push(field);
@@ -359,6 +417,68 @@
 					required: false
 				});
 				if (Array.isArray(item.fields)) {
+					item.fields.forEach(function(nested) {
+						if (nested.type === 'input_group') {
+							var grpId = Math.random().toString(36).substr(2, 6);
+							flat.push({
+								label: nested.label,
+								name: nested.name || 'group_' + grpId,
+								description: nested.description,
+								type: 'input_group_start',
+								options: JSON.stringify({ columns: nested.columns || 2, multi: !!nested.multi }),
+								required: false
+							});
+							if (Array.isArray(nested.fields)) {
+								nested.fields.forEach(function(f) {
+									flat.push({
+										label: f.label,
+										name: f.name,
+										description: f.description,
+										type: f.fieldType,
+										options: f.options,
+										required: f.required
+									});
+								});
+							}
+							flat.push({
+								label: '',
+								name: 'input_group_end_' + grpId,
+								description: '',
+								type: 'input_group_end',
+								options: '',
+								required: false
+							});
+						} else {
+							flat.push({
+								label: nested.label,
+								name: nested.name,
+								description: nested.description,
+								type: nested.fieldType,
+								options: nested.options,
+								required: nested.required
+							});
+						}
+					});
+				}
+				flat.push({
+					label: '',
+					name: 'section_end_' + secId,
+					description: '',
+					type: 'section_end',
+					options: '',
+					required: false
+				});
+			} else if (item.type === 'input_group') {
+				var grpId = Math.random().toString(36).substr(2, 6);
+				flat.push({
+					label: item.label,
+					name: item.name || 'group_' + grpId,
+					description: item.description,
+					type: 'input_group_start',
+					options: JSON.stringify({ columns: item.columns || 2, multi: !!item.multi }),
+					required: false
+				});
+				if (Array.isArray(item.fields)) {
 					item.fields.forEach(function(f) {
 						flat.push({
 							label: f.label,
@@ -372,9 +492,9 @@
 				}
 				flat.push({
 					label: '',
-					name: 'section_end_' + secId,
+					name: 'input_group_end_' + grpId,
 					description: '',
-					type: 'section_end',
+					type: 'input_group_end',
 					options: '',
 					required: false
 				});
@@ -403,6 +523,25 @@
 		renderBuilder();
 	};
 
+	window.addInputGroup = function(secIdx) {
+		var newGroup = {
+			type: 'input_group',
+			label: 'New Input Group',
+			name: 'group_' + Math.random().toString(36).substr(2, 5),
+			description: '',
+			columns: 2,
+			multi: false,
+			fields: []
+		};
+		if (secIdx === null) {
+			formItems.push(newGroup);
+		} else {
+			formItems[secIdx].fields.push(newGroup);
+		}
+		serialize();
+		renderBuilder();
+	};
+
 	window.addFieldToContainer = function(secIdx) {
 		var newField = {
 			type: 'field',
@@ -423,12 +562,36 @@
 		renderBuilder();
 	};
 
+	window.addFieldToGroup = function(secIdx, grpIdx) {
+		var newField = {
+			type: 'field',
+			label: 'New Question',
+			name: 'question_' + Math.random().toString(36).substr(2, 5),
+			description: '',
+			fieldType: 'text',
+			options: '',
+			required: false
+		};
+
+		if (secIdx === null) {
+			formItems[grpIdx].fields.push(newField);
+		} else {
+			formItems[secIdx].fields[grpIdx].fields.push(newField);
+		}
+		serialize();
+		renderBuilder();
+	};
+
 	window.deleteItem = function(secIdx, fldIdx) {
 		if (secIdx === null) {
-			// Top-level item deletion
 			var item = formItems[fldIdx];
 			if (item.type === 'section') {
-				// Move section fields to top-level so data is not lost
+				if (item.fields && item.fields.length > 0) {
+					formItems.splice(fldIdx, 1, ...item.fields);
+				} else {
+					formItems.splice(fldIdx, 1);
+				}
+			} else if (item.type === 'input_group') {
 				if (item.fields && item.fields.length > 0) {
 					formItems.splice(fldIdx, 1, ...item.fields);
 				} else {
@@ -438,8 +601,26 @@
 				formItems.splice(fldIdx, 1);
 			}
 		} else {
-			// Field inside section deletion
-			formItems[secIdx].fields.splice(fldIdx, 1);
+			var item = formItems[secIdx].fields[fldIdx];
+			if (item.type === 'input_group') {
+				if (item.fields && item.fields.length > 0) {
+					formItems[secIdx].fields.splice(fldIdx, 1, ...item.fields);
+				} else {
+					formItems[secIdx].fields.splice(fldIdx, 1);
+				}
+			} else {
+				formItems[secIdx].fields.splice(fldIdx, 1);
+			}
+		}
+		serialize();
+		renderBuilder();
+	};
+
+	window.deleteField = function(secIdx, grpIdx, fldIdx) {
+		if (secIdx === null) {
+			formItems[grpIdx].fields.splice(fldIdx, 1);
+		} else {
+			formItems[secIdx].fields[grpIdx].fields.splice(fldIdx, 1);
 		}
 		serialize();
 		renderBuilder();
@@ -464,37 +645,78 @@
 		renderBuilder();
 	};
 
-	window.changeFieldSection = function(currentSecIdx, currentFldIdx, targetSecIdx) {
+	window.moveGroupField = function(secIdx, grpIdx, fldIdx, dir) {
+		var fields = (secIdx === null) ? formItems[grpIdx].fields : formItems[secIdx].fields[grpIdx].fields;
+		if (fldIdx + dir < 0 || fldIdx + dir >= fields.length) return;
+		var temp = fields[fldIdx];
+		fields[fldIdx] = fields[fldIdx + dir];
+		fields[fldIdx + dir] = temp;
+		serialize();
+		renderBuilder();
+	};
+
+	window.changeFieldContainer = function(currentSecIdx, currentGrpIdx, currentFldIdx, target) {
 		var field;
-		if (currentSecIdx === null) {
-			field = formItems.splice(currentFldIdx, 1)[0];
-		} else {
+		if (currentGrpIdx !== null) {
+			if (currentSecIdx === null) {
+				field = formItems[currentGrpIdx].fields.splice(currentFldIdx, 1)[0];
+			} else {
+				field = formItems[currentSecIdx].fields[currentGrpIdx].fields.splice(currentFldIdx, 1)[0];
+			}
+		} else if (currentSecIdx !== null) {
 			field = formItems[currentSecIdx].fields.splice(currentFldIdx, 1)[0];
+		} else {
+			field = formItems.splice(currentFldIdx, 1)[0];
 		}
 
-		if (targetSecIdx === 'top') {
+		if (target === 'top') {
 			formItems.push(field);
-		} else {
-			formItems[parseInt(targetSecIdx)].fields.push(field);
+		} else if (target.indexOf('sec_') === 0) {
+			var secIdx = parseInt(target.substr(4));
+			formItems[secIdx].fields.push(field);
+		} else if (target.indexOf('grp_') === 0) {
+			var parts = target.substr(4).split('_');
+			var sIdx = parts[0] === 'null' ? null : parseInt(parts[0]);
+			var gIdx = parseInt(parts[1]);
+			if (sIdx === null) {
+				formItems[gIdx].fields.push(field);
+			} else {
+				formItems[sIdx].fields[gIdx].fields.push(field);
+			}
 		}
 		serialize();
 		renderBuilder();
 	};
 
-	function renderFieldCard(field, secIdx, fldIdx) {
+	function getContainerOptionsHtml(currentSecIdx, currentGrpIdx) {
+		var html = '<option value="top"' + (currentSecIdx === null && currentGrpIdx === null ? ' selected' : '') + '>[Top-Level / No Section]</option>';
+		formItems.forEach(function(item, idx) {
+			if (item.type === 'section') {
+				var isSelected = (currentSecIdx === idx && currentGrpIdx === null);
+				html += '<option value="sec_' + idx + '"' + (isSelected ? ' selected' : '') + '>Section: ' + (item.label || 'Unnamed') + '</option>';
+				if (Array.isArray(item.fields)) {
+					item.fields.forEach(function(subItem, subIdx) {
+						if (subItem.type === 'input_group') {
+							var isSubSelected = (currentSecIdx === idx && currentGrpIdx === subIdx);
+							html += '<option value="grp_' + idx + '_' + subIdx + '"' + (isSubSelected ? ' selected' : '') + '>&nbsp;&nbsp;&nbsp;&nbsp;Group: ' + (subItem.label || 'Unnamed') + '</option>';
+						}
+					});
+				}
+			} else if (item.type === 'input_group') {
+				var isSelected = (currentSecIdx === null && currentGrpIdx === idx);
+				html += '<option value="grp_null_' + idx + '"' + (isSelected ? ' selected' : '') + '>Group: ' + (item.label || 'Unnamed') + '</option>';
+			}
+		});
+		return html;
+	}
+
+	function renderFieldCard(field, secIdx, grpIdx, fldIdx) {
 		var escLabel = field.label.replace(/'/g, "&#39;");
 		var escName = field.name.replace(/'/g, "&#39;");
 		var escDesc = field.description.replace(/'/g, "&#39;");
 		var escOptions = field.options.replace(/'/g, "&#39;");
 
-		// Build Section assignment options
-		var sectionOptionsHtml = '<option value="top"' + (secIdx === null ? ' selected' : '') + '>[Top-Level / No Section]</option>';
-		formItems.forEach(function(item, idx) {
-			if (item.type === 'section') {
-				var isSelected = (secIdx === idx);
-				sectionOptionsHtml += '<option value="' + idx + '"' + (isSelected ? ' selected' : '') + '>Section: ' + (item.label || 'Unnamed') + '</option>';
-			}
-		});
+		var sectionOptionsHtml = getContainerOptionsHtml(secIdx, grpIdx);
 
 		var card = document.createElement('div');
 		card.className = 'field-card';
@@ -503,19 +725,19 @@
 			'<div class="field-grid">' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_LABEL') }}</label>' +
-					'<input type="text" value=\'' + escLabel + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'label\',this.value)" />' +
+					'<input type="text" value=\'' + escLabel + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'label\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_NAME') }}</label>' +
-					'<input type="text" value=\'' + escName + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'name\',this.value)" />' +
+					'<input type="text" value=\'' + escName + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'name\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_DESC') }}</label>' +
-					'<input type="text" value=\'' + escDesc + '\' oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'description\',this.value)" />' +
+					'<input type="text" value=\'' + escDesc + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'description\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_TYPE') }}</label>' +
-					'<select onchange="updateFieldData(' + secIdx + ',' + fldIdx + ',\'fieldType\',this.value, true)">' +
+					'<select onchange="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'fieldType\',this.value, true)">' +
 						'<option value="text"' + (field.fieldType === 'text' ? ' selected' : '') + '>Text</option>' +
 						'<option value="textarea"' + (field.fieldType === 'textarea' ? ' selected' : '') + '>Textarea</option>' +
 						'<option value="select"' + (field.fieldType === 'select' ? ' selected' : '') + '>Select</option>' +
@@ -527,35 +749,50 @@
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_OPTIONS') }}</label>' +
-					'<input type="text" value=\'' + escOptions + '\' placeholder="Val1:Label1,Val2:Label2" oninput="updateFieldData(' + secIdx + ',' + fldIdx + ',\'options\',this.value)" />' +
+					'<input type="text" value=\'' + escOptions + '\' placeholder="Val1:Label1,Val2:Label2" oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'options\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item field-item-checkbox">' +
-					'<input type="checkbox" ' + (field.required ? 'checked' : '') + ' onchange="updateFieldData(' + secIdx + ',' + fldIdx + ',\'required\',this.checked)" />' +
+					'<input type="checkbox" ' + (field.required ? 'checked' : '') + ' onchange="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'required\',this.checked)" />' +
 					'<label style="margin: 0; cursor: pointer;">{{ lang('FIELD_REQUIRED') }}</label>' +
 				'</div>' +
 			'</div>' +
 			'<div class="field-controls">' +
 				'<div class="control-buttons-group">' +
-					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + fldIdx + ',-1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',-1)') + '">&uarr; Move Up</button>' +
-					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + fldIdx + ',1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',1)') + '">&darr; Move Down</button>' +
-					'<select style="padding: 4px; border-radius: 4px; font-size: 0.85em;" onchange="changeFieldSection(' + secIdx + ',' + fldIdx + ',this.value)">' +
+					'<button type="button" class="btn-secondary" onclick="' + (grpIdx !== null ? 'moveGroupField(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',-1)' : (secIdx === null ? 'moveTopLevel(' + fldIdx + ',-1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',-1)')) + '">&uarr; Move Up</button>' +
+					'<button type="button" class="btn-secondary" onclick="' + (grpIdx !== null ? 'moveGroupField(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',1)' : (secIdx === null ? 'moveTopLevel(' + fldIdx + ',1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',1)')) + '">&darr; Move Down</button>' +
+					'<select style="padding: 4px; border-radius: 4px; font-size: 0.85em;" onchange="changeFieldContainer(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',this.value)">' +
 						sectionOptionsHtml +
 					'</select>' +
 				'</div>' +
-				'<button type="button" class="btn-danger" onclick="deleteItem(' + secIdx + ',' + fldIdx + ')">{{ lang('DELETE') }}</button>' +
+				'<button type="button" class="btn-danger" onclick="' + (grpIdx !== null ? 'deleteField(' + secIdx + ',' + grpIdx + ',' + fldIdx + ')' : 'deleteItem(' + secIdx + ',' + fldIdx + ')') + '">{{ lang('DELETE') }}</button>' +
 			'</div>';
 
 		return card;
 	}
 
-	window.updateFieldData = function(secIdx, fldIdx, key, val, needsReRender) {
+	window.updateFieldData = function(secIdx, grpIdx, fldIdx, key, val, needsReRender) {
 		var field;
-		if (secIdx === null) {
-			field = formItems[fldIdx];
-		} else {
+		if (grpIdx !== null) {
+			if (secIdx === null) {
+				field = formItems[grpIdx].fields[fldIdx];
+			} else {
+				field = formItems[secIdx].fields[grpIdx].fields[fldIdx];
+			}
+		} else if (secIdx !== null) {
 			field = formItems[secIdx].fields[fldIdx];
+		} else {
+			field = formItems[fldIdx];
 		}
 		field[key] = val;
+		serialize();
+		if (needsReRender) {
+			renderBuilder();
+		}
+	};
+
+	window.updateGroupData = function(secIdx, grpIdx, key, val, needsReRender) {
+		var group = (secIdx === null) ? formItems[grpIdx] : formItems[secIdx].fields[grpIdx];
+		group[key] = val;
 		serialize();
 		if (needsReRender) {
 			renderBuilder();
@@ -566,6 +803,55 @@
 		formItems[secIdx][key] = val;
 		serialize();
 	};
+
+	function renderInputGroupCard(group, secIdx, grpIdx) {
+		var escLabel = group.label.replace(/'/g, "&#39;");
+		var escName = (group.name || '').replace(/'/g, "&#39;");
+		var escDesc = (group.description || '').replace(/'/g, "&#39;");
+		var columns = group.columns || 2;
+		var isMulti = !!group.multi;
+
+		var groupEl = document.createElement('div');
+		groupEl.className = 'input-group-card';
+
+		groupEl.innerHTML = 
+			'<div class="input-group-header">' +
+				'<div class="section-title-wrapper" style="flex-wrap: wrap;">' +
+					'<input type="text" value=\'' + escLabel + '\' placeholder="Group Title" style="font-weight: bold; width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'label\',this.value)" />' +
+					'<input type="text" value=\'' + escName + '\' placeholder="Group Name / BBCode tag" style="width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'name\',this.value)" />' +
+					'<input type="text" value=\'' + escDesc + '\' placeholder="Group Description / Help text" style="width: 30%; min-width: 150px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'description\',this.value)" />' +
+					'<select style="width: auto; padding: 4px;" onchange="updateGroupData(' + secIdx + ',' + grpIdx + ',\'columns\',parseInt(this.value))">' +
+						'<option value="1"' + (columns === 1 ? ' selected' : '') + '>1 Column</option>' +
+						'<option value="2"' + (columns === 2 ? ' selected' : '') + '>2 Columns</option>' +
+						'<option value="3"' + (columns === 3 ? ' selected' : '') + '>3 Columns</option>' +
+						'<option value="4"' + (columns === 4 ? ' selected' : '') + '>4 Columns</option>' +
+					'</select>' +
+					'<label style="margin: 0 0 0 10px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold;">' +
+						'<input type="checkbox" ' + (isMulti ? 'checked' : '') + ' onchange="updateGroupData(' + secIdx + ',' + grpIdx + ',\'multi\',this.checked)" /> Multi Group' +
+					'</label>' +
+				'</div>' +
+				'<div class="control-buttons-group">' +
+					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + grpIdx + ',-1)' : 'moveNested(' + secIdx + ',' + grpIdx + ',-1)') + '">&uarr;</button>' +
+					'<button type="button" class="btn-secondary" onclick="' + (secIdx === null ? 'moveTopLevel(' + grpIdx + ',1)' : 'moveNested(' + secIdx + ',' + grpIdx + ',1)') + '">&darr;</button>' +
+					'<button type="button" class="btn-primary" onclick="addFieldToGroup(' + secIdx + ',' + grpIdx + ')">+ Add Question</button>' +
+					'<button type="button" class="btn-danger" onclick="deleteItem(' + secIdx + ',' + grpIdx + ')">Delete Group</button>' +
+				'</div>' +
+			'</div>';
+
+		var fieldsContainer = document.createElement('div');
+		fieldsContainer.className = 'input-group-fields-container';
+
+		if (group.fields && group.fields.length > 0) {
+			group.fields.forEach(function(field, fldIdx) {
+				fieldsContainer.appendChild(renderFieldCard(field, secIdx, grpIdx, fldIdx));
+			});
+		} else {
+			fieldsContainer.innerHTML = '<p style="color: #94a3b8; font-style: italic; font-size: 0.85em; margin: 10px 0;">This group is empty. Click "+ Add Question" inside the group to add fields.</p>';
+		}
+
+		groupEl.appendChild(fieldsContainer);
+		return groupEl;
+	}
 
 	function renderBuilder() {
 		builderContainer.innerHTML = '';
@@ -589,6 +875,7 @@
 						'<div class="control-buttons-group">' +
 							'<button type="button" class="btn-secondary" onclick="moveTopLevel(' + idx + ',-1)">&uarr;</button>' +
 							'<button type="button" class="btn-secondary" onclick="moveTopLevel(' + idx + ',1)">&darr;</button>' +
+							'<button type="button" class="btn-primary" onclick="addInputGroup(' + idx + ')">+ Add Group</button>' +
 							'<button type="button" class="btn-primary" onclick="addFieldToContainer(' + idx + ')">+ Add Question</button>' +
 							'<button type="button" class="btn-danger" onclick="deleteItem(null, ' + idx + ')">Delete Section</button>' +
 						'</div>' +
@@ -598,8 +885,12 @@
 				fieldsContainer.className = 'section-fields-container';
 
 				if (item.fields && item.fields.length > 0) {
-					item.fields.forEach(function(field, fldIdx) {
-						fieldsContainer.appendChild(renderFieldCard(field, idx, fldIdx));
+					item.fields.forEach(function(nested, fldIdx) {
+						if (nested.type === 'input_group') {
+							fieldsContainer.appendChild(renderInputGroupCard(nested, idx, fldIdx));
+						} else {
+							fieldsContainer.appendChild(renderFieldCard(nested, idx, null, fldIdx));
+						}
 					});
 				} else {
 					fieldsContainer.innerHTML = '<p style="color: #94a3b8; font-style: italic; font-size: 0.85em; margin: 10px 0;">This section is empty. Click "+ Add Question" inside the section to add fields.</p>';
@@ -607,9 +898,10 @@
 
 				sectionEl.appendChild(fieldsContainer);
 				builderContainer.appendChild(sectionEl);
+			} else if (item.type === 'input_group') {
+				builderContainer.appendChild(renderInputGroupCard(item, null, idx));
 			} else {
-				// Top-level field
-				builderContainer.appendChild(renderFieldCard(item, null, idx));
+				builderContainer.appendChild(renderFieldCard(item, null, null, idx));
 			}
 		});
 	}

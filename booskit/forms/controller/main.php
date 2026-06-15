@@ -54,8 +54,12 @@ class main
 
 		foreach ($fields as $field)
 		{
-			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
 			{
+				$options_decoded = json_decode($field['field_options'], true);
+				$columns = isset($options_decoded['columns']) ? (int) $options_decoded['columns'] : 2;
+				$multi = isset($options_decoded['multi']) ? (bool) $options_decoded['multi'] : false;
+
 				$this->template->assign_block_vars('fields', [
 					'NAME'			=> $field['field_name'],
 					'LABEL'			=> $field['field_label'],
@@ -72,6 +76,10 @@ class main
 					'S_DATE'		=> false,
 					'S_SECTION_START' => $field['field_type'] == 'section_start',
 					'S_SECTION_END'   => $field['field_type'] == 'section_end',
+					'S_INPUT_GROUP_START' => $field['field_type'] == 'input_group_start',
+					'S_INPUT_GROUP_END'   => $field['field_type'] == 'input_group_end',
+					'COLUMNS'		=> $columns,
+					'S_MULTI'		=> $multi,
 				]);
 				continue;
 			}
@@ -98,6 +106,8 @@ class main
 				'S_DATE'		=> $field['field_type'] == 'date',
 				'S_SECTION_START' => false,
 				'S_SECTION_END'   => false,
+				'S_INPUT_GROUP_START' => false,
+				'S_INPUT_GROUP_END'   => false,
 			]);
 
 			$options = $this->get_field_options($field);
@@ -119,11 +129,39 @@ class main
 		$form['form_desc'] = generate_text_for_display($form['form_desc'], $form['form_desc_uid'], $form['form_desc_bitfield'], $form['form_desc_options']);
 		$form['form_header'] = generate_text_for_display($form['form_header'], $form['form_header_uid'], $form['form_header_bitfield'], $form['form_header_options']);
 
+		// Fetch submitted values for re-populating (in case of validation error)
+		$submitted_data = [];
+		foreach ($fields as $field)
+		{
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
+			{
+				continue;
+			}
+			if ($this->request->is_set_post($field['field_name']))
+			{
+				$val = $this->request->variable($field['field_name'], array(array('')), true);
+				if (empty($val) || (count($val) == 1 && isset($val[0]) && $val[0] === array('')))
+				{
+					$val = $this->request->variable($field['field_name'], array(''), true);
+				}
+				if (empty($val) || (count($val) == 1 && isset($val[0]) && $val[0] === ''))
+				{
+					$val = $this->request->variable($field['field_name'], '', true);
+				}
+
+				if ($val !== '' && !empty($val))
+				{
+					$submitted_data[$field['field_name']] = $val;
+				}
+			}
+		}
+
 		$this->template->assign_vars([
 			'FORM_NAME'		=> $form['form_name'],
 			'FORM_DESC'		=> $form['form_desc'],
 			'FORM_HEADER'	=> $form['form_header'],
 			'U_ACTION'		=> $this->helper->route('booskit_forms_submit', ['form_id' => $form_id]),
+			'SUBMITTED_DATA_JSON' => !empty($submitted_data) ? json_encode($submitted_data) : '',
 		]);
 
 		return $this->helper->render('form_display.html', $form['form_name']);
@@ -204,45 +242,172 @@ class main
 		$raw_values = [];
 		$errors = [];
 
+		// Group field associations to check if they are part of a multi input group
+		$input_groups = [];
+		$current_group_name = null;
+		
+		foreach ($fields as $field)
+		{
+			if ($field['field_type'] == 'input_group_start')
+			{
+				$options_decoded = json_decode($field['field_options'], true);
+				$multi = isset($options_decoded['multi']) ? (bool) $options_decoded['multi'] : false;
+				
+				$current_group_name = $field['field_name'];
+				$input_groups[$current_group_name] = [
+					'name'   => $current_group_name,
+					'multi'  => $multi,
+					'fields' => [],
+				];
+			}
+			else if ($field['field_type'] == 'input_group_end')
+			{
+				$current_group_name = null;
+			}
+			else if ($field['field_type'] != 'section_start' && $field['field_type'] != 'section_end')
+			{
+				if ($current_group_name !== null)
+				{
+					$input_groups[$current_group_name]['fields'][] = $field;
+				}
+			}
+		}
+
+		$field_to_group = [];
+		foreach ($input_groups as $group_name => $group_info)
+		{
+			foreach ($group_info['fields'] as $gf)
+			{
+				$field_to_group[$gf['field_name']] = $group_info;
+			}
+		}
+
 		// 2. Process User Fields (Overwrites legacy aliases if collision occurs)
 		foreach ($fields as $field)
 		{
-			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
 			{
 				continue;
 			}
+			
 			$name = $field['field_name'];
 			$selected_values = [];
+			$is_in_multi_group = isset($field_to_group[$name]) && $field_to_group[$name]['multi'];
 
-			if ($field['field_type'] == 'checkbox')
+			if ($is_in_multi_group)
 			{
-				$selected_values = $this->request->variable($name, array(''), true);
-				$selected_values = array_filter($selected_values, function($v) { return $v !== ''; });
-				$selected_values = array_values($selected_values);
+				if ($field['field_type'] == 'checkbox')
+				{
+					$raw_data = $this->request->variable($name, array(array('')), true);
+					foreach ($raw_data as $row_idx => $row_val)
+					{
+						$raw_data[$row_idx] = array_values(array_filter($row_val, function($v) { return $v !== ''; }));
+					}
+				}
+				else
+				{
+					$raw_data = $this->request->variable($name, array(''), true);
+				}
+				
+				$raw_values[$name] = $raw_data;
+				
+				$field_options = $this->get_field_options($field);
+				$all_row_labels = [];
+				foreach ($raw_data as $row_val)
+				{
+					$selected_labels = [];
+					if (is_array($row_val))
+					{
+						foreach ($row_val as $v)
+						{
+							if ($v !== '')
+							{
+								$selected_labels[] = isset($field_options[$v]) ? $field_options[$v] : (string)$v;
+							}
+						}
+					}
+					else
+					{
+						if ($row_val !== '')
+						{
+							$selected_labels[] = isset($field_options[$row_val]) ? $field_options[$row_val] : (string)$row_val;
+						}
+					}
+					if (!empty($selected_labels))
+					{
+						$all_row_labels[] = implode(', ', $selected_labels);
+					}
+				}
+				
+				$replacements[$name] = implode('; ', $all_row_labels);
+
+				if ($field['field_required'])
+				{
+					$has_empty = false;
+					if (empty($raw_data))
+					{
+						$has_empty = true;
+					}
+					else
+					{
+						foreach ($raw_data as $row_val)
+						{
+							if ($field['field_type'] == 'checkbox')
+							{
+								if (empty($row_val) || (count($row_val) == 1 && isset($row_val[0]) && $row_val[0] === ''))
+								{
+									$has_empty = true;
+									break;
+								}
+							}
+							else
+							{
+								if ($row_val === '')
+								{
+									$has_empty = true;
+									break;
+								}
+							}
+						}
+					}
+					if ($has_empty)
+					{
+						$errors[] = sprintf($this->user->lang['FIELD_REQUIRED'], $field['field_label']);
+					}
+				}
 			}
 			else
 			{
-				$val = $this->request->variable($name, '', true);
-				if ($val !== '')
+				if ($field['field_type'] == 'checkbox')
 				{
-					$selected_values = [$val];
+					$selected_values = $this->request->variable($name, array(''), true);
+					$selected_values = array_filter($selected_values, function($v) { return $v !== ''; });
+					$selected_values = array_values($selected_values);
 				}
-			}
+				else
+				{
+					$val = $this->request->variable($name, '', true);
+					if ($val !== '')
+					{
+						$selected_values = [$val];
+					}
+				}
 
-			$raw_values[$name] = $selected_values;
-			
-			$field_options = $this->get_field_options($field);
-			$selected_labels = [];
-			foreach ($selected_values as $v)
-			{
-				$selected_labels[] = isset($field_options[$v]) ? $field_options[$v] : (string)$v;
-			}
-			
-			$replacements[$name] = implode(', ', $selected_labels);
+				$raw_values[$name] = $selected_values;
+				
+				$field_options = $this->get_field_options($field);
+				$selected_labels = [];
+				foreach ($selected_values as $v)
+				{
+					$selected_labels[] = isset($field_options[$v]) ? $field_options[$v] : (string)$v;
+				}
+				
+				$replacements[$name] = implode(', ', $selected_labels);
 
-			if ($field['field_required'] && empty($selected_values))
-			{
-				$errors[] = sprintf($this->user->lang['FIELD_REQUIRED'], $field['field_label']);
+				if ($field['field_required'] && empty($selected_values))
+				{
+					$errors[] = sprintf($this->user->lang['FIELD_REQUIRED'], $field['field_label']);
+				}
 			}
 		}
 
@@ -250,13 +415,22 @@ class main
 		$all_fields_text = '';
 		foreach ($fields as $field)
 		{
-			if ($field['field_type'] == 'section_end')
+			if ($field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_end')
 			{
 				continue;
 			}
 			if ($field['field_type'] == 'section_start')
 			{
 				$all_fields_text .= "\n[b][size=120]" . $field['field_label'] . "[/size][/b]\n";
+				if (!empty($field['field_desc']))
+				{
+					$all_fields_text .= "[i]" . $field['field_desc'] . "[/i]\n";
+				}
+				continue;
+			}
+			if ($field['field_type'] == 'input_group_start')
+			{
+				$all_fields_text .= "\n[b]" . $field['field_label'] . "[/b]\n";
 				if (!empty($field['field_desc']))
 				{
 					$all_fields_text .= "[i]" . $field['field_desc'] . "[/i]\n";
@@ -283,15 +457,114 @@ class main
 		$subject = $form['form_subject_tpl'];
 		$body = $form['form_template'];
 
+		// 3b. Process Multi Input Group Loops: {{#groupname}} ... {{/groupname}}
+		foreach ($input_groups as $group_name => $group_info)
+		{
+			if (!$group_info['multi'])
+			{
+				continue;
+			}
+			
+			$num_rows = 0;
+			foreach ($group_info['fields'] as $gf)
+			{
+				$gf_name = $gf['field_name'];
+				if (isset($raw_values[$gf_name]) && is_array($raw_values[$gf_name]))
+				{
+					$num_rows = max($num_rows, count($raw_values[$gf_name]));
+				}
+			}
+			
+			$rows_data = [];
+			for ($i = 0; $i < $num_rows; $i++)
+			{
+				$row_replacements = [];
+				foreach ($group_info['fields'] as $gf)
+				{
+					$gf_name = $gf['field_name'];
+					$gf_options = $this->get_field_options($gf);
+					$val_at_row = isset($raw_values[$gf_name][$i]) ? $raw_values[$gf_name][$i] : '';
+					
+					$labels = [];
+					if (is_array($val_at_row))
+					{
+						foreach ($val_at_row as $v)
+						{
+							if ($v !== '')
+							{
+								$labels[] = isset($gf_options[$v]) ? $gf_options[$v] : (string)$v;
+							}
+						}
+					}
+					else
+					{
+						if ($val_at_row !== '')
+						{
+							$labels[] = isset($gf_options[$val_at_row]) ? $gf_options[$val_at_row] : (string)$val_at_row;
+						}
+					}
+					
+					$row_replacements[$gf_name] = implode(', ', $labels);
+				}
+				$rows_data[] = $row_replacements;
+			}
+			
+			$pattern = '/\{\{\s*#' . preg_quote($group_name, '/') . '\s*\}\}(.*?)\{\{\s*\/' . preg_quote($group_name, '/') . '\s*\}\}/s';
+			
+			$replacement_func = function($matches) use ($rows_data, $group_info) {
+				$loop_content = $matches[1];
+				$result = '';
+				foreach ($rows_data as $row_data)
+				{
+					$temp = $loop_content;
+					foreach ($group_info['fields'] as $gf)
+					{
+						$gf_name = $gf['field_name'];
+						$val_text = isset($row_data[$gf_name]) ? $row_data[$gf_name] : '';
+						
+						$temp = preg_replace_callback('/\{\{\s*' . preg_quote($gf_name, '/') . '\s*\}\}/i', function() use ($val_text) {
+							return $val_text;
+						}, $temp);
+					}
+					$result .= $temp;
+				}
+				return $result;
+			};
+			
+			$body = preg_replace_callback($pattern, $replacement_func, $body);
+			$subject = preg_replace_callback($pattern, $replacement_func, $subject);
+		}
+
 		// 4. Process Field Loops: {{#fieldname}} ... {{/fieldname}}
 		foreach ($fields as $field)
 		{
-			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+			if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
 			{
 				continue;
 			}
 			$name = $field['field_name'];
 			$selected_values = $raw_values[$name];
+			
+			// If it's a multi-group field, $selected_values is 2D/1D array.
+			// The original field loops only apply for checkbox / multi-select values of a single field.
+			// Let's flatten to 1D if it is a multi group nested array for legacy support.
+			if (isset($field_to_group[$name]) && $field_to_group[$name]['multi'])
+			{
+				$flattened = [];
+				foreach ($selected_values as $row_val)
+				{
+					if (is_array($row_val))
+					{
+						$flattened = array_merge($flattened, $row_val);
+					}
+					else if ($row_val !== '')
+					{
+						$flattened[] = $row_val;
+					}
+				}
+				$selected_values = $flattened;
+			}
+			
 			$field_options = $this->get_field_options($field);
 			
 			$selected_data = [];
@@ -327,7 +600,7 @@ class main
 			$all_fields_data = [];
 			foreach ($fields as $field)
 			{
-				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
 				{
 					continue;
 				}
@@ -375,29 +648,61 @@ class main
 
 			foreach ($fields as $field)
 			{
-				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end')
+				if ($field['field_type'] == 'section_start' || $field['field_type'] == 'section_end' || $field['field_type'] == 'input_group_start' || $field['field_type'] == 'input_group_end')
 				{
 					continue;
 				}
 				$key = $field['field_name'];
-				$val = $raw_values[$key];
-
-				if ($field['field_type'] == 'checkbox')
+				$val = isset($raw_values[$key]) ? $raw_values[$key] : null;
+				if ($val === null)
 				{
-					foreach ($val as $v)
+					continue;
+				}
+				
+				$is_in_multi_group = isset($field_to_group[$key]) && $field_to_group[$key]['multi'];
+				
+				if ($is_in_multi_group)
+				{
+					foreach ($val as $row_idx => $row_val)
 					{
-						$this->template->assign_block_vars('hidden_fields', [
-							'NAME'  => $key . '[]',
-							'VALUE' => $v,
-						]);
+						if ($field['field_type'] == 'checkbox')
+						{
+							foreach ($row_val as $v)
+							{
+								$this->template->assign_block_vars('hidden_fields', [
+									'NAME'  => $key . '[' . $row_idx . '][]',
+									'VALUE' => $v,
+								]);
+							}
+						}
+						else
+						{
+							$this->template->assign_block_vars('hidden_fields', [
+								'NAME'  => $key . '[' . $row_idx . ']',
+								'VALUE' => $row_val,
+							]);
+						}
 					}
 				}
 				else
 				{
-					$this->template->assign_block_vars('hidden_fields', [
-						'NAME'  => $key,
-						'VALUE' => isset($val[0]) ? $val[0] : '',
-					]);
+					if ($field['field_type'] == 'checkbox')
+					{
+						foreach ($val as $v)
+						{
+							$this->template->assign_block_vars('hidden_fields', [
+								'NAME'  => $key . '[]',
+								'VALUE' => $v,
+							]);
+						}
+					}
+					else
+					{
+						$this->template->assign_block_vars('hidden_fields', [
+							'NAME'  => $key,
+							'VALUE' => isset($val[0]) ? $val[0] : '',
+						]);
+					}
 				}
 			}
 

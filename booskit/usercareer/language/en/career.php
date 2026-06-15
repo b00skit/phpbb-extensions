@@ -42,4 +42,7 @@ $lang = array_merge($lang, array(
 	'ENABLE_GROUP_ACTION' => 'Execute Forum Group Actions',
 	'GROUPS_ADD' => 'Groups Added',
 	'GROUPS_REMOVE' => 'Groups Removed',
+	'SELECT_AUTOMATION_SETTING' => 'Select Automation Action',
+	'NEW_USERNAME' => 'New Username',
+	'PRIMARY_GROUP' => 'Primary Group',
 ));
