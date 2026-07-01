@@ -1,0 +1,15 @@
+<!-- IF S_SHOW_PREFIX_SELECT -->
+<dl style="clear: left;">
+	<dt><label for="topic_prefix_id">{L_TOPIC_PREFIX}{L_COLON}</label></dt>
+	<dd>
+		<select name="topic_prefix_id" id="topic_prefix_id" style="max-width: 300px; width: 100%;">
+			<option value="0">{L_NO_PREFIX}</option>
+			<!-- BEGIN prefix_options -->
+			<option value="{prefix_options.VALUE}"<!-- IF prefix_options.SELECTED --> selected="selected"<!-- ENDIF -->>
+				{prefix_options.NAME}
+			</option>
+			<!-- END prefix_options -->
+		</select>
+	</dd>
+</dl>
+<!-- ENDIF -->

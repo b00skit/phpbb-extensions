@@ -1,0 +1,113 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_THREADPREFIXES_TITLE') }}</h1>
+<p>{{ lang('ACP_BOOSKIT_THREADPREFIXES_EXPLAIN') }}</p>
+
+<form id="acp_booskit_threadprefixes" method="post" action="{{ U_ACTION }}">
+
+<div class="panel">
+	<div class="inner">
+		<fieldset>
+			<legend>{{ lang('BOOSKIT_THREADPREFIXES_CURRENT_TAGS') }}</legend>
+			<table class="table1 zebra-table">
+				<thead>
+					<tr>
+						<th style="width: 10%;">{{ lang('ID') }}</th>
+						<th style="width: 25%;">{{ lang('PREVIEW') }}</th>
+						<th style="width: 20%;">{{ lang('TEXT') }}</th>
+						<th style="width: 30%;">{{ lang('FORUMS') }}</th>
+						<th style="width: 15%;">{{ lang('ACTION') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for tag in TAGS %}
+					<tr>
+						<td>{{ tag.tag_id }}</td>
+						<td>
+							<span class="thread-prefix-pill" style="color: {{ tag.tag_color }}; background-color: {{ tag.tag_bg_color }}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; text-transform: uppercase; line-height: 1.4; vertical-align: middle;">{{ tag.tag_text }}</span>
+						</td>
+						<td><strong>{{ tag.tag_text }}</strong></td>
+						<td><small>{{ tag.forum_names_list }}</small></td>
+						<td>
+							<a href="{{ U_ACTION }}&amp;action=edit&amp;tag_id={{ tag.tag_id }}" class="button2">{{ lang('EDIT') }}</a>
+							<a href="{{ U_ACTION }}&amp;action=delete&amp;tag_id={{ tag.tag_id }}" class="button2">{{ lang('DELETE') }}</a>
+						</td>
+					</tr>
+				{% else %}
+					<tr>
+						<td colspan="5" style="text-align: center; color: #888;">{{ lang('BOOSKIT_THREADPREFIXES_NO_TAGS') }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</fieldset>
+	</div>
+</div>
+
+<div class="panel">
+	<div class="inner">
+		<fieldset>
+			<legend>{% if S_EDIT %}{{ lang('BOOSKIT_THREADPREFIXES_EDIT_TAG') }}{% else %}{{ lang('BOOSKIT_THREADPREFIXES_ADD_TAG') }}{% endif %}</legend>
+			{% if S_EDIT %}
+				<input type="hidden" name="action" value="edit" />
+				<input type="hidden" name="tag_id" value="{{ EDIT_TAG_ID }}" />
+			{% endif %}
+			
+			<dl>
+				<dt><label for="tag_text">{{ lang('BOOSKIT_THREADPREFIXES_TAG_TEXT') }}{{ lang('COLON') }}</label><br /><span>{{ lang('BOOSKIT_THREADPREFIXES_TAG_TEXT_EXPLAIN') }}</span></dt>
+				<dd><input type="text" id="tag_text" name="tag_text" value="{{ EDIT_TEXT }}" size="30" maxlength="100" class="inputbox" placeholder="e.g. SOLVED" required /></dd>
+			</dl>
+			
+			<dl>
+				<dt><label for="tag_color">{{ lang('BOOSKIT_THREADPREFIXES_TAG_COLOR') }}{{ lang('COLON') }}</label><br /><span>{{ lang('BOOSKIT_THREADPREFIXES_TAG_COLOR_EXPLAIN') }}</span></dt>
+				<dd>
+					<input type="color" id="tag_color" name="tag_color" value="{{ EDIT_COLOR }}" style="vertical-align: middle; width: 40px; height: 30px; padding: 2px; border: 1px solid #ccc; cursor: pointer;" />
+					<span style="margin-left: 8px; vertical-align: middle;">Hex: <input type="text" id="tag_color_hex" value="{{ EDIT_COLOR }}" size="7" style="vertical-align: middle; text-align: center;" oninput="document.getElementById('tag_color').value = this.value;" /></span>
+				</dd>
+			</dl>
+			
+			<dl>
+				<dt><label for="tag_bg_color">{{ lang('BOOSKIT_THREADPREFIXES_TAG_BG_COLOR') }}{{ lang('COLON') }}</label><br /><span>{{ lang('BOOSKIT_THREADPREFIXES_TAG_BG_COLOR_EXPLAIN') }}</span></dt>
+				<dd>
+					<input type="color" id="tag_bg_color" name="tag_bg_color" value="{{ EDIT_BG_COLOR }}" style="vertical-align: middle; width: 40px; height: 30px; padding: 2px; border: 1px solid #ccc; cursor: pointer;" />
+					<span style="margin-left: 8px; vertical-align: middle;">Hex: <input type="text" id="tag_bg_color_hex" value="{{ EDIT_BG_COLOR }}" size="7" style="vertical-align: middle; text-align: center;" oninput="document.getElementById('tag_bg_color').value = this.value;" /></span>
+				</dd>
+			</dl>
+
+			<dl>
+				<dt><label for="tag_forums">{{ lang('BOOSKIT_THREADPREFIXES_BIND_FORUMS') }}{{ lang('COLON') }}</label><br /><span>{{ lang('BOOSKIT_THREADPREFIXES_BIND_FORUMS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select id="tag_forums" name="tag_forums[]" multiple="multiple" size="10" style="width: 95%; max-width: 500px;">
+						{% for forum in forum_options %}
+							<option value="{{ forum.VALUE }}" {% if forum.SELECTED %}selected="selected"{% endif %}>{{ forum.NAME }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+
+			<p class="submit-buttons">
+				<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+				{% if S_EDIT %}
+					<a href="{{ U_ACTION }}" class="button2">{{ lang('CANCEL') }}</a>
+				{% else %}
+					<input class="button2" type="reset" name="reset" value="{{ lang('RESET') }}" />
+				{% endif %}
+			</p>
+		</fieldset>
+	</div>
+</div>
+
+<script>
+// Keep Hex inputs synced with color pickers
+document.getElementById('tag_color').addEventListener('input', function() {
+	document.getElementById('tag_color_hex').value = this.value;
+});
+document.getElementById('tag_bg_color').addEventListener('input', function() {
+	document.getElementById('tag_bg_color_hex').value = this.value;
+});
+</script>
+
+{{ S_FORM_TOKEN }}
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

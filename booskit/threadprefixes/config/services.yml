@@ -1,0 +1,33 @@
+services:
+    booskit.threadprefixes.prefix_manager:
+        class: booskit\threadprefixes\service\prefix_manager
+        arguments:
+            - '@dbal.conn'
+            - '%booskit.threadprefixes.tables.tags%'
+
+    booskit.threadprefixes.controller.acp.settings:
+        class: booskit\threadprefixes\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+            - '@booskit.threadprefixes.prefix_manager'
+            - '%core.table_prefix%'
+
+    booskit.threadprefixes.listener:
+        class: booskit\threadprefixes\event\listener
+        arguments:
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@auth'
+            - '@booskit.threadprefixes.prefix_manager'
+        tags:
+            - { name: event.listener }
+
+parameters:
+    booskit.threadprefixes.tables.tags: %core.table_prefix%booskit_threadprefixes_tags
