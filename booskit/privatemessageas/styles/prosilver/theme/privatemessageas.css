@@ -1,0 +1,25 @@
+/* Private Message As dropdown styling */
+.privatemessageas-select dt {
+	width: 20%;
+}
+
+.privatemessageas-select dd {
+	margin-left: 20%;
+}
+
+.privatemessageas-select select {
+	width: auto;
+	min-width: 200px;
+}
+
+.privatemessageas-select {
+	margin-bottom: 10px;
+}
+
+.postprofile dt .privatemessageas-realname {
+	display: none;
+}
+
+.postbody .author .privatemessageas-realname {
+	display: inline;
+}

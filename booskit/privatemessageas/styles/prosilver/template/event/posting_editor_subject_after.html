@@ -1,0 +1,14 @@
+<!-- IF S_COMPOSE_PM and S_PRIVATEMESSAGEAS_AVAILABLE -->
+<dl class="privatemessageas-select">
+	<dt><label for="privatemessageas_altchar_id">{L_PRIVATEMESSAGEAS_SELECT}</label><br /><span>{L_PRIVATEMESSAGEAS_EXPLAIN}</span></dt>
+	<dd>
+		<select name="privatemessageas_altchar_id" id="privatemessageas_altchar_id">
+			<!-- BEGIN privatemessageas_options -->
+			<option value="{privatemessageas_options.VALUE}" style="<!-- IF privatemessageas_options.COLOR -->color: {privatemessageas_options.COLOR};<!-- ENDIF -->">
+				{privatemessageas_options.NAME}
+			</option>
+			<!-- END privatemessageas_options -->
+		</select>
+	</dd>
+</dl>
+<!-- ENDIF -->

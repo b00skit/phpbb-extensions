@@ -1,0 +1,7 @@
+.postprofile .privatemessageas-realname {
+	display: none;
+}
+
+.postbody .author .privatemessageas-realname {
+	display: inline;
+}

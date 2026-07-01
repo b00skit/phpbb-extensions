@@ -1,0 +1,24 @@
+parameters:
+    booskit.privatemessageas.privatemessageas_table: '%core.table_prefix%booskit_privatemessageas'
+
+services:
+    booskit.privatemessageas.listener:
+        class: booskit\privatemessageas\event\listener
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@template'
+            - '@request'
+            - '%core.table_prefix%'
+            - '@config'
+        tags:
+            - { name: event.listener }
+    booskit.privatemessageas.controller.acp:
+        class: booskit\privatemessageas\controller\acp_controller
+        arguments:
+            - '@config'
+            - '@language'
+            - '@log'
+            - '@request'
+            - '@template'
+            - '@user'
