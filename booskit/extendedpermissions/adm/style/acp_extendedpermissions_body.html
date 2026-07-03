@@ -1,0 +1,43 @@
+<!-- INCLUDE overall_header.html -->
+
+<a id="maincontent"></a>
+
+<h1>{L_ACP_EXTENDEDPERMISSIONS_TITLE}</h1>
+
+<p>{L_ACP_EXTENDEDPERMISSIONS_EXPLAIN}</p>
+
+<form id="acp_extendedpermissions" method="post" action="{U_ACTION}">
+
+	<fieldset>
+		<legend>{L_ACP_EXTENDEDPERMISSIONS_SETTINGS}</legend>
+		<dl>
+			<dt><label for="extendedpermissions_mod_logs_groups">{L_ACP_EXTENDEDPERMISSIONS_MOD_LOGS}:</label><br /><span>{L_ACP_EXTENDEDPERMISSIONS_MOD_LOGS_EXPLAIN}</span></dt>
+			<dd>
+				<select id="extendedpermissions_mod_logs_groups" name="extendedpermissions_mod_logs_groups[]" multiple="multiple" size="8" style="width: 300px;">
+					<!-- BEGIN group_options -->
+					<option value="{group_options.GROUP_ID}"<!-- IF group_options.S_MOD_LOGS_SELECTED --> selected="selected"<!-- ENDIF -->>{group_options.GROUP_NAME}</option>
+					<!-- END group_options -->
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="extendedpermissions_last_actions_groups">{L_ACP_EXTENDEDPERMISSIONS_LAST_ACTIONS}:</label><br /><span>{L_ACP_EXTENDEDPERMISSIONS_LAST_ACTIONS_EXPLAIN}</span></dt>
+			<dd>
+				<select id="extendedpermissions_last_actions_groups" name="extendedpermissions_last_actions_groups[]" multiple="multiple" size="8" style="width: 300px;">
+					<!-- BEGIN group_options -->
+					<option value="{group_options.GROUP_ID}"<!-- IF group_options.S_LAST_ACTIONS_SELECTED --> selected="selected"<!-- ENDIF -->>{group_options.GROUP_NAME}</option>
+					<!-- END group_options -->
+				</select>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<legend>{L_SUBMIT}</legend>
+		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

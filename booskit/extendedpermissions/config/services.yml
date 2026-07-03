@@ -1,0 +1,12 @@
+services:
+    booskit.extendedpermissions.listener:
+        class: booskit\extendedpermissions\event\main_listener
+        arguments:
+            - '@config'
+            - '@auth'
+            - '@request'
+            - '@template'
+            - '@dbal.conn'
+            - '@user'
+        tags:
+            - { name: event.listener }
