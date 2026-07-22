@@ -1,0 +1,11 @@
+services:
+    booskit.select2.listener:
+        class: booskit\select2\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@dbal.conn'
+            - '@config'
+            - '@path_helper'
+        tags:
+            - { name: event.listener }

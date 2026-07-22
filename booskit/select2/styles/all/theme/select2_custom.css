@@ -1,0 +1,91 @@
+/* Select2 Custom phpBB Integration Styles */
+.select2-container {
+    box-sizing: border-box;
+    display: inline-block;
+    margin: 2px 0;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 34px;
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #333;
+    line-height: 26px;
+    padding-left: 4px;
+    padding-right: 20px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 32px;
+}
+
+.select2-container--default .select2-selection--multiple {
+    min-height: 34px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.select2-dropdown {
+    z-index: 999999 !important;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Rank preview option styling */
+.select2-rank-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+}
+
+.select2-rank-thumb {
+    max-height: 28px;
+    max-width: 45px;
+    object-fit: contain;
+    vertical-align: middle;
+    border-radius: 2px;
+    background: transparent;
+}
+
+.select2-rank-title {
+    font-weight: 600;
+    color: #222;
+}
+
+.select2-rank-imgname {
+    font-size: 0.82em;
+    color: #666;
+    font-family: monospace;
+    background: #f0f0f0;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+/* Live image preview block in ACP Manage Ranks */
+.acp-rank-image-preview-wrapper {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.acp-rank-image-preview-img {
+    max-height: 40px;
+    max-width: 120px;
+    object-fit: contain;
+}
