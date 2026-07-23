@@ -1,0 +1,26 @@
+services:
+    booskit.hidecontent.listener:
+        class: booskit\hidecontent\event\listener
+        arguments:
+            - '@config'
+            - '@auth'
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+        tags:
+            - { name: event.listener }
+
+    booskit.hidecontent.controller.main:
+        class: booskit\hidecontent\controller\main
+        arguments:
+            - '@auth'
+            - '@user'
+            - '@dbal.conn'
+            - '@request'
+            - '@template'
+            - '@controller.helper'
+            - '%core.root_path%'
+            - '%core.php_ext%'

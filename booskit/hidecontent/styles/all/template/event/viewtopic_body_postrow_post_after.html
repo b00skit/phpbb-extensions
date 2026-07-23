@@ -1,0 +1,8 @@
+{% if postrow.S_POST_MARKED_HIDDEN %}
+	<script>
+		(function(){
+			var el = document.getElementById('p{{ postrow.POST_ID }}');
+			if (el) { el.classList.add('post-hidden'); }
+		})();
+	</script>
+{% endif %}

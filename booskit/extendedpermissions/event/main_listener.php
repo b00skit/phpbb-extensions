@@ -35,21 +35,18 @@ class main_listener implements EventSubscriberInterface
 	/** @var \phpbb\user */
 	protected $user;
 
-	/** @var array|null Cached user groups */
-	protected $user_group_ids = null;
-
 	/** @var array|null Cached extension module auth strings from DB */
 	protected $extension_acp_auths = null;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param \phpbb\config\config				$config		Config object
-	 * @param \phpbb\auth\auth					$auth		Auth object
-	 * @param \phpbb\request\request			$request	Request object
-	 * @param \phpbb\template\template			$template	Template object
-	 * @param \phpbb\db\driver\driver_interface	$db			Database driver
-	 * @param \phpbb\user						$user		User object
+	 * @param \phpbb\config\config              $config   Config object
+	 * @param \phpbb\auth\auth                  $auth     Auth object
+	 * @param \phpbb\request\request            $request  Request object
+	 * @param \phpbb\template\template          $template Template object
+	 * @param \phpbb\db\driver\driver_interface $db       Database driver
+	 * @param \phpbb\user                       $user     User object
 	 */
 	public function __construct(
 		\phpbb\config\config $config,
@@ -82,7 +79,10 @@ class main_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Register the custom administrative permission `a_extensions_manage`.
+	 * Register custom permissions:
+	 * - `a_extensions_manage`: Administrative permission to manage extensions in ACP.
+	 * - `m_mod_logs`: Moderator permission to view Moderator Logs in MCP (disabled by default).
+	 * - `m_last_actions`: Moderator permission to view Latest 5 Actions in MCP (disabled by default).
 	 *
 	 * @param \phpbb\event\data $event Event object
 	 * @return void
@@ -91,6 +91,8 @@ class main_listener implements EventSubscriberInterface
 	{
 		$permissions = $event['permissions'];
 		$permissions['a_extensions_manage'] = ['lang' => 'ACL_A_EXTENSIONS_MANAGE', 'cat' => 'misc'];
+		$permissions['m_mod_logs']           = ['lang' => 'ACL_M_MOD_LOGS', 'cat' => 'misc'];
+		$permissions['m_last_actions']       = ['lang' => 'ACL_M_LAST_ACTIONS', 'cat' => 'misc'];
 		$event['permissions'] = $permissions;
 	}
 
@@ -150,26 +152,16 @@ class main_listener implements EventSubscriberInterface
 	}
 
 	/**
-	 * Hide the "Latest 5 logged actions" list on the MCP front page from
-	 * users who do not belong to the allowed groups.
+	 * Hide the "Latest 5 logged actions" list on the MCP front page if the current
+	 * user does not have the `m_last_actions` moderator permission.
 	 *
 	 * @return void
 	 */
 	public function hide_latest_logs()
 	{
-		$last_actions_groups_str = $this->config['extendedpermissions_last_actions_groups'];
-		if (empty($last_actions_groups_str))
-		{
-			return; // No group restriction configured -> default access
-		}
+		$this->user->add_lang_ext('booskit/extendedpermissions', 'permissions_extendedpermissions');
 
-		$allowed_groups = array_map('intval', explode(',', $last_actions_groups_str));
-		if (empty($allowed_groups))
-		{
-			return;
-		}
-
-		if (!$this->current_user_in_groups($allowed_groups))
+		if (!$this->auth->acl_get('m_last_actions'))
 		{
 			$this->template->assign_vars([
 				'S_SHOW_LOGS' => false,
@@ -180,7 +172,7 @@ class main_listener implements EventSubscriberInterface
 
 	/**
 	 * Hide the Moderator Logs tab from the MCP navigation if the current
-	 * user is restricted.
+	 * user is restricted from viewing moderator logs.
 	 *
 	 * @param \phpbb\event\data $event Event object
 	 * @return void
@@ -231,56 +223,13 @@ class main_listener implements EventSubscriberInterface
 
 	/**
 	 * Check whether the current user is restricted from viewing moderator logs.
-	 * Restricted if groups are specified and the user is NOT in any of them.
+	 * Restricted if the user does NOT have the `m_mod_logs` permission.
 	 *
 	 * @return bool
 	 */
 	protected function logs_are_restricted()
 	{
-		$mod_logs_groups_str = $this->config['extendedpermissions_mod_logs_groups'];
-		if (empty($mod_logs_groups_str))
-		{
-			return false; // No group restriction configured -> default access
-		}
-
-		$allowed_groups = array_map('intval', explode(',', $mod_logs_groups_str));
-		if (empty($allowed_groups))
-		{
-			return false;
-		}
-
-		return !$this->current_user_in_groups($allowed_groups);
-	}
-
-	/**
-	 * Helper to check if current user is in a list of group IDs.
-	 *
-	 * @param array $allowed_groups Array of group IDs
-	 * @return bool
-	 */
-	protected function current_user_in_groups(array $allowed_groups)
-	{
-		if (empty($allowed_groups))
-		{
-			return false;
-		}
-
-		if ($this->user_group_ids === null)
-		{
-			$this->user_group_ids = [];
-			$user_id = (int) $this->user->data['user_id'];
-
-			$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . '
-				WHERE user_id = ' . $user_id . '
-					AND user_pending = 0';
-			$result = $this->db->sql_query($sql);
-			while ($row = $this->db->sql_fetchrow($result))
-			{
-				$this->user_group_ids[] = (int) $row['group_id'];
-			}
-			$this->db->sql_freeresult($result);
-		}
-
-		return (bool) array_intersect($this->user_group_ids, $allowed_groups);
+		return !$this->auth->acl_get('m_mod_logs');
 	}
 }
+

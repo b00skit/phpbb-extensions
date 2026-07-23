@@ -1,0 +1,7 @@
+{% if S_CAN_HIDE_CONTENT %}
+	<div>
+		<label for="post_hidden">
+			<input type="checkbox" name="post_hidden" id="post_hidden" value="1"{% if S_POST_HIDDEN_CHECKED %} checked="checked"{% endif %} /> {{ lang('HIDE_CONTENT_OPTION') }}
+		</label>
+	</div>
+{% endif %}

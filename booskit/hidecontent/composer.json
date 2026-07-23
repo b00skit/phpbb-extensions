@@ -1,10 +1,10 @@
 {
-    "name": "booskit/extendedpermissions",
+    "name": "booskit/hidecontent",
     "type": "phpbb-extension",
-    "description": "Extended Permissions - adds moderator permissions for MCP moderator logs and last 5 actions, and adds a new permission to manage extensions in the ACP.",
+    "description": "Hide Content - allows moderators to hide topics and posts with permission controls and visual indicators.",
     "homepage": "",
     "version": "1.0.0",
-    "time": "2026-07-01",
+    "time": "2026-07-22",
     "license": "GPL-2.0",
     "authors": [
         {
@@ -18,7 +18,7 @@
         "composer/installers": "~1.0"
     },
     "extra": {
-        "display-name": "Extended Permissions",
+        "display-name": "Hide Content",
         "soft-require": {
             "phpbb/phpbb": ">=3.3.0"
         }

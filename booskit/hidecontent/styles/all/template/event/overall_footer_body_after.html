@@ -1,0 +1,15 @@
+<script>
+(function() {
+	var quickmodUl = document.querySelector('#quickmod ul.dropdown-contents');
+	var topicOpt = document.querySelector('.hidecontent-topic-option');
+	if (quickmodUl && topicOpt && !quickmodUl.querySelector('.hidecontent-topic-option')) {
+		var clone = topicOpt.cloneNode(true);
+		quickmodUl.appendChild(clone);
+	}
+	document.querySelectorAll('li.hidecontent-topic-option').forEach(function(el) {
+		if (el.parentNode && el.parentNode.tagName !== 'UL') {
+			el.remove();
+		}
+	});
+})();
+</script>

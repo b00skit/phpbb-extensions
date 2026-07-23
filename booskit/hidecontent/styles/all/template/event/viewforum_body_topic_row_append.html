@@ -1,0 +1,8 @@
+{% if topicrow.S_TOPIC_HIDDEN %}
+	<script>
+		(function(){
+			var el = document.currentScript.closest('li.row');
+			if (el) { el.classList.add('topic-hidden'); }
+		})();
+	</script>
+{% endif %}

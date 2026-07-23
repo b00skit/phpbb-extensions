@@ -1,0 +1,60 @@
+/* phpBB Hide Content Extension Styling */
+
+/* Hidden Post Highlight */
+.post.post-hidden {
+	background-color: #fff3e0 !important;
+	border: 2px solid #ff9800 !important;
+	border-radius: 5px;
+	box-shadow: 0 0 6px rgba(255, 152, 0, 0.35);
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+/* Hidden Post Badge */
+.post-hidden-badge {
+	display: inline-block;
+	background-color: #e65100;
+	color: #ffffff !important;
+	font-weight: bold;
+	font-size: 10px;
+	padding: 2px 7px;
+	border-radius: 3px;
+	text-transform: uppercase;
+	margin-bottom: 8px;
+	letter-spacing: 0.5px;
+}
+
+/* Hidden Topic Row Highlight in viewforum.php */
+li.row.topic-hidden,
+.topic-hidden {
+	background-color: #fff8e1 !important;
+	border: 2px solid #ff9800 !important;
+	border-radius: 4px;
+}
+
+/* Hidden Topic Badge */
+.topic-hidden-badge {
+	display: inline-block;
+	background-color: #e65100;
+	color: #ffffff !important;
+	font-size: 10px;
+	font-weight: bold;
+	padding: 2px 6px;
+	border-radius: 3px;
+	margin-right: 5px;
+	vertical-align: middle;
+	text-transform: uppercase;
+}
+
+/* Action button icons/links */
+.button.button-hide,
+a.button-hide {
+	background-color: #ffe0b2;
+	color: #e65100 !important;
+	border-color: #ffb74d;
+}
+
+.button.button-hide:hover,
+a.button-hide:hover {
+	background-color: #ffcc80;
+}

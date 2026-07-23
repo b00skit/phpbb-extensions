@@ -1,0 +1,7 @@
+booskit_hidecontent_toggle_post:
+    path: /hidecontent/post/{id}/{action}
+    defaults: { _controller: booskit.hidecontent.controller.main:toggle_post }
+
+booskit_hidecontent_toggle_topic:
+    path: /hidecontent/topic/{id}/{action}
+    defaults: { _controller: booskit.hidecontent.controller.main:toggle_topic }

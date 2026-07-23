@@ -1,0 +1,59 @@
+<!-- INCLUDE overall_header.html -->
+
+<h1>{L_ACP_TOPICLOGVIEWS_TITLE}</h1>
+
+<p>{L_ACP_TOPICLOGVIEWS_SETTINGS_EXPLAIN}</p>
+
+<form id="acp_topiclogviews_settings" method="post" action="{U_ACTION}">
+	<fieldset>
+		<legend>{L_ACP_TOPICLOGVIEWS_SETTINGS}</legend>
+
+		<dl>
+			<dt><label for="booskit_topiclogviews_enable">{L_TOPICLOGVIEWS_ENABLE}:</label><br /><span>{L_TOPICLOGVIEWS_ENABLE_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_enable" value="1"<!-- IF BOOSKIT_TOPICLOGVIEWS_ENABLE --> id="booskit_topiclogviews_enable" checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_enable" value="0"<!-- IF not BOOSKIT_TOPICLOGVIEWS_ENABLE --> id="booskit_topiclogviews_enable" checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="booskit_topiclogviews_session_once">{L_TOPICLOGVIEWS_SESSION_ONCE}:</label><br /><span>{L_TOPICLOGVIEWS_SESSION_ONCE_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_session_once" value="1"<!-- IF BOOSKIT_TOPICLOGVIEWS_SESSION_ONCE --> id="booskit_topiclogviews_session_once" checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_session_once" value="0"<!-- IF not BOOSKIT_TOPICLOGVIEWS_SESSION_ONCE --> id="booskit_topiclogviews_session_once" checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="booskit_topiclogviews_log_guests">{L_TOPICLOGVIEWS_LOG_GUESTS}:</label><br /><span>{L_TOPICLOGVIEWS_LOG_GUESTS_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_log_guests" value="1"<!-- IF BOOSKIT_TOPICLOGVIEWS_LOG_GUESTS --> id="booskit_topiclogviews_log_guests" checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_log_guests" value="0"<!-- IF not BOOSKIT_TOPICLOGVIEWS_LOG_GUESTS --> id="booskit_topiclogviews_log_guests" checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="booskit_topiclogviews_exclude_bots">{L_TOPICLOGVIEWS_EXCLUDE_BOTS}:</label><br /><span>{L_TOPICLOGVIEWS_EXCLUDE_BOTS_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_exclude_bots" value="1"<!-- IF BOOSKIT_TOPICLOGVIEWS_EXCLUDE_BOTS --> id="booskit_topiclogviews_exclude_bots" checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_exclude_bots" value="0"<!-- IF not BOOSKIT_TOPICLOGVIEWS_EXCLUDE_BOTS --> id="booskit_topiclogviews_exclude_bots" checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="booskit_topiclogviews_mod_only">{L_TOPICLOGVIEWS_MOD_ONLY}:</label><br /><span>{L_TOPICLOGVIEWS_MOD_ONLY_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_mod_only" value="1"<!-- IF BOOSKIT_TOPICLOGVIEWS_MOD_ONLY --> id="booskit_topiclogviews_mod_only" checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_topiclogviews_mod_only" value="0"<!-- IF not BOOSKIT_TOPICLOGVIEWS_MOD_ONLY --> id="booskit_topiclogviews_mod_only" checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

@@ -1,0 +1,20 @@
+services:
+    booskit.topiclogviews.listener:
+        class: booskit\topiclogviews\event\listener
+        arguments:
+            - '@config'
+            - '@user'
+            - '@log'
+            - '@request'
+            - '@auth'
+        tags:
+            - { name: event.listener }
+
+    booskit.topiclogviews.controller.acp.settings:
+        class: booskit\topiclogviews\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
