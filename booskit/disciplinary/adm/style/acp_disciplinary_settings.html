@@ -7,6 +7,14 @@
 <fieldset>
 	<legend>{{ lang('ACP_BOOSKIT_DISCIPLINARY_SETTINGS') }}</legend>
 	<dl>
+		<dt><label for="booskit_disciplinary_perm_system">{{ lang('BOOSKIT_DISCIPLINARY_PERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_PERM_SYSTEM_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_disciplinary_perm_system" value="legacy" {% if BOOSKIT_DISCIPLINARY_PERM_SYSTEM == 'legacy' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DISCIPLINARY_PERM_SYSTEM_LEGACY') }}</label>
+			<label><input type="radio" class="radio" name="booskit_disciplinary_perm_system" value="groups" {% if BOOSKIT_DISCIPLINARY_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DISCIPLINARY_PERM_SYSTEM_GROUPS') }}</label>
+		</dd>
+	</dl>
+
+	<dl>
 		<dt><label for="booskit_disciplinary_source">{{ lang('BOOSKIT_DISCIPLINARY_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_SOURCE_EXPLAIN') }}</span></dt>
 		<dd>
 			<label><input type="radio" class="radio" name="booskit_disciplinary_source" value="url" {% if BOOSKIT_DISCIPLINARY_SOURCE == 'url' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DISCIPLINARY_SOURCE_URL') }}</label>
@@ -31,48 +39,225 @@
 		</dd>
 	</dl>
 
-	<dl>
-		<dt><label for="booskit_disciplinary_access_l1">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_l1" name="booskit_disciplinary_access_l1" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L1 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_l2">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_l2" name="booskit_disciplinary_access_l2" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L2 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_l3">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_l3" name="booskit_disciplinary_access_l3" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L3 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_full">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_full" name="booskit_disciplinary_access_full" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_FULL }}" size="50"></dd>
-	</dl>
+	<div id="booskit_disciplinary_legacy_settings">
+		<dl>
+			<dt><label for="booskit_disciplinary_access_l1">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L1_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_l1" name="booskit_disciplinary_access_l1" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L1 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_l2">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L2_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_l2" name="booskit_disciplinary_access_l2" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L2 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_l3">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_L3_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_l3" name="booskit_disciplinary_access_l3" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_L3 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_full">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_FULL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_full" name="booskit_disciplinary_access_full" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_FULL }}" size="50"></dd>
+		</dl>
 
-	<dl>
-		<dt><label for="booskit_disciplinary_access_view_local">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_view_local" name="booskit_disciplinary_access_view_local" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_view_exempted">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_view_exempted" name="booskit_disciplinary_access_view_exempted" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_view_limited">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_view_limited" name="booskit_disciplinary_access_view_limited" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_view_global">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_disciplinary_access_view_global" name="booskit_disciplinary_access_view_global" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_disciplinary_access_view_limited_map">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP_EXPLAIN') }}</span></dt>
-		<dd><textarea name="booskit_disciplinary_access_view_limited_map" id="booskit_disciplinary_access_view_limited_map" rows="5" cols="60">{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP }}</textarea></dd>
-	</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_view_local">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_view_local" name="booskit_disciplinary_access_view_local" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LOCAL }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_view_exempted">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_view_exempted" name="booskit_disciplinary_access_view_exempted" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_EXEMPTED }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_view_limited">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_view_limited" name="booskit_disciplinary_access_view_limited" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_view_global">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_disciplinary_access_view_global" name="booskit_disciplinary_access_view_global" value="{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_disciplinary_access_view_limited_map">{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP_EXPLAIN') }}</span></dt>
+			<dd><textarea name="booskit_disciplinary_access_view_limited_map" id="booskit_disciplinary_access_view_limited_map" rows="5" cols="60">{{ BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP }}</textarea></dd>
+		</dl>
+	</div>
 
 	<p class="submit-buttons">
 		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
 	</p>
 </fieldset>
+
+<div id="booskit_disciplinary_groups_settings">
+	<fieldset>
+		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+		<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+		{% for pg in PERMISSION_GROUPS %}
+		<div style="background: #f4f4f4; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+			<dl>
+				<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+				<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_all[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_all %}checked="checked"{% endif %} /> {{ lang('ALL_GROUPS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_self[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_self %}checked="checked"{% endif %} /> {{ lang('SELF_GROUP') }}
+					</label>
+					<br><br>
+					<select name="power_over_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.power_over_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="exclude_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('DISCIPLINARY_ACTION_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<table class="table1 zebra-table" style="margin-top: 5px;">
+						<thead>
+							<tr>
+								<th>{{ lang('DISCIPLINARY_ACTION') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_VIEW') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for def in DEFINITIONS %}
+							<tr>
+								<td><strong>{{ def.name }}</strong> (<code>{{ def.id }}</code>)</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view]" value="1" {% if pg.permissions_array[def.id]['view'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view_private_notes]" value="1" {% if pg.permissions_array[def.id]['view_private_notes'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue]" value="1" {% if pg.permissions_array[def.id]['issue'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue_private_notes]" value="1" {% if pg.permissions_array[def.id]['issue_private_notes'] %}checked="checked"{% endif %} />
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</dd>
+			</dl>
+			<p class="submit-buttons" style="margin-top: 10px;">
+				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</p>
+		</div>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+		<dl>
+			<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Senior Moderators" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_all" value="1" /> {{ lang('ALL_GROUPS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_self" value="1" /> {{ lang('SELF_GROUP') }}
+				</label>
+				<br><br>
+				<select name="new_power_over_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('DISCIPLINARY_ACTION_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<table class="table1 zebra-table" style="margin-top: 5px;">
+					<thead>
+						<tr>
+							<th>{{ lang('DISCIPLINARY_ACTION') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_VIEW') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for def in DEFINITIONS %}
+						<tr>
+							<td><strong>{{ def.name }}</strong> (<code>{{ def.id }}</code>)</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][view]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][view_private_notes]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][issue]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][issue_private_notes]" value="1" />
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('ADD_PERMISSION_GROUP') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+		</p>
+	</fieldset>
+</div>
 
 <div id="booskit_disciplinary_local_settings">
 	<fieldset>
@@ -86,9 +271,9 @@
 			<th>{{ lang('NAME') }}</th>
 			<th>{{ lang('DESCRIPTION') }}</th>
 			<th>{{ lang('COLOR') }}</th>
-			<th>{{ lang('ACCESS_LEVEL') }}</th>
-			<th>{{ lang('BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE') }}</th>
-			<th>{{ lang('BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE') }}</th>
+			<th class="legacy-def-field">{{ lang('ACCESS_LEVEL') }}</th>
+			<th class="legacy-def-field">{{ lang('BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE') }}</th>
+			<th class="legacy-def-field">{{ lang('BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE') }}</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
 		</thead>
@@ -99,9 +284,9 @@
 			<td><input type="text" name="name[{{ def.def_id }}]" value="{{ def.disc_name }}" /></td>
 			<td><textarea name="desc[{{ def.def_id }}]" rows="2">{{ def.disc_desc }}</textarea></td>
 			<td><input type="color" name="color[{{ def.def_id }}]" value="{{ def.disc_color }}" /></td>
-			<td><input type="number" name="access_level[{{ def.def_id }}]" value="{{ def.access_level }}" min="0" max="4" style="width: 50px;" /></td>
-			<td><input type="checkbox" name="locally_viewable[{{ def.def_id }}]" value="1" {% if def.locally_viewable %}checked{% endif %} /></td>
-			<td><input type="checkbox" name="globally_viewable[{{ def.def_id }}]" value="1" {% if def.globally_viewable %}checked{% endif %} /></td>
+			<td class="legacy-def-field"><input type="number" name="access_level[{{ def.def_id }}]" value="{{ def.access_level }}" min="0" max="4" style="width: 50px;" /></td>
+			<td class="legacy-def-field"><input type="checkbox" name="locally_viewable[{{ def.def_id }}]" value="1" {% if def.locally_viewable %}checked{% endif %} /></td>
+			<td class="legacy-def-field"><input type="checkbox" name="globally_viewable[{{ def.def_id }}]" value="1" {% if def.globally_viewable %}checked{% endif %} /></td>
 			<td>
 				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('UPDATE') }}</button>
 				<a href="{{ U_ACTION }}&amp;action=delete&amp;def_id={{ def.def_id }}" class="button2">{{ lang('DELETE') }}</a>
@@ -130,15 +315,15 @@
 			<dt>{{ lang('COLOR') }}</dt>
 			<dd><input type="color" name="new_color" value="#000000" /></dd>
 		</dl>
-		<dl>
+		<dl class="legacy-def-field">
 			<dt>{{ lang('ACCESS_LEVEL') }}</dt>
 			<dd><input type="number" name="new_access_level" value="0" min="0" max="4" style="width: 50px;" /></dd>
 		</dl>
-		<dl>
+		<dl class="legacy-def-field">
 			<dt>{{ lang('BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE') }}</dt>
 			<dd><input type="checkbox" name="new_locally_viewable" value="1" /></dd>
 		</dl>
-		<dl>
+		<dl class="legacy-def-field">
 			<dt>{{ lang('BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE') }}</dt>
 			<dd><input type="checkbox" name="new_globally_viewable" value="1" /></dd>
 		</dl>
@@ -155,13 +340,13 @@
 (function() {
 	var urlSettings = document.getElementById('booskit_disciplinary_url_settings');
 	var localSettings = document.getElementById('booskit_disciplinary_local_settings');
-	var radios = document.getElementsByName('booskit_disciplinary_source');
+	var radiosSource = document.getElementsByName('booskit_disciplinary_source');
 
-	function updateVisibility() {
+	function updateSourceVisibility() {
 		var selected = '';
-		for (var i = 0; i < radios.length; i++) {
-			if (radios[i].checked) {
-				selected = radios[i].value;
+		for (var i = 0; i < radiosSource.length; i++) {
+			if (radiosSource[i].checked) {
+				selected = radiosSource[i].value;
 				break;
 			}
 		}
@@ -175,10 +360,45 @@
 		}
 	}
 
-	for (var i = 0; i < radios.length; i++) {
-		radios[i].addEventListener('change', updateVisibility);
+	for (var i = 0; i < radiosSource.length; i++) {
+		radiosSource[i].addEventListener('change', updateSourceVisibility);
 	}
-	updateVisibility();
+	updateSourceVisibility();
+
+	var legacySettings = document.getElementById('booskit_disciplinary_legacy_settings');
+	var groupsSettings = document.getElementById('booskit_disciplinary_groups_settings');
+	var radiosSystem = document.getElementsByName('booskit_disciplinary_perm_system');
+
+	function updateSystemVisibility() {
+		var selected = '';
+		for (var i = 0; i < radiosSystem.length; i++) {
+			if (radiosSystem[i].checked) {
+				selected = radiosSystem[i].value;
+				break;
+			}
+		}
+
+		var legacyFields = document.querySelectorAll('.legacy-def-field');
+
+		if (selected === 'groups') {
+			groupsSettings.style.display = 'block';
+			legacySettings.style.display = 'none';
+			for (var j = 0; j < legacyFields.length; j++) {
+				legacyFields[j].style.display = 'none';
+			}
+		} else {
+			groupsSettings.style.display = 'none';
+			legacySettings.style.display = 'block';
+			for (var j = 0; j < legacyFields.length; j++) {
+				legacyFields[j].style.display = '';
+			}
+		}
+	}
+
+	for (var i = 0; i < radiosSystem.length; i++) {
+		radiosSystem[i].addEventListener('change', updateSystemVisibility);
+	}
+	updateSystemVisibility();
 })();
 </script>
 

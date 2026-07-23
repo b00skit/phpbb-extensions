@@ -31,10 +31,13 @@ class disciplinary_manager
 	/** @var string */
 	protected $table_definitions;
 
+	/** @var string */
+	protected $table_perm_groups;
+
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions, $table_perm_groups = '')
 	{
 		$this->config = $config;
 		$this->db = $db;
@@ -43,6 +46,12 @@ class disciplinary_manager
 		$this->auth = $auth;
 		$this->table = $table;
 		$this->table_definitions = $table_definitions;
+		$this->table_perm_groups = !empty($table_perm_groups) ? $table_perm_groups : $this->table . '_perm_groups';
+	}
+
+	public function get_perm_system()
+	{
+		return isset($this->config['booskit_disciplinary_perm_system']) ? $this->config['booskit_disciplinary_perm_system'] : 'legacy';
 	}
 
 	public function get_definitions()
@@ -196,6 +205,102 @@ class disciplinary_manager
 		return null;
 	}
 
+	public function get_permission_groups()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' ORDER BY perm_group_id ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', explode(',', $row['applies_to'])) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', explode(',', $row['power_over_groups'])) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', explode(',', $row['exclude_groups'])) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+			$groups[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	public function get_permission_group($perm_group_id)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+		if ($row)
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', explode(',', $row['applies_to'])) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', explode(',', $row['power_over_groups'])) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', explode(',', $row['exclude_groups'])) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+		}
+		return $row;
+	}
+
+	public function add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'INSERT INTO ' . $this->table_perm_groups . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+	}
+
+	public function update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'UPDATE ' . $this->table_perm_groups . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_permission_group($perm_group_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function get_phpbb_groups()
+	{
+		$sql = 'SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . ' ORDER BY group_type DESC, group_name ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$name = isset($this->user->lang['G_' . $row['group_name']]) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+			$groups[] = [
+				'group_id' => (int) $row['group_id'],
+				'group_name' => $name,
+			];
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
 	public function get_user_records($user_id)
 	{
 		$sql = 'SELECT * FROM ' . $this->table . ' WHERE user_id = ' . (int) $user_id . ' ORDER BY issue_date DESC';
@@ -323,14 +428,7 @@ class disciplinary_manager
 		}
 
 		// Fetch user's groups
-		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
-		$result = $this->db->sql_query($sql);
-		$user_groups = [];
-		while ($row = $this->db->sql_fetchrow($result))
-		{
-			$user_groups[] = (int) $row['group_id'];
-		}
-		$this->db->sql_freeresult($result);
+		$user_groups = $this->get_user_groups($user_id);
 
 		// Determine level (highest match wins)
 		if (array_intersect($user_groups, $this->cached_role_groups['full'])) {
@@ -349,8 +447,179 @@ class disciplinary_manager
 		return 0;
 	}
 
+	public function get_effective_permissions($viewer_id, $target_user_id)
+	{
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		$target_groups = $this->get_user_groups($target_user_id);
+		$perm_groups = $this->get_permission_groups();
+
+		$effective = [];
+		$definitions = $this->get_definitions();
+		foreach ($definitions as $def)
+		{
+			$id = $def['id'];
+			$effective[$id] = [
+				'view' => false,
+				'view_private_notes' => false,
+				'issue' => false,
+				'issue_private_notes' => false,
+			];
+		}
+
+		foreach ($perm_groups as $pg)
+		{
+			// Check if pg applies to viewer
+			if (empty($pg['applies_to_array']) || !array_intersect($viewer_groups, $pg['applies_to_array']))
+			{
+				continue;
+			}
+
+			// Check if target user has a group in exclude_groups for this permission group
+			if (!empty($pg['exclude_groups_array']) && array_intersect($target_groups, $pg['exclude_groups_array']))
+			{
+				continue;
+			}
+
+			// Check if pg has power over target
+			$has_power = false;
+			if (!empty($pg['power_over_all']))
+			{
+				$has_power = true;
+			}
+			if (!$has_power && !empty($pg['power_over_self']))
+			{
+				if ($viewer_id == $target_user_id || array_intersect($viewer_groups, $target_groups))
+				{
+					$has_power = true;
+				}
+			}
+			if (!$has_power && !empty($pg['power_over_groups_array']))
+			{
+				if (array_intersect($target_groups, $pg['power_over_groups_array']))
+				{
+					$has_power = true;
+				}
+			}
+
+			if (!$has_power)
+			{
+				continue;
+			}
+
+			// Merge permissions
+			$perms = $pg['permissions_array'];
+			if (is_array($perms))
+			{
+				foreach ($perms as $def_id => $p)
+				{
+					if (!isset($effective[$def_id]))
+					{
+						$effective[$def_id] = [
+							'view' => false,
+							'view_private_notes' => false,
+							'issue' => false,
+							'issue_private_notes' => false,
+						];
+					}
+					if (!empty($p['view']))
+					{
+						$effective[$def_id]['view'] = true;
+					}
+					if (!empty($p['view_private_notes']))
+					{
+						$effective[$def_id]['view_private_notes'] = true;
+					}
+					if (!empty($p['issue']))
+					{
+						$effective[$def_id]['issue'] = true;
+					}
+					if (!empty($p['issue_private_notes']))
+					{
+						$effective[$def_id]['issue_private_notes'] = true;
+					}
+				}
+			}
+		}
+
+		return $effective;
+	}
+
+	public function can_add_disciplinary($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			foreach ($effective as $def_id => $p)
+			{
+				if (!empty($p['issue']))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$target_level = $this->get_user_role_level($target_user_id);
+		return ($viewer_level > 0 && ($viewer_level === 4 || $viewer_level > $target_level));
+	}
+
+	public function can_issue_type($viewer_id, $target_user_id, $def_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective[$def_id]['issue']);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$def = $this->get_definition($def_id);
+		return ($def && isset($def['access_level']) && $viewer_level >= $def['access_level']);
+	}
+
+	public function can_issue_private_notes($viewer_id, $target_user_id, $def_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective[$def_id]['issue_private_notes']);
+		}
+
+		// Legacy system: if you can issue, you can write evidence
+		return true;
+	}
+
+	public function can_modify_record($viewer_id, $record)
+	{
+		$target_user_id = $record['user_id'];
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			// Check if actor has issue permission on target for this definition ID
+			return $this->can_issue_type($viewer_id, $target_user_id, $def_id);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$is_issuer = ($viewer_id == $record['issuer_user_id']);
+		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
+	}
+
 	public function check_view_access($viewer_id, $target_user_id, $definition)
 	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			$def_id = isset($definition['id']) ? $definition['id'] : '';
+			$can_view = !empty($effective[$def_id]['view']);
+			$can_view_pn = !empty($effective[$def_id]['view_private_notes']);
+			return ['allowed' => $can_view, 'show_evidence' => $can_view_pn];
+		}
+
+		// Legacy system:
 		// 1. Check existing full access (L1-4)
 		$viewer_level = $this->get_user_role_level($viewer_id);
 		$target_level = $this->get_user_role_level($target_user_id);
@@ -421,7 +690,7 @@ class disciplinary_manager
 		return ['allowed' => false, 'show_evidence' => false];
 	}
 
-	protected function get_user_groups($user_id)
+	public function get_user_groups($user_id)
 	{
 		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
 		$result = $this->db->sql_query($sql);

@@ -46,20 +46,9 @@ class listener implements EventSubscriberInterface
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
 		$viewer_id = $this->user->data['user_id'];
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($viewer_id);
-		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
 
-		// Determine Add Permission (Strict Hierarchy)
-		$can_add = false;
-		if ($viewer_level > 0)
-		{
-			if ($viewer_level === 4 || $viewer_level > $target_level)
-			{
-				$can_add = true;
-			}
-		}
-
-		if ($can_add)
+		// Determine Add Permission
+		if ($this->disciplinary_manager->can_add_disciplinary($viewer_id, $user_id))
 		{
 			$this->template->assign_vars(array(
 				'U_ADD_DISCIPLINARY' => $this->helper->route('booskit_disciplinary_add_record', array('user_id' => $user_id)),
@@ -67,7 +56,6 @@ class listener implements EventSubscriberInterface
 		}
 
 		$records = $this->disciplinary_manager->get_user_records($user_id);
-		$definitions = $this->disciplinary_manager->get_definitions();
 
 		// Gather all issuer IDs to fetch usernames in bulk (optimization)
 		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
@@ -105,9 +93,7 @@ class listener implements EventSubscriberInterface
 
 			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
-			// Edit/Delete Permission Check: Full Access (4) can edit all; others only their own (if they have hierarchy access)
-			// Note: If they only have "View Access" but not L1+ (viewer_level=0), they can't edit.
-			$can_modify = ($viewer_level == 4 || ($viewer_level > 0 && $this->user->data['user_id'] == $record['issuer_user_id']));
+			$can_modify = $this->disciplinary_manager->can_modify_record($viewer_id, $record);
 
 			// Parse BBCode
 			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';

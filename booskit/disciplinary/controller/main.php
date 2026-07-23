@@ -37,27 +37,10 @@ class main
 		$this->php_ext = $php_ext;
 	}
 
-	protected function check_auth()
-	{
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($this->user->data['user_id']);
-		if ($viewer_level === 0)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-		return $viewer_level;
-	}
-
 	public function add_record($user_id)
 	{
-		$viewer_level = $this->check_auth();
-
-		// Determine Target Level
-		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
-
-		// Access Check:
-		// Full Access (4) can target everyone (including 4).
-		// Others must be strictly higher level than target.
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		$viewer_id = $this->user->data['user_id'];
+		if (!$this->disciplinary_manager->can_add_disciplinary($viewer_id, $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -89,10 +72,15 @@ class main
 			}
 
 			// Validation: Check if user has access to issue this type
-			$def = $this->disciplinary_manager->get_definition($type_id);
-			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			if (!$this->disciplinary_manager->can_issue_type($viewer_id, $user_id, $type_id))
 			{
 				trigger_error('NOT_AUTHORISED');
+			}
+
+			// If user cannot issue private notes, clear evidence field
+			if (!$this->disciplinary_manager->can_issue_private_notes($viewer_id, $user_id, $type_id))
+			{
+				$evidence = '';
 			}
 
 			// Parse BBCode
@@ -103,12 +91,12 @@ class main
 			generate_text_for_storage($reason, $reason_uid, $reason_bitfield, $reason_options, $allow_bbcode, $allow_urls, $allow_smilies);
 			generate_text_for_storage($evidence, $evidence_uid, $evidence_bitfield, $evidence_options, $allow_bbcode, $allow_urls, $allow_smilies);
 
-			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $this->user->data['user_id'],
+			$this->disciplinary_manager->add_record($user_id, $type_id, $issue_date, $reason, $evidence, $viewer_id,
 				$reason_uid, $reason_bitfield, $reason_options,
 				$evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_ADDED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -116,7 +104,7 @@ class main
 			trigger_error($this->user->lang['DISCIPLINARY_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($user_id, null, false, $viewer_level);
+		$this->assign_form_vars($user_id, null, false);
 
 		add_form_key('add_disciplinary');
 
@@ -136,7 +124,7 @@ class main
 
 	public function edit_record($record_id)
 	{
-		$viewer_level = $this->check_auth();
+		$viewer_id = $this->user->data['user_id'];
 
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 		$this->user->add_lang('common');
@@ -148,30 +136,7 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		// Determine Target Level
-		$target_level = $this->disciplinary_manager->get_user_role_level($user_id);
-
-		// Access Check Logic:
-		// 1. Full Access (4) -> ALLOW
-		// 2. Issuer (Self-correction) -> ALLOW (Bypasses hierarchy check)
-		// 3. Others -> Must be > target AND have permission to edit others?
-		//    Currently, disciplinary only allows Issuer or Full Access to edit.
-		//    So, we just enforce that.
-
-		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
-		$has_access = false;
-
-		if ($viewer_level === 4)
-		{
-			$has_access = true;
-		}
-		elseif ($is_issuer)
-		{
-			// Issuer allowed to edit their own record
-			$has_access = true;
-		}
-
-		if (!$has_access)
+		if (!$this->disciplinary_manager->can_modify_record($viewer_id, $record))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -199,11 +164,14 @@ class main
 				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
-			// Validation: Check if user has access to issue this type
-			$def = $this->disciplinary_manager->get_definition($type_id);
-			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			if (!$this->disciplinary_manager->can_issue_type($viewer_id, $user_id, $type_id))
 			{
 				trigger_error('NOT_AUTHORISED');
+			}
+
+			if (!$this->disciplinary_manager->can_issue_private_notes($viewer_id, $user_id, $type_id))
+			{
+				$evidence = '';
 			}
 
 			// Parse BBCode
@@ -219,7 +187,7 @@ class main
 				$evidence_uid, $evidence_bitfield, $evidence_options);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -227,7 +195,7 @@ class main
 			trigger_error($this->user->lang['DISCIPLINARY_UPDATED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($user_id, $record, true, $viewer_level);
+		$this->assign_form_vars($user_id, $record, true);
 
 		add_form_key('edit_disciplinary');
 
@@ -247,7 +215,7 @@ class main
 
 	public function delete_record($record_id)
 	{
-		$viewer_level = $this->check_auth();
+		$viewer_id = $this->user->data['user_id'];
 
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
 
@@ -258,20 +226,7 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		// Access Check Logic (Same as Edit)
-		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
-		$has_access = false;
-
-		if ($viewer_level === 4)
-		{
-			$has_access = true;
-		}
-		elseif ($is_issuer)
-		{
-			$has_access = true;
-		}
-
-		if (!$has_access)
+		if (!$this->disciplinary_manager->can_modify_record($viewer_id, $record))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -281,7 +236,7 @@ class main
 			$this->disciplinary_manager->delete_record($record_id);
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_DISCIPLINARY_DELETED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_DELETED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 			meta_refresh(3, $u_profile);
@@ -302,7 +257,6 @@ class main
 
 		$target_username = $this->disciplinary_manager->get_username_string($user_id);
 		$viewer_id = $this->user->data['user_id'];
-		$viewer_level = $this->disciplinary_manager->get_user_role_level($viewer_id);
 
 		$records = $this->disciplinary_manager->get_user_records($user_id);
 		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
@@ -324,7 +278,7 @@ class main
 
 			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
-			$can_modify = ($viewer_level == 4 || ($viewer_level > 0 && $this->user->data['user_id'] == $record['issuer_user_id']));
+			$can_modify = $this->disciplinary_manager->can_modify_record($viewer_id, $record);
 
 			// Parse BBCode
 			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
@@ -360,12 +314,13 @@ class main
 			'PAGE_TITLE' => $this->user->lang('DISCIPLINARY_ACTIONS'),
 		));
 
-		return $this->helper->render('view_disciplinary.html', $this->user->lang('DISCIPLINARY_ACTIONS'));
+		return $this->helper->render('view_disciplinary.html', $this->user->lang['DISCIPLINARY_ACTIONS']);
 	}
 
-	protected function assign_form_vars($user_id, $record = null, $is_edit = false, $viewer_level = 0)
+	protected function assign_form_vars($user_id, $record = null, $is_edit = false)
 	{
 		$definitions = $this->disciplinary_manager->get_definitions();
+		$viewer_id = $this->user->data['user_id'];
 
 		$default_date = date('Y-m-d');
 		$current_type = '';
@@ -389,10 +344,56 @@ class main
 			$current_evidence = $evidence_data['text'];
 		}
 
+		$can_issue_notes = false;
+		if ($current_type)
+		{
+			$can_issue_notes = $this->disciplinary_manager->can_issue_private_notes($viewer_id, $user_id, $current_type);
+		}
+		else
+		{
+			foreach ($definitions as $def)
+			{
+				if ($this->disciplinary_manager->can_issue_type($viewer_id, $user_id, $def['id']) && $this->disciplinary_manager->can_issue_private_notes($viewer_id, $user_id, $def['id']))
+				{
+					$can_issue_notes = true;
+					break;
+				}
+			}
+		}
+
+		$types_data = [];
+		foreach ($definitions as $def) {
+			// Filter by access
+			if (!$this->disciplinary_manager->can_issue_type($viewer_id, $user_id, $def['id']))
+			{
+				if ($def['id'] != $current_type)
+				{
+					continue;
+				}
+			}
+
+			$can_notes_for_def = $this->disciplinary_manager->can_issue_private_notes($viewer_id, $user_id, $def['id']);
+
+			$types_data[$def['id']] = [
+				'id' => $def['id'],
+				'name' => $def['name'],
+				'can_issue_private_notes' => (bool)$can_notes_for_def,
+			];
+
+			$this->template->assign_block_vars('types', array(
+				'ID' 		=> $def['id'],
+				'NAME' 		=> $def['name'],
+				'SELECTED' 	=> ($def['id'] == $current_type),
+				'CAN_ISSUE_PRIVATE_NOTES' => $can_notes_for_def ? 1 : 0,
+			));
+		}
+
 		$this->template->assign_vars(array(
+			'TYPES_JSON' => json_encode($types_data),
 			'S_ISSUE_DATE' 		=> $default_date,
 			'REASON' 			=> $current_reason,
 			'EVIDENCE' 			=> $current_evidence,
+			'S_CAN_ISSUE_PRIVATE_NOTES' => $can_issue_notes,
 			'S_EDIT'			=> $is_edit,
 			'U_ACTION'			=> $is_edit
 				? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id']))
@@ -404,22 +405,5 @@ class main
 			'S_LINKS_ALLOWED'  => true,
 			'S_SMILIES_ALLOWED'=> true,
 		));
-
-		foreach ($definitions as $def) {
-			// Filter by access level
-			if (isset($def['access_level']) && $viewer_level < $def['access_level'])
-			{
-				if ($def['id'] != $current_type)
-				{
-					continue;
-				}
-			}
-
-			$this->template->assign_block_vars('types', array(
-				'ID' 		=> $def['id'],
-				'NAME' 		=> $def['name'],
-				'SELECTED' 	=> ($def['id'] == $current_type),
-			));
-		}
 	}
 }
