@@ -136,7 +136,7 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		if (!$this->disciplinary_manager->can_modify_record($viewer_id, $record))
+		if (!$this->disciplinary_manager->can_edit_record($viewer_id, $record))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -184,7 +184,8 @@ class main
 
 			$this->disciplinary_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence,
 				$reason_uid, $reason_bitfield, $reason_options,
-				$evidence_uid, $evidence_bitfield, $evidence_options);
+				$evidence_uid, $evidence_bitfield, $evidence_options,
+				$viewer_id, time());
 
 			$user_row = $this->disciplinary_manager->get_username_string($user_id);
 			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_EDITED', time(), array($user_row));
@@ -226,7 +227,7 @@ class main
 		}
 		$user_id = $record['user_id'];
 
-		if (!$this->disciplinary_manager->can_modify_record($viewer_id, $record))
+		if (!$this->disciplinary_manager->can_delete_record($viewer_id, $record))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -259,8 +260,11 @@ class main
 		$viewer_id = $this->user->data['user_id'];
 
 		$records = $this->disciplinary_manager->get_user_records($user_id);
-		$issuer_ids = array_unique(array_column($records, 'issuer_user_id'));
-		$issuer_usernames = $this->disciplinary_manager->get_usernames($issuer_ids);
+		$user_ids_to_fetch = array_unique(array_filter(array_merge(
+			array_column($records, 'issuer_user_id'),
+			array_column($records, 'edited_by_user_id')
+		)));
+		$user_names = $this->disciplinary_manager->get_usernames($user_ids_to_fetch);
 
 		foreach ($records as $record)
 		{
@@ -276,9 +280,14 @@ class main
 			$type_name = $definition ? $definition['name'] : $record['disciplinary_type_id'];
 			$color = isset($definition['color']) ? $definition['color'] : '';
 
-			$issuer_name = isset($issuer_usernames[$record['issuer_user_id']]) ? $issuer_usernames[$record['issuer_user_id']] : $this->user->lang['GUEST'];
+			$issuer_name = isset($user_names[$record['issuer_user_id']]) ? $user_names[$record['issuer_user_id']] : $this->user->lang['GUEST'];
 
-			$can_modify = $this->disciplinary_manager->can_modify_record($viewer_id, $record);
+			$can_edit = $this->disciplinary_manager->can_edit_record($viewer_id, $record);
+			$can_delete = $this->disciplinary_manager->can_delete_record($viewer_id, $record);
+
+			$was_edited = !empty($record['edited_by_user_id']) && !empty($record['last_edited_time']);
+			$edited_by_name = $was_edited ? (isset($user_names[$record['edited_by_user_id']]) ? $user_names[$record['edited_by_user_id']] : $this->user->lang['GUEST']) : '';
+			$last_edited_time = $was_edited ? $this->user->format_date($record['last_edited_time'], 'D M d, Y H:i') : '';
 
 			// Parse BBCode
 			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
@@ -304,8 +313,11 @@ class main
 				'ISSUER_ID' => $record['issuer_user_id'],
 				'ISSUER_NAME' => $issuer_name,
 				'COLOR' => $color,
-				'U_EDIT' => $can_modify ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
-				'U_DELETE' => $can_modify ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
+				'EDITED_BY_NAME' => $edited_by_name,
+				'LAST_EDITED_TIME' => $last_edited_time,
+				'S_WAS_EDITED' => $was_edited,
+				'U_EDIT' => $can_edit ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
+				'U_DELETE' => $can_delete ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
 			));
 		}
 

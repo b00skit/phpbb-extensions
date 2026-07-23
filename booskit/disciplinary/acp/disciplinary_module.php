@@ -130,11 +130,19 @@ class disciplinary_module
 				$power_over_self = $request->variable('new_power_over_self', 0);
 				$power_over_groups = $request->variable('new_power_over_groups', array(0));
 				$exclude_groups = $request->variable('new_exclude_groups', array(0));
+				$edit_own = $request->variable('new_edit_own', 0);
+				$delete_own = $request->variable('new_delete_own', 0);
 				$perms_raw = $request->variable('new_perms', array('' => array('' => 0)));
+
+				$perms_combined = [
+					'edit_own' => $edit_own,
+					'delete_own' => $delete_own,
+					'types' => $perms_raw,
+				];
 
 				if (!empty($group_name))
 				{
-					$disciplinary_manager->add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $perms_raw);
+					$disciplinary_manager->add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $perms_combined);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
@@ -149,6 +157,8 @@ class disciplinary_module
 				$power_over_self_all = $request->variable('power_over_self', array(0 => 0));
 				$power_over_groups_all = $request->variable('power_over_groups', array(0 => array(0)));
 				$exclude_groups_all = $request->variable('exclude_groups', array(0 => array(0)));
+				$edit_own_all = $request->variable('edit_own', array(0 => 0));
+				$delete_own_all = $request->variable('delete_own', array(0 => 0));
 				$perms_all = $request->variable('perms', array(0 => array('' => array('' => 0))));
 
 				if ($perm_group_id && isset($group_names[$perm_group_id]))
@@ -159,9 +169,17 @@ class disciplinary_module
 					$power_over_self = isset($power_over_self_all[$perm_group_id]) ? $power_over_self_all[$perm_group_id] : 0;
 					$power_over_groups = isset($power_over_groups_all[$perm_group_id]) ? $power_over_groups_all[$perm_group_id] : array();
 					$exclude_groups = isset($exclude_groups_all[$perm_group_id]) ? $exclude_groups_all[$perm_group_id] : array();
+					$edit_own = isset($edit_own_all[$perm_group_id]) ? $edit_own_all[$perm_group_id] : 0;
+					$delete_own = isset($delete_own_all[$perm_group_id]) ? $delete_own_all[$perm_group_id] : 0;
 					$perms = isset($perms_all[$perm_group_id]) ? $perms_all[$perm_group_id] : array();
 
-					$disciplinary_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $perms);
+					$perms_combined = [
+						'edit_own' => $edit_own,
+						'delete_own' => $delete_own,
+						'types' => $perms,
+					];
+
+					$disciplinary_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $perms_combined);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}

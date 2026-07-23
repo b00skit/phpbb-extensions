@@ -48,10 +48,14 @@
 				<div class="icdisciplinary-header">
 					<span class="icdisciplinary-type-badge" style="background-color: {ic_records.COLOR}">{ic_records.TYPE}</span>
 					<span class="icdisciplinary-date">{ic_records.DATE}</span>
-					<!-- IF ic_records.U_EDIT -->
+					<!-- IF ic_records.U_EDIT || ic_records.U_DELETE -->
 					<div class="icdisciplinary-actions">
+						<!-- IF ic_records.U_EDIT -->
 						<a href="{ic_records.U_EDIT}" title="{L_EDIT}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
+						<!-- IF ic_records.U_DELETE -->
 						<a href="{ic_records.U_DELETE}" title="{L_DELETE}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
 					</div>
 					<!-- ENDIF -->
 				</div>
@@ -59,13 +63,18 @@
 					<div class="icdisciplinary-reason">{ic_records.REASON|raw}</div>
 					<!-- IF ic_records.EVIDENCE -->
 					<div class="icdisciplinary-evidence">
-						<strong>{L_EVIDENCE}</strong>
+						<strong>{L_PRIVATE_NOTES}</strong>
 						{ic_records.EVIDENCE|raw}
 					</div>
 					<!-- ENDIF -->
 				</div>
 				<div class="icdisciplinary-footer">
 					<span class="icdisciplinary-issuer">{L_ISSUED_BY}: <strong>{ic_records.ISSUER_NAME}</strong></span>
+					<!-- IF ic_records.S_WAS_EDITED -->
+					<span class="icdisciplinary-edited" style="margin-left: 15px; font-style: italic; color: #7f8c8d;">
+						{L_LAST_EDITED_BY}: <strong>{ic_records.EDITED_BY_NAME}</strong> {L_ON} {ic_records.LAST_EDITED_TIME}
+					</span>
+					<!-- ENDIF -->
 				</div>
 			</div>
 			<!-- END ic_records -->

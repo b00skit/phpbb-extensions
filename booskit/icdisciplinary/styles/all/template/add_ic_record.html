@@ -29,7 +29,7 @@
 						<select name="disciplinary_type_id" id="disciplinary_type_id">
 							<option value="">{L_SELECT_DISCIPLINARY_TYPE}</option>
 							<!-- BEGIN types -->
-							<option value="{types.ID}"<!-- IF types.SELECTED --> selected="selected"<!-- ENDIF -->>{types.NAME}</option>
+							<option value="{types.ID}" data-can-notes="{types.CAN_ISSUE_PRIVATE_NOTES}"<!-- IF types.SELECTED --> selected="selected"<!-- ENDIF -->>{types.NAME}</option>
 							<!-- END types -->
 						</select>
 					</dd>
@@ -43,8 +43,8 @@
 					<dt><label for="reason">{L_REASON}:</label></dt>
 					<dd><textarea name="reason" id="reason" rows="10" cols="30" class="inputbox" onfocus="set_text_name('reason');" tabindex="3">{REASON}</textarea></dd>
 				</dl>
-				<dl>
-					<dt><label for="evidence">{L_EVIDENCE}:</label></dt>
+				<dl id="private_notes_dl" style="display: none;">
+					<dt><label for="evidence">{L_PRIVATE_NOTES}:</label></dt>
 					<dd><textarea name="evidence" id="evidence" rows="10" cols="30" class="inputbox" onfocus="set_text_name('evidence');" tabindex="4">{EVIDENCE}</textarea></dd>
 				</dl>
 			</fieldset>
@@ -57,5 +57,58 @@
 		{S_FORM_TOKEN}
 	</fieldset>
 </form>
+
+<script>
+(function() {
+	var typesData = {};
+	try {
+		typesData = {{ TYPES_JSON|raw }};
+	} catch (e) {}
+
+	function updatePrivateNotesVisibility() {
+		var select = document.getElementById('disciplinary_type_id');
+		var container = document.getElementById('private_notes_dl');
+		if (!select || !container) return;
+
+		var selectedId = select.value;
+		var canNotes = false;
+
+		if (selectedId && typesData && typesData[selectedId]) {
+			canNotes = typesData[selectedId].can_issue_private_notes;
+		} else {
+			var opt = select.options[select.selectedIndex];
+			if (opt) {
+				var attr = opt.getAttribute('data-can-notes');
+				if (attr === '1' || attr === 1 || attr === 'true') {
+					canNotes = true;
+				}
+			}
+		}
+
+		if (canNotes) {
+			container.style.display = 'block';
+		} else {
+			container.style.display = 'none';
+		}
+	}
+
+	function init() {
+		if (typeof jQuery !== 'undefined') {
+			jQuery('#disciplinary_type_id').on('change', updatePrivateNotesVisibility);
+		}
+		var select = document.getElementById('disciplinary_type_id');
+		if (select) {
+			select.addEventListener('change', updatePrivateNotesVisibility);
+		}
+		updatePrivateNotesVisibility();
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
+})();
+</script>
 
 <!-- INCLUDE overall_footer.html -->

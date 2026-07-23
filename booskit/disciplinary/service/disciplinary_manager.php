@@ -353,7 +353,8 @@ class disciplinary_manager
 
 	public function update_record($record_id, $disciplinary_type_id, $issue_date, $reason, $evidence,
 		$reason_bbcode_uid, $reason_bbcode_bitfield, $reason_bbcode_options,
-		$evidence_bbcode_uid, $evidence_bbcode_bitfield, $evidence_bbcode_options)
+		$evidence_bbcode_uid, $evidence_bbcode_bitfield, $evidence_bbcode_options,
+		$edited_by_user_id = 0, $last_edited_time = 0)
 	{
 		$sql_ary = [
 			'disciplinary_type_id' => $disciplinary_type_id,
@@ -367,6 +368,12 @@ class disciplinary_manager
 			'evidence_bbcode_bitfield' => $evidence_bbcode_bitfield,
 			'evidence_bbcode_options' => $evidence_bbcode_options,
 		];
+
+		if (!empty($edited_by_user_id))
+		{
+			$sql_ary['edited_by_user_id'] = (int) $edited_by_user_id;
+			$sql_ary['last_edited_time'] = (int) ($last_edited_time ?: time());
+		}
 
 		$sql = 'UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE record_id = ' . (int) $record_id;
 		$this->db->sql_query($sql);
@@ -453,16 +460,22 @@ class disciplinary_manager
 		$target_groups = $this->get_user_groups($target_user_id);
 		$perm_groups = $this->get_permission_groups();
 
-		$effective = [];
+		$effective = [
+			'edit_own' => false,
+			'delete_own' => false,
+			'types' => [],
+		];
 		$definitions = $this->get_definitions();
 		foreach ($definitions as $def)
 		{
 			$id = $def['id'];
-			$effective[$id] = [
+			$effective['types'][$id] = [
 				'view' => false,
 				'view_private_notes' => false,
 				'issue' => false,
 				'issue_private_notes' => false,
+				'edit' => false,
+				'delete' => false,
 			];
 		}
 
@@ -488,7 +501,7 @@ class disciplinary_manager
 			}
 			if (!$has_power && !empty($pg['power_over_self']))
 			{
-				if ($viewer_id == $target_user_id || array_intersect($viewer_groups, $target_groups))
+				if ($viewer_id == $target_user_id)
 				{
 					$has_power = true;
 				}
@@ -510,32 +523,57 @@ class disciplinary_manager
 			$perms = $pg['permissions_array'];
 			if (is_array($perms))
 			{
-				foreach ($perms as $def_id => $p)
+				if (!empty($perms['edit_own']))
 				{
-					if (!isset($effective[$def_id]))
+					$effective['edit_own'] = true;
+				}
+				if (!empty($perms['delete_own']))
+				{
+					$effective['delete_own'] = true;
+				}
+
+				$types = isset($perms['types']) ? $perms['types'] : $perms;
+				if (is_array($types))
+				{
+					foreach ($types as $def_id => $p)
 					{
-						$effective[$def_id] = [
-							'view' => false,
-							'view_private_notes' => false,
-							'issue' => false,
-							'issue_private_notes' => false,
-						];
-					}
-					if (!empty($p['view']))
-					{
-						$effective[$def_id]['view'] = true;
-					}
-					if (!empty($p['view_private_notes']))
-					{
-						$effective[$def_id]['view_private_notes'] = true;
-					}
-					if (!empty($p['issue']))
-					{
-						$effective[$def_id]['issue'] = true;
-					}
-					if (!empty($p['issue_private_notes']))
-					{
-						$effective[$def_id]['issue_private_notes'] = true;
+						if (!is_array($p)) continue;
+
+						if (!isset($effective['types'][$def_id]))
+						{
+							$effective['types'][$def_id] = [
+								'view' => false,
+								'view_private_notes' => false,
+								'issue' => false,
+								'issue_private_notes' => false,
+								'edit' => false,
+								'delete' => false,
+							];
+						}
+						if (!empty($p['view']))
+						{
+							$effective['types'][$def_id]['view'] = true;
+						}
+						if (!empty($p['view_private_notes']))
+						{
+							$effective['types'][$def_id]['view_private_notes'] = true;
+						}
+						if (!empty($p['issue']))
+						{
+							$effective['types'][$def_id]['issue'] = true;
+						}
+						if (!empty($p['issue_private_notes']))
+						{
+							$effective['types'][$def_id]['issue_private_notes'] = true;
+						}
+						if (!empty($p['edit']))
+						{
+							$effective['types'][$def_id]['edit'] = true;
+						}
+						if (!empty($p['delete']))
+						{
+							$effective['types'][$def_id]['delete'] = true;
+						}
 					}
 				}
 			}
@@ -549,11 +587,14 @@ class disciplinary_manager
 		if ($this->get_perm_system() === 'groups')
 		{
 			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
-			foreach ($effective as $def_id => $p)
+			if (isset($effective['types']))
 			{
-				if (!empty($p['issue']))
+				foreach ($effective['types'] as $def_id => $p)
 				{
-					return true;
+					if (!empty($p['issue']))
+					{
+						return true;
+					}
 				}
 			}
 			return false;
@@ -570,7 +611,7 @@ class disciplinary_manager
 		if ($this->get_perm_system() === 'groups')
 		{
 			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
-			return !empty($effective[$def_id]['issue']);
+			return !empty($effective['types'][$def_id]['issue']);
 		}
 
 		// Legacy system
@@ -584,22 +625,27 @@ class disciplinary_manager
 		if ($this->get_perm_system() === 'groups')
 		{
 			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
-			return !empty($effective[$def_id]['issue_private_notes']);
+			return !empty($effective['types'][$def_id]['issue_private_notes']);
 		}
 
 		// Legacy system: if you can issue, you can write evidence
 		return true;
 	}
 
-	public function can_modify_record($viewer_id, $record)
+	public function can_edit_record($viewer_id, $record)
 	{
 		$target_user_id = $record['user_id'];
 		$def_id = $record['disciplinary_type_id'];
 
 		if ($this->get_perm_system() === 'groups')
 		{
-			// Check if actor has issue permission on target for this definition ID
-			return $this->can_issue_type($viewer_id, $target_user_id, $def_id);
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			$is_issuer = ($viewer_id == $record['issuer_user_id']);
+			if ($is_issuer)
+			{
+				return !empty($effective['edit_own']) || !empty($effective['types'][$def_id]['edit']);
+			}
+			return !empty($effective['types'][$def_id]['edit']);
 		}
 
 		// Legacy system
@@ -608,14 +654,41 @@ class disciplinary_manager
 		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
 	}
 
+	public function can_delete_record($viewer_id, $record)
+	{
+		$target_user_id = $record['user_id'];
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			$is_issuer = ($viewer_id == $record['issuer_user_id']);
+			if ($is_issuer)
+			{
+				return !empty($effective['delete_own']) || !empty($effective['types'][$def_id]['delete']);
+			}
+			return !empty($effective['types'][$def_id]['delete']);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$is_issuer = ($viewer_id == $record['issuer_user_id']);
+		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
+	}
+
+	public function can_modify_record($viewer_id, $record)
+	{
+		return $this->can_edit_record($viewer_id, $record);
+	}
+
 	public function check_view_access($viewer_id, $target_user_id, $definition)
 	{
 		if ($this->get_perm_system() === 'groups')
 		{
 			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
 			$def_id = isset($definition['id']) ? $definition['id'] : '';
-			$can_view = !empty($effective[$def_id]['view']);
-			$can_view_pn = !empty($effective[$def_id]['view_private_notes']);
+			$can_view = !empty($effective['types'][$def_id]['view']);
+			$can_view_pn = !empty($effective['types'][$def_id]['view_private_notes']);
 			return ['allowed' => $can_view, 'show_evidence' => $can_view_pn];
 		}
 

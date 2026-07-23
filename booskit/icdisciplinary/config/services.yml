@@ -10,6 +10,7 @@ services:
             - '%core.table_prefix%booskit_ic_characters'
             - '%core.table_prefix%booskit_ic_records'
             - '%core.table_prefix%booskit_ic_definitions'
+            - '%core.table_prefix%booskit_icdisciplinary_perm_groups'
 
     booskit.icdisciplinary.controller.main:
         class: booskit\icdisciplinary\controller\main

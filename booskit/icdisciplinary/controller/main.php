@@ -37,24 +37,11 @@ class main
 		$this->php_ext = $php_ext;
 	}
 
-	protected function check_auth()
-	{
-		$viewer_level = $this->ic_manager->get_user_role_level($this->user->data['user_id']);
-		if ($viewer_level === 0)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-		return $viewer_level;
-	}
-
 	// --- Character Management ---
 
 	public function add_character($user_id)
 	{
-		$viewer_level = $this->check_auth();
-
-		// Requirement: Level 1 access can create a new character
-		if ($viewer_level < 1)
+		if (!$this->ic_manager->can_create_character($this->user->data['user_id'], $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -99,16 +86,6 @@ class main
 
 	public function archive_character($character_id)
 	{
-		$viewer_level = $this->check_auth();
-
-		// Requirement: Level 2 access can archive
-		if ($viewer_level < 2)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-
-        $this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
-
 		$character = $this->ic_manager->get_character($character_id);
 		if (!$character)
 		{
@@ -116,15 +93,22 @@ class main
 		}
 		$user_id = $character['user_id'];
 
+		if (!$this->ic_manager->can_archive_character($this->user->data['user_id'], $user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
+
 		if (confirm_box(true))
 		{
-            // Toggle
-            $new_state = !$character['is_archived'];
+			// Toggle
+			$new_state = !$character['is_archived'];
 			$this->ic_manager->archive_character($character_id, $new_state);
 
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_CHARACTER_ARCHIVED', time(), array($character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id); // Stay on same char?
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id);
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['CHARACTER_ARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
@@ -138,22 +122,19 @@ class main
 
 	public function delete_character($character_id)
 	{
-		$viewer_level = $this->check_auth();
-
-		// Requirement: Full Access (4) can delete
-		if ($viewer_level < 4)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-
-        $this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
-
 		$character = $this->ic_manager->get_character($character_id);
 		if (!$character)
 		{
 			trigger_error('NO_CHARACTER');
 		}
 		$user_id = $character['user_id'];
+
+		if (!$this->ic_manager->can_delete_character($this->user->data['user_id'], $user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
 
 		if (confirm_box(true))
 		{
@@ -177,8 +158,6 @@ class main
 
 	public function add_record($character_id)
 	{
-		$viewer_level = $this->check_auth();
-
 		$character = $this->ic_manager->get_character($character_id);
 		if (!$character)
 		{
@@ -186,13 +165,7 @@ class main
 		}
 		$target_user_id = $character['user_id'];
 
-		// Access Check Logic (Same as Disciplinary)
-		// Determine Target User Level
-		$target_level = $this->ic_manager->get_user_role_level($target_user_id);
-
-		// Full Access (4) can target everyone.
-		// Others must be strictly higher level than target.
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		if (!$this->ic_manager->can_add_record($this->user->data['user_id'], $target_user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -224,8 +197,7 @@ class main
 			}
 
 			// Validation: Check if user has access to issue this type
-			$def = $this->ic_manager->get_definition($type_id);
-			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			if (!$this->ic_manager->can_issue_type($this->user->data['user_id'], $target_user_id, $type_id))
 			{
 				trigger_error('NOT_AUTHORISED');
 			}
@@ -250,7 +222,7 @@ class main
 			trigger_error($this->user->lang['IC_RECORD_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($target_user_id, $character_id, null, false, $viewer_level);
+		$this->assign_form_vars($target_user_id, $character_id, null, false);
 
 		add_form_key('add_ic_record');
 
@@ -263,7 +235,7 @@ class main
 
 		$this->template->assign_vars(array(
 			'BOOSKIT_ICDISCIPLINARY_RULESET' => $ruleset_html,
-            'CHARACTER_NAME' => $character['character_name'],
+			'CHARACTER_NAME' => $character['character_name'],
 		));
 
 		return $this->helper->render('add_ic_record.html', $this->user->lang['ADD_IC_RECORD']);
@@ -271,8 +243,6 @@ class main
 
 	public function edit_record($record_id)
 	{
-		$viewer_level = $this->check_auth();
-
 		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
 		$this->user->add_lang('common');
 
@@ -282,22 +252,10 @@ class main
 			trigger_error('NO_IC_RECORDS');
 		}
 
-        $character = $this->ic_manager->get_character($record['character_id']);
-        $target_user_id = $character['user_id'];
+		$character = $this->ic_manager->get_character($record['character_id']);
+		$target_user_id = $character['user_id'];
 
-		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
-		$has_access = false;
-
-		if ($viewer_level === 4)
-		{
-			$has_access = true;
-		}
-		elseif ($is_issuer)
-		{
-			$has_access = true;
-		}
-
-		if (!$has_access)
+		if (!$this->ic_manager->can_edit_record($this->user->data['user_id'], $record, $target_user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -326,8 +284,7 @@ class main
 			}
 
 			// Validation: Check if user has access to issue this type
-			$def = $this->ic_manager->get_definition($type_id);
-			if ($def && isset($def['access_level']) && $viewer_level < $def['access_level'])
+			if (!$this->ic_manager->can_issue_type($this->user->data['user_id'], $target_user_id, $type_id))
 			{
 				trigger_error('NOT_AUTHORISED');
 			}
@@ -342,7 +299,8 @@ class main
 
 			$this->ic_manager->update_record($record_id, $type_id, $issue_date, $reason, $evidence,
 				$reason_uid, $reason_bitfield, $reason_options,
-				$evidence_uid, $evidence_bitfield, $evidence_options);
+				$evidence_uid, $evidence_bitfield, $evidence_options,
+				$this->user->data['user_id'], time());
 
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_EDITED', time(), array($type_id, $character['character_name']));
 
@@ -352,7 +310,7 @@ class main
 			trigger_error($this->user->lang['IC_RECORD_UPDATED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
-		$this->assign_form_vars($target_user_id, $record['character_id'], $record, true, $viewer_level);
+		$this->assign_form_vars($target_user_id, $record['character_id'], $record, true);
 
 		add_form_key('edit_ic_record');
 
@@ -365,7 +323,7 @@ class main
 
 		$this->template->assign_vars(array(
 			'BOOSKIT_ICDISCIPLINARY_RULESET' => $ruleset_html,
-            'CHARACTER_NAME' => $character['character_name'],
+			'CHARACTER_NAME' => $character['character_name'],
 		));
 
 		return $this->helper->render('add_ic_record.html', $this->user->lang['EDIT_IC_RECORD']);
@@ -373,8 +331,6 @@ class main
 
 	public function delete_record($record_id)
 	{
-		$viewer_level = $this->check_auth();
-
 		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
 
 		$record = $this->ic_manager->get_record($record_id);
@@ -382,22 +338,10 @@ class main
 		{
 			trigger_error('NO_IC_RECORDS');
 		}
-        $character = $this->ic_manager->get_character($record['character_id']);
-        $target_user_id = $character['user_id'];
+		$character = $this->ic_manager->get_character($record['character_id']);
+		$target_user_id = $character['user_id'];
 
-		$is_issuer = ($this->user->data['user_id'] == $record['issuer_user_id']);
-		$has_access = false;
-
-		if ($viewer_level === 4)
-		{
-			$has_access = true;
-		}
-		elseif ($is_issuer)
-		{
-			$has_access = true;
-		}
-
-		if (!$has_access)
+		if (!$this->ic_manager->can_delete_record($this->user->data['user_id'], $record, $target_user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -420,7 +364,7 @@ class main
 		}
 	}
 
-	protected function assign_form_vars($user_id, $character_id, $record = null, $is_edit = false, $viewer_level = 0)
+	protected function assign_form_vars($user_id, $character_id, $record = null, $is_edit = false)
 	{
 		$definitions = $this->ic_manager->get_definitions();
 
@@ -446,11 +390,35 @@ class main
 			$current_evidence = $evidence_data['text'];
 		}
 
+		$types_json_data = [];
+		foreach ($definitions as $def) {
+			if (!$this->ic_manager->can_issue_type($this->user->data['user_id'], $user_id, $def['id']))
+			{
+				if ($def['id'] != $current_type)
+				{
+					continue;
+				}
+			}
+
+			$can_notes = $this->ic_manager->can_issue_private_notes($this->user->data['user_id'], $user_id, $def['id']);
+			$types_json_data[$def['id']] = [
+				'can_issue_private_notes' => $can_notes,
+			];
+
+			$this->template->assign_block_vars('types', array(
+				'ID' 		=> $def['id'],
+				'NAME' 		=> $def['name'],
+				'SELECTED' 	=> ($def['id'] == $current_type),
+				'CAN_ISSUE_PRIVATE_NOTES' => $can_notes ? 1 : 0,
+			));
+		}
+
 		$this->template->assign_vars(array(
 			'S_ISSUE_DATE' 		=> $default_date,
 			'REASON' 			=> $current_reason,
 			'EVIDENCE' 			=> $current_evidence,
 			'S_EDIT'			=> $is_edit,
+			'TYPES_JSON'		=> json_encode($types_json_data),
 			'U_ACTION'			=> $is_edit
 				? $this->helper->route('booskit_icdisciplinary_edit_record', array('record_id' => $record['record_id']))
 				: $this->helper->route('booskit_icdisciplinary_add_record', array('character_id' => $character_id)),
@@ -461,22 +429,5 @@ class main
 			'S_LINKS_ALLOWED'  => true,
 			'S_SMILIES_ALLOWED'=> true,
 		));
-
-		foreach ($definitions as $def) {
-			// Filter by access level
-			if (isset($def['access_level']) && $viewer_level < $def['access_level'])
-			{
-				if ($def['id'] != $current_type)
-				{
-					continue;
-				}
-			}
-
-			$this->template->assign_block_vars('types', array(
-				'ID' 		=> $def['id'],
-				'NAME' 		=> $def['name'],
-				'SELECTED' 	=> ($def['id'] == $current_type),
-			));
-		}
 	}
 }

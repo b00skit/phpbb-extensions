@@ -133,8 +133,20 @@
 				</dd>
 			</dl>
 			<dl>
+				<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="edit_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.edit_own %}checked="checked"{% endif %} /> {{ lang('PERM_EDIT_OWN') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="delete_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.delete_own %}checked="checked"{% endif %} /> {{ lang('PERM_DELETE_OWN') }}
+					</label>
+				</dd>
+			</dl>
+			<dl>
 				<dt><label>{{ lang('DISCIPLINARY_ACTION_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
 				<dd>
+					{% set type_perms = pg.permissions_array.types ? pg.permissions_array.types : pg.permissions_array %}
 					<table class="table1 zebra-table" style="margin-top: 5px;">
 						<thead>
 							<tr>
@@ -143,6 +155,8 @@
 								<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_EDIT') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_DELETE') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -150,16 +164,22 @@
 							<tr>
 								<td><strong>{{ def.name }}</strong> (<code>{{ def.id }}</code>)</td>
 								<td style="text-align: center;">
-									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view]" value="1" {% if pg.permissions_array[def.id]['view'] %}checked="checked"{% endif %} />
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view]" value="1" {% if type_perms[def.id]['view'] %}checked="checked"{% endif %} />
 								</td>
 								<td style="text-align: center;">
-									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view_private_notes]" value="1" {% if pg.permissions_array[def.id]['view_private_notes'] %}checked="checked"{% endif %} />
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view_private_notes]" value="1" {% if type_perms[def.id]['view_private_notes'] %}checked="checked"{% endif %} />
 								</td>
 								<td style="text-align: center;">
-									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue]" value="1" {% if pg.permissions_array[def.id]['issue'] %}checked="checked"{% endif %} />
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue]" value="1" {% if type_perms[def.id]['issue'] %}checked="checked"{% endif %} />
 								</td>
 								<td style="text-align: center;">
-									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue_private_notes]" value="1" {% if pg.permissions_array[def.id]['issue_private_notes'] %}checked="checked"{% endif %} />
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue_private_notes]" value="1" {% if type_perms[def.id]['issue_private_notes'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][edit]" value="1" {% if type_perms[def.id]['edit'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][delete]" value="1" {% if type_perms[def.id]['delete'] %}checked="checked"{% endif %} />
 								</td>
 							</tr>
 							{% endfor %}
@@ -219,6 +239,17 @@
 			</dd>
 		</dl>
 		<dl>
+			<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_edit_own" value="1" /> {{ lang('PERM_EDIT_OWN') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_delete_own" value="1" /> {{ lang('PERM_DELETE_OWN') }}
+				</label>
+			</dd>
+		</dl>
+		<dl>
 			<dt><label>{{ lang('DISCIPLINARY_ACTION_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
 			<dd>
 				<table class="table1 zebra-table" style="margin-top: 5px;">
@@ -229,6 +260,8 @@
 							<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_EDIT') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_DELETE') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -246,6 +279,12 @@
 							</td>
 							<td style="text-align: center;">
 								<input type="checkbox" name="new_perms[{{ def.id }}][issue_private_notes]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][edit]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][delete]" value="1" />
 							</td>
 						</tr>
 						{% endfor %}

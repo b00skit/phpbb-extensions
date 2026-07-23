@@ -52,8 +52,11 @@ $lang = array_merge($lang, array(
     'LOG_IC_RECORD_DELETED'     => '<strong>IC Record deleted</strong><br />» %s (Character: %s)',
 
 	'DISCIPLINARY_TYPE'			=> 'Type',
-	'EVIDENCE'					=> 'Evidence',
+	'EVIDENCE'					=> 'Private Notes',
+	'PRIVATE_NOTES'				=> 'Private Notes',
 	'ISSUED_BY'					=> 'Issued By',
+	'LAST_EDITED_BY'				=> 'Last edited by',
+	'ON'							=> 'on',
 	'REASON'					=> 'Reason',
 
 	'ISSUE_DATE'					=> 'Date Issued',

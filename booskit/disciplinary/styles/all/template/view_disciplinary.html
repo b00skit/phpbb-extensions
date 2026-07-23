@@ -13,10 +13,14 @@
 				<div class="disciplinary-header">
 					<span class="disciplinary-type-badge" style="background-color: {disciplinary.COLOR}">{disciplinary.TYPE}</span>
 					<span class="disciplinary-date">{disciplinary.DATE}</span>
-					<!-- IF disciplinary.U_EDIT -->
+					<!-- IF disciplinary.U_EDIT || disciplinary.U_DELETE -->
 					<div class="disciplinary-actions">
+						<!-- IF disciplinary.U_EDIT -->
 						<a href="{disciplinary.U_EDIT}" title="{L_EDIT}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
+						<!-- IF disciplinary.U_DELETE -->
 						<a href="{disciplinary.U_DELETE}" title="{L_DELETE}"><i class="icon fa-trash fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
 					</div>
 					<!-- ENDIF -->
 				</div>
@@ -31,6 +35,11 @@
 				</div>
 				<div class="disciplinary-footer">
 					<span class="disciplinary-issuer">{L_ISSUED_BY}: <strong>{disciplinary.ISSUER_NAME}</strong></span>
+					<!-- IF disciplinary.S_WAS_EDITED -->
+					<span class="disciplinary-edited" style="margin-left: 15px; font-style: italic; color: #7f8c8d;">
+						{L_LAST_EDITED_BY}: <strong>{disciplinary.EDITED_BY_NAME}</strong> {L_ON} {disciplinary.LAST_EDITED_TIME}
+					</span>
+					<!-- ENDIF -->
 				</div>
 			</div>
 			<!-- BEGINELSE -->
