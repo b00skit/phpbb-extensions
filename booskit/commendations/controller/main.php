@@ -33,23 +33,9 @@ class main
 		$this->php_ext = $php_ext;
 	}
 
-	protected function check_auth()
-	{
-		$viewer_level = $this->commendations_manager->get_user_role_level($this->user->data['user_id']);
-		if ($viewer_level === 0)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-		return $viewer_level;
-	}
-
 	public function add_commendation($user_id)
 	{
-		$viewer_level = $this->check_auth(); // Must be at least level 1
-
-		$target_level = $this->commendations_manager->get_user_role_level($user_id);
-
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		if (!$this->commendations_manager->can_add_commendation($this->user->data['user_id'], $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -87,6 +73,42 @@ class main
 
 			$this->commendations_manager->add_commendation($user_id, $type, $date, $character_name, $reason, $this->user->data['user_id'], $uid, $bitfield, $options);
 
+			// Public Posting
+			if (!empty($this->config['booskit_commendations_enable_public_posting']) && $this->request->variable('make_public_post', 0))
+			{
+				$target_username = $this->commendations_manager->get_username_string($user_id);
+				$issuer_username = $this->user->data['username'];
+				$date_str = $this->user->format_date($date, 'D M d, Y');
+				$type_lang = ($type == 'IC') ? $this->user->lang['COMMENDATION_TYPE_IC'] : $this->user->lang['COMMENDATION_TYPE_OOC'];
+
+				$subject_tpl = isset($this->config['booskit_commendations_public_posting_subject_tpl']) && !empty($this->config['booskit_commendations_public_posting_subject_tpl'])
+					? $this->config['booskit_commendations_public_posting_subject_tpl']
+					: 'Commendation: {CHARACTER_NAME}';
+
+				$body_tpl = isset($this->config['booskit_commendations_public_posting_body_tpl']) && !empty($this->config['booskit_commendations_public_posting_body_tpl'])
+					? $this->config['booskit_commendations_public_posting_body_tpl']
+					: "Commendation Type: {TYPE}\nCharacter Name: {CHARACTER_NAME}\nRecipient: {TARGET_USERNAME}\nIssued By: {ISSUER_USERNAME}\nDate: {DATE}\n\nReason:\n{REASON}";
+
+				$placeholders = [
+					'{CHARACTER_NAME}'  => $character_name,
+					'{TARGET_USERNAME}' => $target_username,
+					'{ISSUER_USERNAME}' => $issuer_username,
+					'{TYPE}'            => $type_lang,
+					'{DATE}'            => $date_str,
+					'{REASON}'          => $reason,
+				];
+
+				$subject = str_replace(array_keys($placeholders), array_values($placeholders), $subject_tpl);
+				$body = str_replace(array_keys($placeholders), array_values($placeholders), $body_tpl);
+
+				$mode = isset($this->config['booskit_commendations_public_posting_mode']) ? $this->config['booskit_commendations_public_posting_mode'] : 'forum';
+				$forum_id = isset($this->config['booskit_commendations_public_posting_forum_id']) ? (int) $this->config['booskit_commendations_public_posting_forum_id'] : 0;
+				$post_id = isset($this->config['booskit_commendations_public_posting_post_id']) ? (int) $this->config['booskit_commendations_public_posting_post_id'] : 0;
+				$poster_id = isset($this->config['booskit_commendations_public_posting_poster_id']) ? (int) $this->config['booskit_commendations_public_posting_poster_id'] : 0;
+
+				$this->commendations_manager->create_public_post($forum_id, $poster_id, $subject, $body, $mode, $post_id);
+			}
+
 			$user_row = $this->commendations_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_COMMENDATION_ADDED', time(), array($user_row));
 
@@ -105,8 +127,6 @@ class main
 
 	public function edit_commendation($commendation_id)
 	{
-		$viewer_level = $this->check_auth();
-
 		$this->user->add_lang_ext('booskit/commendations', 'commendations');
 		$this->user->add_lang('common');
 
@@ -116,25 +136,8 @@ class main
 			trigger_error('NO_COMMENDATION_RECORD');
 		}
 		$user_id = $commendation['user_id'];
-		$target_level = $this->commendations_manager->get_user_role_level($user_id);
 
-		$is_issuer = ($commendation['issuer_user_id'] == $this->user->data['user_id']);
-		$can_edit = false;
-
-		if ($viewer_level === 4)
-		{
-			$can_edit = true;
-		}
-		elseif ($is_issuer)
-		{
-			$can_edit = true;
-		}
-		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-		{
-			$can_edit = true;
-		}
-
-		if (!$can_edit)
+		if (!$this->commendations_manager->can_edit_commendation($this->user->data['user_id'], $user_id, $commendation['issuer_user_id']))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -187,8 +190,6 @@ class main
 
 	public function remove_commendation($commendation_id)
 	{
-		$viewer_level = $this->check_auth();
-
 		$this->user->add_lang_ext('booskit/commendations', 'commendations');
 
 		$commendation = $this->commendations_manager->get_commendation($commendation_id);
@@ -197,25 +198,8 @@ class main
 			trigger_error('NO_COMMENDATION_RECORD');
 		}
 		$user_id = $commendation['user_id'];
-		$target_level = $this->commendations_manager->get_user_role_level($user_id);
 
-		$is_issuer = ($commendation['issuer_user_id'] == $this->user->data['user_id']);
-		$can_remove = false;
-
-		if ($viewer_level === 4)
-		{
-			$can_remove = true;
-		}
-		elseif ($is_issuer)
-		{
-			$can_remove = true;
-		}
-		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-		{
-			$can_remove = true;
-		}
-
-		if (!$can_remove)
+		if (!$this->commendations_manager->can_delete_commendation($this->user->data['user_id'], $user_id, $commendation['issuer_user_id']))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -250,7 +234,6 @@ class main
 		}
 
 		$target_username = $this->commendations_manager->get_username_string($user_id);
-
 		$commendations = $this->commendations_manager->get_commendations($user_id); // No limit
 
 		// Collect issuer IDs
@@ -261,27 +244,9 @@ class main
 		}
 		$issuer_names = $this->commendations_manager->get_usernames(array_unique($issuer_ids));
 
-		// Viewer level for edit/delete checks
-		$viewer_level = $this->commendations_manager->get_user_role_level($this->user->data['user_id']);
-		$target_level = $this->commendations_manager->get_user_role_level($user_id);
-
 		foreach ($commendations as $comm)
 		{
-			$is_issuer = ($comm['issuer_user_id'] == $this->user->data['user_id']);
-			$has_access = false;
-
-			if ($viewer_level === 4)
-			{
-				$has_access = true;
-			}
-			elseif ($is_issuer && $viewer_level >= 1)
-			{
-				$has_access = true;
-			}
-			elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-			{
-				$has_access = true;
-			}
+			$has_access = $this->commendations_manager->can_edit_commendation($this->user->data['user_id'], $user_id, $comm['issuer_user_id']);
 
 			// Render BBCode
 			$bbcode_uid = isset($comm['bbcode_uid']) ? $comm['bbcode_uid'] : '';
@@ -338,6 +303,7 @@ class main
 			'REASON' 				=> $current_reason,
 			'COMMENDATION_TYPE'		=> $current_type,
 			'S_EDIT'				=> $is_edit,
+			'S_ENABLE_PUBLIC_POSTING' => !empty($this->config['booskit_commendations_enable_public_posting']),
 			'U_ACTION'				=> $is_edit
 				? $this->helper->route('booskit_commendations_edit', array('commendation_id' => $commendation['commendation_id']))
 				: $this->helper->route('booskit_commendations_add', array('user_id' => $user_id)),

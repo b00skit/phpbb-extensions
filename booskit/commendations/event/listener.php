@@ -73,16 +73,7 @@ class listener implements EventSubscriberInterface
 
 		foreach ($commendations as $comm)
 		{
-			$is_issuer = ($comm['issuer_user_id'] == $this->user->data['user_id']);
-			$has_access = false;
-
-			if ($viewer_level === 4) {
-				$has_access = true;
-			} elseif ($is_issuer && $viewer_level >= 1) {
-				$has_access = true;
-			} elseif ($viewer_level >= 2 && $viewer_level > $target_level) {
-				$has_access = true;
-			}
+			$has_access = $this->commendations_manager->can_edit_commendation($this->user->data['user_id'], $user_id, $comm['issuer_user_id']);
 
 			// Render BBCode
 			$bbcode_uid = isset($comm['bbcode_uid']) ? $comm['bbcode_uid'] : '';
@@ -105,12 +96,8 @@ class listener implements EventSubscriberInterface
 		}
 
 		// Check if user can add
-		$can_add = false;
-		if ($viewer_level >= 1) {
-			if ($viewer_level === 4 || $viewer_level > $target_level) {
-				$can_add = true;
-			}
-		}
+		$can_add = $this->commendations_manager->can_add_commendation($this->user->data['user_id'], $user_id);
+
 
 		$this->template->assign_vars(array(
 			'U_COMMENDATION_ADD' => $can_add ? $this->helper->route('booskit_commendations_add', array('user_id' => $user_id)) : '',

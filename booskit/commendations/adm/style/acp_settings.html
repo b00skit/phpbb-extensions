@@ -6,31 +6,212 @@
 
 <fieldset>
 	<legend>{{ lang('ACP_BOOSKIT_COMMENDATIONS_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_commendations_perm_system">{{ lang('BOOSKIT_COMMENDATIONS_PERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_PERM_SYSTEM_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_commendations_perm_system" value="legacy" {% if BOOSKIT_COMMENDATIONS_PERM_SYSTEM == 'legacy' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_COMMENDATIONS_PERM_SYSTEM_LEGACY') }}</label>
+			<label><input type="radio" class="radio" name="booskit_commendations_perm_system" value="groups" {% if BOOSKIT_COMMENDATIONS_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_COMMENDATIONS_PERM_SYSTEM_GROUPS') }}</label>
+		</dd>
+	</dl>
 
+	<div id="booskit_commendations_legacy_settings">
+		<dl>
+			<dt><label for="booskit_commendations_access_view">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_view" name="booskit_commendations_access_view" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_access_view_global">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_view_global" name="booskit_commendations_access_view_global" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_access_l1">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_l1" name="booskit_commendations_access_l1" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L1 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_access_l2">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_l2" name="booskit_commendations_access_l2" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L2 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_access_l3">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_l3" name="booskit_commendations_access_l3" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L3 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_access_full">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_access_full" name="booskit_commendations_access_full" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_FULL }}" size="50"></dd>
+		</dl>
+	</div>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
+<div id="booskit_commendations_groups_settings">
+	<fieldset>
+		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+		<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+		{% for pg in PERMISSION_GROUPS %}
+		<div style="background: #f4f4f4; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+			<dl>
+				<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+				<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_all[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_all %}checked="checked"{% endif %} /> {{ lang('ALL_GROUPS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_self[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_self %}checked="checked"{% endif %} /> {{ lang('SELF_GROUP') }}
+					</label>
+					<br><br>
+					<select name="power_over_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.power_over_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="exclude_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="view[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.view %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="submit_perm[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.submit %}checked="checked"{% endif %} /> {{ lang('PERM_SUBMIT') }}
+					</label>
+				</dd>
+			</dl>
+			<p class="submit-buttons" style="margin-top: 10px;">
+				<button type="submit" name="submit_config" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</p>
+		</div>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+		<dl>
+			<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Senior Officers" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_all" value="1" /> {{ lang('ALL_GROUPS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_self" value="1" /> {{ lang('SELF_GROUP') }}
+				</label>
+				<br><br>
+				<select name="new_power_over_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_view" value="1" /> {{ lang('PERM_VIEW') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_submit" value="1" /> {{ lang('PERM_SUBMIT') }}
+				</label>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit_config" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+		</p>
+	</fieldset>
+</div>
+
+<fieldset>
+	<legend>{{ lang('PUBLIC_POSTING_SETTINGS') }}</legend>
 	<dl>
-		<dt><label for="booskit_commendations_access_view">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_view" name="booskit_commendations_access_view" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW }}" size="50"></dd>
+		<dt><label for="booskit_commendations_enable_public_posting">{{ lang('ENABLE_PUBLIC_POSTING') }}{{ lang('COLON') }}</label><br><span>{{ lang('ENABLE_PUBLIC_POSTING_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_commendations_enable_public_posting" value="1" {% if BOOSKIT_COMMENDATIONS_ENABLE_PUBLIC_POSTING %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_commendations_enable_public_posting" value="0" {% if not BOOSKIT_COMMENDATIONS_ENABLE_PUBLIC_POSTING %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
 	</dl>
-	<dl>
-		<dt><label for="booskit_commendations_access_view_global">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_view_global" name="booskit_commendations_access_view_global" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_commendations_access_l1">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L1_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_l1" name="booskit_commendations_access_l1" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L1 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_commendations_access_l2">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L2_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_l2" name="booskit_commendations_access_l2" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L2 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_commendations_access_l3">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_L3_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_l3" name="booskit_commendations_access_l3" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_L3 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_commendations_access_full">{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_COMMENDATIONS_ACCESS_FULL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_commendations_access_full" name="booskit_commendations_access_full" value="{{ BOOSKIT_COMMENDATIONS_ACCESS_FULL }}" size="50"></dd>
-	</dl>
+
+	<div id="booskit_commendations_public_posting_details">
+		<dl>
+			<dt><label for="booskit_commendations_public_posting_mode">{{ lang('PUBLIC_POSTING_MODE') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_MODE_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_commendations_public_posting_mode" value="forum" {% if BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_MODE == 'forum' %}checked="checked"{% endif %} /> {{ lang('PUBLIC_POSTING_MODE_FORUM') }}</label>
+				<label><input type="radio" class="radio" name="booskit_commendations_public_posting_mode" value="reply" {% if BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_MODE == 'reply' %}checked="checked"{% endif %} /> {{ lang('PUBLIC_POSTING_MODE_REPLY') }}</label>
+			</dd>
+		</dl>
+		<dl id="public_posting_forum_dl">
+			<dt><label for="booskit_commendations_public_posting_forum_id">{{ lang('PUBLIC_POSTING_FORUM_ID') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_FORUM_ID_EXPLAIN') }}</span></dt>
+			<dd><input type="number" id="booskit_commendations_public_posting_forum_id" name="booskit_commendations_public_posting_forum_id" value="{{ BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_FORUM_ID }}" /></dd>
+		</dl>
+		<dl id="public_posting_post_dl">
+			<dt><label for="booskit_commendations_public_posting_post_id">{{ lang('PUBLIC_POSTING_POST_ID') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_POST_ID_EXPLAIN') }}</span></dt>
+			<dd><input type="number" id="booskit_commendations_public_posting_post_id" name="booskit_commendations_public_posting_post_id" value="{{ BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_POST_ID }}" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_public_posting_poster_id">{{ lang('PUBLIC_POSTING_POSTER_ID') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_POSTER_ID_EXPLAIN') }}</span></dt>
+			<dd><input type="number" id="booskit_commendations_public_posting_poster_id" name="booskit_commendations_public_posting_poster_id" value="{{ BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_POSTER_ID }}" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_public_posting_subject_tpl">{{ lang('PUBLIC_POSTING_SUBJECT_TPL') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_SUBJECT_TPL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_commendations_public_posting_subject_tpl" name="booskit_commendations_public_posting_subject_tpl" value="{{ BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_SUBJECT_TPL }}" style="width: 95%;" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_commendations_public_posting_body_tpl">{{ lang('PUBLIC_POSTING_BODY_TPL') }}{{ lang('COLON') }}</label><br><span>{{ lang('PUBLIC_POSTING_BODY_TPL_EXPLAIN') }}</span></dt>
+			<dd><textarea id="booskit_commendations_public_posting_body_tpl" name="booskit_commendations_public_posting_body_tpl" rows="6" style="width: 95%;">{{ BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_BODY_TPL }}</textarea></dd>
+		</dl>
+	</div>
 
 	<p class="submit-buttons">
 		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
@@ -39,5 +220,75 @@
 
 {{ S_FORM_TOKEN }}
 </form>
+
+<script>
+(function() {
+	var legacySettings = document.getElementById('booskit_commendations_legacy_settings');
+	var groupsSettings = document.getElementById('booskit_commendations_groups_settings');
+	var radiosSystem = document.getElementsByName('booskit_commendations_perm_system');
+
+	function updateSystemVisibility() {
+		var selected = '';
+		for (var i = 0; i < radiosSystem.length; i++) {
+			if (radiosSystem[i].checked) {
+				selected = radiosSystem[i].value;
+				break;
+			}
+		}
+
+		if (selected === 'groups') {
+			if (groupsSettings) groupsSettings.style.display = 'block';
+			if (legacySettings) legacySettings.style.display = 'none';
+		} else {
+			if (groupsSettings) groupsSettings.style.display = 'none';
+			if (legacySettings) legacySettings.style.display = 'block';
+		}
+	}
+
+	for (var i = 0; i < radiosSystem.length; i++) {
+		radiosSystem[i].addEventListener('change', updateSystemVisibility);
+	}
+	updateSystemVisibility();
+
+	var enablePublicRadios = document.getElementsByName('booskit_commendations_enable_public_posting');
+	var publicDetails = document.getElementById('booskit_commendations_public_posting_details');
+	var modeRadios = document.getElementsByName('booskit_commendations_public_posting_mode');
+	var forumDl = document.getElementById('public_posting_forum_dl');
+	var postDl = document.getElementById('public_posting_post_dl');
+
+	function updatePublicPostingVisibility() {
+		var enabled = false;
+		for (var i = 0; i < enablePublicRadios.length; i++) {
+			if (enablePublicRadios[i].checked && (enablePublicRadios[i].value === '1' || enablePublicRadios[i].value === 1)) {
+				enabled = true;
+				break;
+			}
+		}
+
+		if (publicDetails) {
+			publicDetails.style.display = enabled ? 'block' : 'none';
+		}
+
+		var mode = 'forum';
+		for (var j = 0; j < modeRadios.length; j++) {
+			if (modeRadios[j].checked) {
+				mode = modeRadios[j].value;
+				break;
+			}
+		}
+
+		if (forumDl) forumDl.style.display = (mode === 'forum') ? 'block' : 'none';
+		if (postDl) postDl.style.display = (mode === 'reply') ? 'block' : 'none';
+	}
+
+	for (var k = 0; k < enablePublicRadios.length; k++) {
+		enablePublicRadios[k].addEventListener('change', updatePublicPostingVisibility);
+	}
+	for (var m = 0; m < modeRadios.length; m++) {
+		modeRadios[m].addEventListener('change', updatePublicPostingVisibility);
+	}
+	updatePublicPostingVisibility();
+})();
+</script>
 
 {% INCLUDE 'overall_footer.html' %}

@@ -42,4 +42,7 @@ $lang = array_merge($lang, array(
 	'LOG_COMMENDATION_ADDED'		=> '<strong>Added commendation for</strong><br />» %s',
 	'LOG_COMMENDATION_EDITED'		=> '<strong>Edited commendation for</strong><br />» %s',
 	'LOG_COMMENDATION_DELETED'		=> '<strong>Deleted commendation for</strong><br />» %s',
+
+	'MAKE_PUBLIC_POST'				=> 'Make Public Post',
+	'MAKE_PUBLIC_POST_EXPLAIN'		=> 'Post a public announcement post/reply for this commendation.',
 ));
