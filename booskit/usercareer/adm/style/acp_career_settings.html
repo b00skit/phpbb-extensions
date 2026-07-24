@@ -6,6 +6,15 @@
 
 <fieldset>
 	<legend>{{ lang('ACP_BOOSKIT_CAREER_SETTINGS') }}</legend>
+
+	<dl>
+		<dt><label for="booskit_career_perm_system">{{ lang('BOOSKIT_CAREER_PERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_PERM_SYSTEM_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_career_perm_system" value="legacy" {% if BOOSKIT_CAREER_PERM_SYSTEM == 'legacy' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_CAREER_PERM_SYSTEM_LEGACY') }}</label>
+			<label><input type="radio" class="radio" name="booskit_career_perm_system" value="groups" {% if BOOSKIT_CAREER_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_CAREER_PERM_SYSTEM_GROUPS') }}</label>
+		</dd>
+	</dl>
+
 	<dl>
 		<dt><label for="booskit_career_source">{{ lang('BOOSKIT_CAREER_SOURCE') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_SOURCE_EXPLAIN') }}</span></dt>
 		<dd>
@@ -31,35 +40,188 @@
 		</dd>
 	</dl>
 
-	<dl>
-		<dt><label for="booskit_career_access_view">{{ lang('BOOSKIT_CAREER_ACCESS_VIEW') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_view" name="booskit_career_access_view" value="{{ BOOSKIT_CAREER_ACCESS_VIEW }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_career_access_view_global">{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_view_global" name="booskit_career_access_view_global" value="{{ BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_career_access_l1">{{ lang('BOOSKIT_CAREER_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L1_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_l1" name="booskit_career_access_l1" value="{{ BOOSKIT_CAREER_ACCESS_L1 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_career_access_l2">{{ lang('BOOSKIT_CAREER_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L2_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_l2" name="booskit_career_access_l2" value="{{ BOOSKIT_CAREER_ACCESS_L2 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_career_access_l3">{{ lang('BOOSKIT_CAREER_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L3_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_l3" name="booskit_career_access_l3" value="{{ BOOSKIT_CAREER_ACCESS_L3 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_career_access_full">{{ lang('BOOSKIT_CAREER_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_FULL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_career_access_full" name="booskit_career_access_full" value="{{ BOOSKIT_CAREER_ACCESS_FULL }}" size="50"></dd>
-	</dl>
+	<div id="booskit_career_legacy_settings">
+		<dl>
+			<dt><label for="booskit_career_access_view">{{ lang('BOOSKIT_CAREER_ACCESS_VIEW') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_view" name="booskit_career_access_view" value="{{ BOOSKIT_CAREER_ACCESS_VIEW }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_career_access_view_global">{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_view_global" name="booskit_career_access_view_global" value="{{ BOOSKIT_CAREER_ACCESS_VIEW_GLOBAL }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_career_access_l1">{{ lang('BOOSKIT_CAREER_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L1_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_l1" name="booskit_career_access_l1" value="{{ BOOSKIT_CAREER_ACCESS_L1 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_career_access_l2">{{ lang('BOOSKIT_CAREER_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L2_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_l2" name="booskit_career_access_l2" value="{{ BOOSKIT_CAREER_ACCESS_L2 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_career_access_l3">{{ lang('BOOSKIT_CAREER_ACCESS_L3') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_L3_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_l3" name="booskit_career_access_l3" value="{{ BOOSKIT_CAREER_ACCESS_L3 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_career_access_full">{{ lang('BOOSKIT_CAREER_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_CAREER_ACCESS_FULL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_career_access_full" name="booskit_career_access_full" value="{{ BOOSKIT_CAREER_ACCESS_FULL }}" size="50"></dd>
+		</dl>
+	</div>
 
 	<p class="submit-buttons">
 		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
 	</p>
 </fieldset>
+
+<div id="booskit_career_groups_settings">
+	<fieldset>
+		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+		<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+		{% for pg in PERMISSION_GROUPS %}
+		<div style="background: #f4f4f4; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+			<dl>
+				<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+				<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_all[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_all %}checked="checked"{% endif %} /> {{ lang('ALL_GROUPS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_self[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_self %}checked="checked"{% endif %} /> {{ lang('SELF_GROUP') }}
+					</label>
+					<br><br>
+					<select name="power_over_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.power_over_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="exclude_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="view[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.view %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="submit[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.submit %}checked="checked"{% endif %} /> {{ lang('PERM_SUBMIT') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="edit_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.edit_own %}checked="checked"{% endif %} /> {{ lang('PERM_EDIT_OWN') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="delete_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.delete_own %}checked="checked"{% endif %} /> {{ lang('PERM_DELETE_OWN') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="edit[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.edit %}checked="checked"{% endif %} /> {{ lang('PERM_EDIT_ALL') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="delete[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.delete %}checked="checked"{% endif %} /> {{ lang('PERM_DELETE_ALL') }}
+					</label>
+				</dd>
+			</dl>
+			<p class="submit-buttons" style="margin-top: 10px;">
+				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</p>
+		</div>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+		<dl>
+			<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Senior Officers" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_all" value="1" /> {{ lang('ALL_GROUPS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_self" value="1" /> {{ lang('SELF_GROUP') }}
+				</label>
+				<br><br>
+				<select name="new_power_over_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_view" value="1" /> {{ lang('PERM_VIEW') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_submit" value="1" /> {{ lang('PERM_SUBMIT') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_edit_own" value="1" /> {{ lang('PERM_EDIT_OWN') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_delete_own" value="1" /> {{ lang('PERM_DELETE_OWN') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_edit" value="1" /> {{ lang('PERM_EDIT_ALL') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_delete" value="1" /> {{ lang('PERM_DELETE_ALL') }}
+				</label>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+		</p>
+	</fieldset>
+</div>
 
 <div id="booskit_career_local_settings">
 	<fieldset>
@@ -95,6 +257,60 @@
 		</tr>
 		<tr id="settings-{{ def.def_id }}" style="display: none;">
 			<td colspan="6">
+				<!-- PRE-GENERATED NOTE SETTINGS -->
+				<fieldset>
+					<legend>{{ lang('PREGENERATED_NOTE_SETTINGS') }}</legend>
+					<dl>
+						<dt><label>{{ lang('ENABLE_NOTE_TEMPLATE') }}</label></dt>
+						<dd>
+							<label><input type="checkbox" class="radio" id="enable_note_template_{{ def.def_id }}" name="enable_note_template[{{ def.def_id }}]" value="1" {% if def.enable_note_template %}checked="checked"{% endif %} onchange="updateNoteTemplateVisibility({{ def.def_id }});" /> {{ lang('YES') }}</label>
+						</dd>
+					</dl>
+
+					<div id="note_template_details_{{ def.def_id }}">
+						<hr />
+						<h4>{{ lang('NOTE_CUSTOM_FIELDS') }}</h4>
+						<p>{{ lang('NOTE_CUSTOM_FIELDS_EXPLAIN') }}</p>
+
+						<table class="table1" id="note-fields-table-{{ def.def_id }}">
+							<thead>
+								<tr>
+									<th>{{ lang('FIELD_NAME') }}</th>
+									<th>{{ lang('FIELD_DESC') }}</th>
+									<th>{{ lang('DEFAULT_OPTIONS') }}</th>
+									<th>{{ lang('TYPE') }}</th>
+									<th>{{ lang('VARIABLE') }}</th>
+									<th style="text-align: center;">{{ lang('MANDATORY') }}</th>
+									<th>{{ lang('ACTION') }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								<!-- JS will populate this -->
+							</tbody>
+						</table>
+						<p>
+							<button type="button" class="button2" onclick="addNoteFieldRow({{ def.def_id }});">{{ lang('ADD_FIELD') }}</button>
+						</p>
+						<input type="hidden" name="note_template_fields_json[{{ def.def_id }}]" id="note-fields-json-{{ def.def_id }}" value="{{ def.note_template_fields|e }}" />
+
+						<hr />
+						<h4>{{ lang('NOTE_TEMPLATE_BODY') }}</h4>
+						<p>{{ lang('NOTE_TEMPLATE_BODY_EXPLAIN') }} <br />
+							<code>{{ '{#' }}type}</code>, <code>{{ '{#' }}creator}</code>, <code>{{ '{#' }}date}</code>, <code>{{ '{#' }}target}</code> <br />
+							{{ lang('CUSTOM_VARIABLES_EXPLAIN') }}
+						</p>
+						<dl>
+							<dt><label>{{ lang('BODY') }}</label></dt>
+							<dd><textarea name="note_template_body_tpl[{{ def.def_id }}]" rows="5" style="width: 100%;">{{ def.note_template_body_tpl }}</textarea></dd>
+						</dl>
+					</div>
+
+					<p class="submit-buttons">
+						<button type="submit" name="submit" class="button1" formaction="{{ U_ACTION }}&amp;action=update_one&amp;def_id={{ def.def_id }}">{{ lang('SUBMIT') }}</button>
+					</p>
+				</fieldset>
+
+				<!-- PUBLIC POST SETTINGS -->
 				<fieldset>
 					<legend>{{ lang('PUBLIC_POST_SETTINGS') }}</legend>
 					<dl>
@@ -112,29 +328,43 @@
 						<dd><input type="number" name="public_posting_forum_id[{{ def.def_id }}]" value="{{ def.public_posting_forum_id }}" /></dd>
 					</dl>
 
-					<hr />
-					<h4>{{ lang('CUSTOM_FIELDS') }}</h4>
-					<p>{{ lang('CUSTOM_FIELDS_EXPLAIN') }}</p>
+					<dl>
+						<dt><label>{{ lang('INHERIT_NOTE_FIELDS') }}</label><br /><span>{{ lang('INHERIT_NOTE_FIELDS_EXPLAIN') }}</span></dt>
+						<dd>
+							<label><input type="checkbox" class="radio" id="inherit_note_fields_{{ def.def_id }}" name="inherit_note_fields[{{ def.def_id }}]" value="1" {% if def.inherit_note_fields %}checked="checked"{% endif %} onchange="updateNoteTemplateVisibility({{ def.def_id }});" /> {{ lang('YES') }}</label>
+						</dd>
+					</dl>
 
-					<table class="table1" id="fields-table-{{ def.def_id }}">
-						<thead>
-							<tr>
-								<th>{{ lang('FIELD_NAME') }}</th>
-								<th>{{ lang('FIELD_DESC') }}</th>
-								<th>{{ lang('DEFAULT_OPTIONS') }}</th>
-								<th>{{ lang('TYPE') }}</th>
-								<th>{{ lang('VARIABLE') }}</th>
-								<th>{{ lang('ACTION') }}</th>
-							</tr>
-						</thead>
-						<tbody>
-							<!-- JS will populate this -->
-						</tbody>
-					</table>
-					<p>
-						<button type="button" class="button2" onclick="addFieldRow({{ def.def_id }});">{{ lang('ADD_FIELD') }}</button>
-					</p>
-					<input type="hidden" name="public_posting_fields_json[{{ def.def_id }}]" id="fields-json-{{ def.def_id }}" value="{{ def.public_posting_fields|e }}" />
+					<div id="public_posting_custom_fields_box_{{ def.def_id }}">
+						<hr />
+						<h4>{{ lang('CUSTOM_FIELDS') }}</h4>
+						<p>{{ lang('CUSTOM_FIELDS_EXPLAIN') }}</p>
+
+						<table class="table1" id="fields-table-{{ def.def_id }}">
+							<thead>
+								<tr>
+									<th>{{ lang('FIELD_NAME') }}</th>
+									<th>{{ lang('FIELD_DESC') }}</th>
+									<th>{{ lang('DEFAULT_OPTIONS') }}</th>
+									<th>{{ lang('TYPE') }}</th>
+									<th>{{ lang('VARIABLE') }}</th>
+									<th style="text-align: center;">{{ lang('MANDATORY') }}</th>
+									<th>{{ lang('ACTION') }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								<!-- JS will populate this -->
+							</tbody>
+						</table>
+						<p>
+							<button type="button" class="button2" onclick="addFieldRow({{ def.def_id }});">{{ lang('ADD_FIELD') }}</button>
+						</p>
+						<input type="hidden" name="public_posting_fields_json[{{ def.def_id }}]" id="fields-json-{{ def.def_id }}" value="{{ def.public_posting_fields|e }}" />
+					</div>
+
+					<div id="public_posting_inherited_notice_{{ def.def_id }}" style="display: none; background: #eef7ff; border: 1px solid #bce2fe; padding: 10px; margin: 10px 0; border-radius: 4px;">
+						<p style="margin: 0; color: #00529B;"><strong>{{ lang('INHERITED_FIELDS_ACTIVE') }}</strong>: {{ lang('INHERITED_FIELDS_ACTIVE_EXPLAIN') }}</p>
+					</div>
 
 					<hr />
 					<h4>{{ lang('POST_TEMPLATE') }}</h4>
@@ -239,9 +469,12 @@
 (function() {
 	var urlSettings = document.getElementById('booskit_career_url_settings');
 	var localSettings = document.getElementById('booskit_career_local_settings');
+	var legacySettings = document.getElementById('booskit_career_legacy_settings');
+	var groupsSettings = document.getElementById('booskit_career_groups_settings');
 	var radios = document.getElementsByName('booskit_career_source');
+	var permRadios = document.getElementsByName('booskit_career_perm_system');
 
-	function updateVisibility() {
+	function updateSourceVisibility() {
 		var selected = '';
 		for (var i = 0; i < radios.length; i++) {
 			if (radios[i].checked) {
@@ -259,10 +492,33 @@
 		}
 	}
 
-	for (var i = 0; i < radios.length; i++) {
-		radios[i].addEventListener('change', updateVisibility);
+	function updatePermVisibility() {
+		var selected = '';
+		for (var i = 0; i < permRadios.length; i++) {
+			if (permRadios[i].checked) {
+				selected = permRadios[i].value;
+				break;
+			}
+		}
+
+		if (selected === 'groups') {
+			legacySettings.style.display = 'none';
+			groupsSettings.style.display = 'block';
+		} else {
+			legacySettings.style.display = 'block';
+			groupsSettings.style.display = 'none';
+		}
 	}
-	updateVisibility();
+
+	for (var i = 0; i < radios.length; i++) {
+		radios[i].addEventListener('change', updateSourceVisibility);
+	}
+	for (var i = 0; i < permRadios.length; i++) {
+		permRadios[i].addEventListener('change', updatePermVisibility);
+	}
+
+	updateSourceVisibility();
+	updatePermVisibility();
 })();
 
 // Career Settings JS
@@ -273,9 +529,46 @@ function toggleSettings(id) {
 	if (row.style.display === 'none') {
 		row.style.display = 'table-row';
 		initFieldsTable(id);
+		initNoteFieldsTable(id);
 		initAutomationTable(id);
+		updateNoteTemplateVisibility(id);
 	} else {
 		row.style.display = 'none';
+	}
+}
+
+function updateNoteTemplateVisibility(id) {
+	var enableCheckbox = document.getElementById('enable_note_template_' + id);
+	var detailsBox = document.getElementById('note_template_details_' + id);
+	var inheritCheckbox = document.getElementById('inherit_note_fields_' + id);
+	var customFieldsBox = document.getElementById('public_posting_custom_fields_box_' + id);
+	var inheritedNotice = document.getElementById('public_posting_inherited_notice_' + id);
+
+	var noteEnabled = enableCheckbox ? enableCheckbox.checked : false;
+
+	if (detailsBox) {
+		detailsBox.style.display = noteEnabled ? 'block' : 'none';
+	}
+
+	// Dynamic inheritance logic
+	if (!noteEnabled) {
+		if (inheritCheckbox) {
+			inheritCheckbox.checked = false;
+			inheritCheckbox.disabled = true;
+		}
+	} else {
+		if (inheritCheckbox) {
+			inheritCheckbox.disabled = false;
+		}
+	}
+
+	var isInheriting = noteEnabled && inheritCheckbox && inheritCheckbox.checked;
+
+	if (customFieldsBox) {
+		customFieldsBox.style.display = isInheriting ? 'none' : 'block';
+	}
+	if (inheritedNotice) {
+		inheritedNotice.style.display = isInheriting ? 'block' : 'none';
 	}
 }
 
@@ -307,12 +600,14 @@ function addFieldRow(id, fieldData) {
 	var placeholder = fieldData ? fieldData.placeholder : '';
 	var type = fieldData ? fieldData.type : 'text';
 	var variable = fieldData ? fieldData.variable : 'var_' + Math.random().toString(36).substr(2, 5);
+	var mandatory = fieldData ? !!fieldData.mandatory : false;
 
 	row.innerHTML = '<td><input type="text" class="field-name" value="' + name + '" onchange="updateJson(' + id + ')" /></td>' +
 		'<td><input type="text" class="field-desc" value="' + desc + '" onchange="updateJson(' + id + ')" /></td>' +
 		'<td><input type="text" class="field-placeholder" value="' + placeholder + '" onchange="updateJson(' + id + ')" /></td>' +
 		'<td><select class="field-type" onchange="updateJson(' + id + ')"><option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option><option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option><option value="dropdown"' + (type === 'dropdown' ? ' selected' : '') + '>Dropdown</option></select></td>' +
 		'<td><input type="text" class="field-variable" value="' + variable + '" readonly /></td>' +
+		'<td style="text-align: center;"><input type="checkbox" class="field-mandatory" ' + (mandatory ? 'checked="checked"' : '') + ' onchange="updateJson(' + id + ')" /></td>' +
 		'<td><button type="button" class="button2" onclick="removeFieldRow(this, ' + id + ')">' + lang_delete + '</button></td>';
 
 	tableBody.appendChild(row);
@@ -336,11 +631,79 @@ function updateJson(id) {
 			description: row.querySelector('.field-desc').value,
 			placeholder: row.querySelector('.field-placeholder').value,
 			type: row.querySelector('.field-type').value,
-			variable: row.querySelector('.field-variable').value
+			variable: row.querySelector('.field-variable').value,
+			mandatory: row.querySelector('.field-mandatory').checked
 		});
 	}
 
 	document.getElementById('fields-json-' + id).value = JSON.stringify(data);
+}
+
+function initNoteFieldsTable(id) {
+	var tableBody = document.querySelector('#note-fields-table-' + id + ' tbody');
+	if (tableBody.getAttribute('data-loaded')) return;
+
+	var jsonInput = document.getElementById('note-fields-json-' + id);
+	var data = [];
+	try {
+		if (jsonInput.value) data = JSON.parse(jsonInput.value);
+	} catch (e) { console.error('Invalid JSON', e); }
+
+	if (Array.isArray(data)) {
+		data.forEach(function(field) {
+			addNoteFieldRow(id, field);
+		});
+	}
+
+	tableBody.setAttribute('data-loaded', 'true');
+}
+
+function addNoteFieldRow(id, fieldData) {
+	var tableBody = document.querySelector('#note-fields-table-' + id + ' tbody');
+	var row = document.createElement('tr');
+
+	var name = fieldData ? fieldData.name : '';
+	var desc = fieldData ? fieldData.description : '';
+	var placeholder = fieldData ? fieldData.placeholder : '';
+	var type = fieldData ? fieldData.type : 'text';
+	var variable = fieldData ? fieldData.variable : 'note_var_' + Math.random().toString(36).substr(2, 5);
+	var mandatory = fieldData ? !!fieldData.mandatory : false;
+
+	row.innerHTML = '<td><input type="text" class="note-field-name" value="' + name + '" onchange="updateNoteJson(' + id + ')" /></td>' +
+		'<td><input type="text" class="note-field-desc" value="' + desc + '" onchange="updateNoteJson(' + id + ')" /></td>' +
+		'<td><input type="text" class="note-field-placeholder" value="' + placeholder + '" onchange="updateNoteJson(' + id + ')" /></td>' +
+		'<td><select class="note-field-type" onchange="updateNoteJson(' + id + ')"><option value="text"' + (type === 'text' ? ' selected' : '') + '>Text</option><option value="textarea"' + (type === 'textarea' ? ' selected' : '') + '>Textarea</option><option value="dropdown"' + (type === 'dropdown' ? ' selected' : '') + '>Dropdown</option></select></td>' +
+		'<td><input type="text" class="note-field-variable" value="' + variable + '" readonly /></td>' +
+		'<td style="text-align: center;"><input type="checkbox" class="note-field-mandatory" ' + (mandatory ? 'checked="checked"' : '') + ' onchange="updateNoteJson(' + id + ')" /></td>' +
+		'<td><button type="button" class="button2" onclick="removeNoteFieldRow(this, ' + id + ')">' + lang_delete + '</button></td>';
+
+	tableBody.appendChild(row);
+	updateNoteJson(id);
+}
+
+function removeNoteFieldRow(btn, id) {
+	var row = btn.closest('tr');
+	row.remove();
+	updateNoteJson(id);
+}
+
+function updateNoteJson(id) {
+	var rows = document.querySelectorAll('#note-fields-table-' + id + ' tbody tr');
+	var data = [];
+
+	for (var i = 0; i < rows.length; i++) {
+		var row = rows[i];
+		data.push({
+			name: row.querySelector('.note-field-name').value,
+			description: row.querySelector('.note-field-desc').value,
+			placeholder: row.querySelector('.note-field-placeholder').value,
+			type: row.querySelector('.note-field-type').value,
+			variable: row.querySelector('.note-field-variable').value,
+			mandatory: row.querySelector('.note-field-mandatory').checked
+		});
+	}
+
+	document.getElementById('note-fields-json-' + id).value = JSON.stringify(data);
 }
 
 function initAutomationTable(id) {

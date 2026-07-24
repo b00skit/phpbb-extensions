@@ -35,6 +35,13 @@ $lang = array_merge($lang, array(
 	'NO_ENTRIES' => 'No entries found.',
 	'BACK_TO_PROFILE' => 'Back to Profile',
 
+	'NOTE_INPUT_MODE' => 'Note Type Mode',
+	'NOTE_MODE_USER' => 'User Note (Custom Text)',
+	'NOTE_MODE_PREGENERATED' => 'Pre-generated Note (Form Template)',
+	'PREGENERATED_NOTE_FORM' => 'Pre-generated Note Form',
+	'MANDATORY_FIELD_REQUIRED' => 'The field "%s" is mandatory and cannot be left blank.',
+	'INHERITED_PUBLIC_POST_USER_EXPLAIN' => 'Public post notice will automatically inherit and use the information provided in the Pre-generated Note Form.',
+
 	'MAKE_PUBLIC_POST' => 'Make Public Notice Post',
 	'PUBLIC_POST_SETTINGS' => 'Public Post Settings',
 

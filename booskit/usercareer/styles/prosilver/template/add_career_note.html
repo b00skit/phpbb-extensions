@@ -37,7 +37,20 @@
 				<dd><input type="date" name="note_date" id="note_date" value="{{ S_NOTE_DATE }}" class="inputbox" /></dd>
 			</dl>
 
-			<dl>
+			<dl id="note_mode_row" style="display: none;">
+				<dt><label>{{ lang('NOTE_INPUT_MODE') }}</label></dt>
+				<dd>
+					<label style="margin-right: 15px;"><input type="radio" name="note_mode" id="note_mode_user" value="user" checked="checked" /> {{ lang('NOTE_MODE_USER') }}</label>
+					<label><input type="radio" name="note_mode" id="note_mode_pregenerated" value="pregenerated" /> {{ lang('NOTE_MODE_PREGENERATED') }}</label>
+				</dd>
+			</dl>
+
+			<div id="pregenerated_note_fields_container" style="display: none; background: #f9f9f9; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 15px;">
+				<h4>{{ lang('PREGENERATED_NOTE_FORM') }}</h4>
+				<div id="note_fields_inputs"></div>
+			</div>
+
+			<dl id="description_row">
 				<dt><label for="description">{{ lang('CAREER_DESCRIPTION') }}</label></dt>
 				<dd><textarea name="description" id="description" rows="10" cols="45" class="inputbox" tabindex="3">{{ DESCRIPTION }}</textarea></dd>
 			</dl>
@@ -53,6 +66,9 @@
 				<dt><label for="make_public_post">{{ lang('MAKE_PUBLIC_POST') }}</label></dt>
 				<dd><input type="checkbox" name="make_public_post" id="make_public_post" value="1" /></dd>
 			</dl>
+			<div id="public_post_inherited_notice" style="display: none; background: #eef7ff; border: 1px solid #bce2fe; padding: 8px 12px; margin: 10px 0; border-radius: 4px;">
+				<p style="margin: 0; color: #00529B;"><strong>{{ lang('INHERITED_FIELDS_ACTIVE') }}</strong>: {{ lang('INHERITED_PUBLIC_POST_USER_EXPLAIN') }}</p>
+			</div>
 			<div id="custom_fields_container" style="display: none;">
 				<!-- Dynamic fields injected here -->
 			</div>
@@ -127,25 +143,158 @@
 		return null;
 	}
 
+	function getActiveNoteMode() {
+		var userRadio = document.getElementById('note_mode_user');
+		var pregensRadio = document.getElementById('note_mode_pregenerated');
+		if (pregensRadio && pregensRadio.checked) return 'pregenerated';
+		return 'user';
+	}
+
+	function updateNoteFormMode() {
+		var typeSelect = document.getElementById('career_type_id');
+		var selectedId = typeSelect ? typeSelect.value : '';
+		var def = getDefinition(selectedId);
+		var modeRow = document.getElementById('note_mode_row');
+		var descRow = document.getElementById('description_row');
+		var pregensContainer = document.getElementById('pregenerated_note_fields_container');
+
+		if (def && def.enable_note_template) {
+			if (modeRow) modeRow.style.display = 'block';
+			var currentMode = getActiveNoteMode();
+
+			if (currentMode === 'pregenerated') {
+				if (descRow) descRow.style.display = 'none';
+				if (pregensContainer) pregensContainer.style.display = 'block';
+				renderNoteTemplateFields(def);
+			} else {
+				if (descRow) descRow.style.display = 'block';
+				if (pregensContainer) pregensContainer.style.display = 'none';
+			}
+		} else {
+			if (modeRow) modeRow.style.display = 'none';
+			var userRadio = document.getElementById('note_mode_user');
+			if (userRadio) userRadio.checked = true;
+			if (descRow) descRow.style.display = 'block';
+			if (pregensContainer) pregensContainer.style.display = 'none';
+		}
+
+		updateVisibility();
+	}
+
+	function renderNoteTemplateFields(def) {
+		var container = document.getElementById('note_fields_inputs');
+		if (!container) return;
+
+		var fields = [];
+		try {
+			if (def.note_template_fields) {
+				fields = JSON.parse(def.note_template_fields);
+			}
+		} catch (e) {
+			console.error('Error parsing note template fields JSON', e);
+		}
+
+		container.innerHTML = '';
+
+		if (fields.length > 0) {
+			fields.forEach(function(field) {
+				var dl = document.createElement('dl');
+				var dt = document.createElement('dt');
+				var label = document.createElement('label');
+
+				label.textContent = field.name;
+				if (field.mandatory) {
+					var star = document.createElement('span');
+					star.style.color = 'red';
+					star.style.fontWeight = 'bold';
+					star.textContent = ' *';
+					label.appendChild(star);
+				}
+				dt.appendChild(label);
+
+				if (field.description) {
+					var br = document.createElement('br');
+					var span = document.createElement('span');
+					span.textContent = field.description;
+					dt.appendChild(br);
+					dt.appendChild(span);
+				}
+
+				var dd = document.createElement('dd');
+				var input;
+
+				if (field.type === 'textarea') {
+					input = document.createElement('textarea');
+					input.name = 'note_fields[' + field.variable + ']';
+					input.className = 'inputbox';
+					input.rows = 5;
+					if (field.placeholder) input.value = field.placeholder;
+				} else if (field.type === 'dropdown') {
+					input = document.createElement('select');
+					input.name = 'note_fields[' + field.variable + ']';
+
+					var options = field.placeholder ? field.placeholder.split(',') : [];
+					if (options.length === 0) options.push('None');
+
+					options.forEach(function(opt) {
+						var option = document.createElement('option');
+						option.value = opt.trim();
+						option.textContent = opt.trim();
+						input.appendChild(option);
+					});
+				} else {
+					input = document.createElement('input');
+					input.type = 'text';
+					input.name = 'note_fields[' + field.variable + ']';
+					input.className = 'inputbox';
+					if (field.placeholder) input.value = field.placeholder;
+				}
+
+				if (field.mandatory) {
+					input.required = true;
+				}
+
+				dd.appendChild(input);
+				dl.appendChild(dt);
+				dl.appendChild(dd);
+				container.appendChild(dl);
+			});
+		} else {
+			container.textContent = 'No form fields configured for this note template.';
+		}
+	}
+
 	function updateVisibility() {
         var typeSelect = document.getElementById('career_type_id');
         var settingsPanel = document.getElementById('public_post_settings');
         var makePublicCheckbox = document.getElementById('make_public_post');
         var fieldsContainer = document.getElementById('custom_fields_container');
+        var inheritedNotice = document.getElementById('public_post_inherited_notice');
         var groupActionPanel = document.getElementById('group_action_settings');
         var executeGroupActionCheckbox = document.getElementById('execute_group_action');
 
 		var selectedId = typeSelect ? typeSelect.value : '';
 		var def = getDefinition(selectedId);
+		var noteMode = getActiveNoteMode();
 
 		// Public Posting
 		if (def && def.enable_public_posting) {
 			if (settingsPanel) settingsPanel.style.display = 'block';
-			updateFields(def);
+
+			var isInheriting = def.enable_note_template && def.inherit_note_fields;
+
+			if (isInheriting && noteMode === 'pregenerated') {
+				if (inheritedNotice) inheritedNotice.style.display = 'block';
+				if (fieldsContainer) fieldsContainer.style.display = 'none';
+			} else {
+				if (inheritedNotice) inheritedNotice.style.display = 'none';
+				updateFields(def);
+			}
 		} else {
 			if (settingsPanel) settingsPanel.style.display = 'none';
 			if (makePublicCheckbox) makePublicCheckbox.checked = false;
 			if (fieldsContainer) fieldsContainer.style.display = 'none';
+			if (inheritedNotice) inheritedNotice.style.display = 'none';
 		}
 
 		// Group Actions
@@ -173,7 +322,6 @@
 
 		select.innerHTML = '';
 
-		// Parse settings
 		var settings = [];
 		try {
 			if (def.automation_settings) {
@@ -184,7 +332,6 @@
 		}
 
 		if (settings.length === 0) {
-			// Fallback to legacy structure
 			var opt = document.createElement('option');
 			opt.value = 0;
 			opt.textContent = 'Default Action';
@@ -221,7 +368,6 @@
 		if (settings.length > 0 && settings[index]) {
 			setting = settings[index];
 		} else {
-			// Fallback to legacy
 			setting = {
 				name: 'Default Action',
 				groups_add: currentDef.group_action_add || '',
@@ -232,7 +378,6 @@
 			};
 		}
 
-		// Update Groups Add List
 		var groupsAddList = document.getElementById('groups_add_list');
 		var addStr = String(setting.groups_add || '');
 		var addList = [];
@@ -244,7 +389,6 @@
 		}
 		if (groupsAddList) groupsAddList.textContent = addList.length ? addList.join(', ') : 'None';
 
-		// Update Groups Remove List
 		var groupsRemoveList = document.getElementById('groups_remove_list');
 		var removeStr = String(setting.groups_remove || '');
 		var removeList = [];
@@ -261,7 +405,6 @@
 		}
 		if (groupsRemoveList) groupsRemoveList.textContent = removeList.length ? removeList.join(', ') : 'None';
 
-		// Update Primary Group
 		var primaryGroupContainer = document.getElementById('automation_primary_group_container');
 		var primaryGroupDisplay = document.getElementById('primary_group_display');
 		var primaryGroupId = String(setting.primary_group || '').trim();
@@ -272,7 +415,6 @@
 			if (primaryGroupContainer) primaryGroupContainer.style.display = 'none';
 		}
 
-		// Update Change Name Input Visibility
 		var changeNameContainer = document.getElementById('automation_change_name_container');
 		var newUsernameInput = document.getElementById('new_username');
 		if (setting.change_name) {
@@ -305,8 +447,17 @@
 				var dl = document.createElement('dl');
 				var dt = document.createElement('dt');
 				var label = document.createElement('label');
+
 				label.textContent = field.name;
+				if (field.mandatory) {
+					var star = document.createElement('span');
+					star.style.color = 'red';
+					star.style.fontWeight = 'bold';
+					star.textContent = ' *';
+					label.appendChild(star);
+				}
 				dt.appendChild(label);
+
 				if (field.description) {
 					var br = document.createElement('br');
 					var span = document.createElement('span');
@@ -345,6 +496,10 @@
 					if (field.placeholder) input.value = field.placeholder;
 				}
 
+				if (field.mandatory) {
+					input.required = true;
+				}
+
 				dd.appendChild(input);
 				dl.appendChild(dt);
 				dl.appendChild(dd);
@@ -358,36 +513,45 @@
 	}
 
     function init() {
-        if (typeof jQuery !== 'undefined') {
-            jQuery('#career_type_id').on('change', updateVisibility);
-            jQuery('#make_public_post').on('change', function() {
-                var fieldsContainer = document.getElementById('custom_fields_container');
-                if (this.checked) {
-                    if (fieldsContainer) fieldsContainer.style.display = 'block';
-                } else {
-                    if (fieldsContainer) fieldsContainer.style.display = 'none';
-                }
-            });
-        } else {
-            var typeSelect = document.getElementById('career_type_id');
-            var makePublicCheckbox = document.getElementById('make_public_post');
+        var typeSelect = document.getElementById('career_type_id');
+        var userRadio = document.getElementById('note_mode_user');
+        var pregensRadio = document.getElementById('note_mode_pregenerated');
+        var makePublicCheckbox = document.getElementById('make_public_post');
 
-            if (typeSelect) {
-                typeSelect.addEventListener('change', updateVisibility);
-            }
-            if (makePublicCheckbox) {
-                makePublicCheckbox.addEventListener('change', function() {
-                    var fieldsContainer = document.getElementById('custom_fields_container');
-                    if (this.checked) {
-                        if (fieldsContainer) fieldsContainer.style.display = 'block';
-                    } else {
-                        if (fieldsContainer) fieldsContainer.style.display = 'none';
-                    }
-                });
-            }
+        if (typeSelect) {
+            typeSelect.addEventListener('change', updateNoteFormMode);
+        }
+        if (userRadio) {
+            userRadio.addEventListener('change', updateNoteFormMode);
+        }
+        if (pregensRadio) {
+            pregensRadio.addEventListener('change', updateNoteFormMode);
         }
 
-        // Setup details toggle and dropdown change listeners
+        if (makePublicCheckbox) {
+            makePublicCheckbox.addEventListener('change', function() {
+                var fieldsContainer = document.getElementById('custom_fields_container');
+                var inheritedNotice = document.getElementById('public_post_inherited_notice');
+                var typeSelect = document.getElementById('career_type_id');
+                var selectedId = typeSelect ? typeSelect.value : '';
+                var def = getDefinition(selectedId);
+                var isInheriting = def && def.enable_public_posting && def.enable_note_template && def.inherit_note_fields && getActiveNoteMode() === 'pregenerated';
+
+                if (this.checked) {
+                    if (isInheriting) {
+                        if (inheritedNotice) inheritedNotice.style.display = 'block';
+                        if (fieldsContainer) fieldsContainer.style.display = 'none';
+                    } else {
+                        if (inheritedNotice) inheritedNotice.style.display = 'none';
+                        if (fieldsContainer) fieldsContainer.style.display = 'block';
+                    }
+                } else {
+                    if (fieldsContainer) fieldsContainer.style.display = 'none';
+                    if (inheritedNotice) inheritedNotice.style.display = 'none';
+                }
+            });
+        }
+
         var execActionCheckbox = document.getElementById('execute_group_action');
         var settingIndexSelect = document.getElementById('automation_setting_index');
 
@@ -406,7 +570,7 @@
             settingIndexSelect.addEventListener('change', updateAutomationDetails);
         }
 
-        updateVisibility();
+        updateNoteFormMode();
     }
 
     if (document.readyState === 'loading') {

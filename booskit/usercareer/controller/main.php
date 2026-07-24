@@ -40,11 +40,8 @@ class main
 	protected function check_auth()
 	{
 		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
-		if ($viewer_level === 0)
+		if ($this->career_manager->get_perm_system() === 'legacy' && $viewer_level === 0)
 		{
-			// If not L1+, maybe they have add access some other way? No, add access is tied to levels.
-			// But for viewing, we have get_user_view_access.
-			// This method is for "add/edit/remove" auth generally, which requires at least L1.
 			trigger_error('NOT_AUTHORISED');
 		}
 		return $viewer_level;
@@ -52,13 +49,8 @@ class main
 
 	public function add_note($user_id)
 	{
-		$viewer_level = $this->check_auth(); // Must be at least level 1
-
-		$target_level = $this->career_manager->get_user_role_level($user_id);
-
-		// Permissions for who can access who should be the same as disciplinary actions
-		// Viewer must be strictly higher level than target, unless viewer is Full Access (4).
-		if ($viewer_level !== 4 && $viewer_level <= $target_level)
+		$viewer_id = $this->user->data['user_id'];
+		if (!$this->career_manager->can_add_career_note($viewer_id, $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -76,6 +68,7 @@ class main
 			$type_id = $this->request->variable('career_type_id', '');
 			$description = $this->request->variable('description', '', true);
 			$note_date_raw = $this->request->variable('note_date', '');
+			$note_mode = $this->request->variable('note_mode', 'user');
 
 			$note_date = time();
 			if (!empty($note_date_raw))
@@ -88,118 +81,155 @@ class main
 				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
+			$def = $this->career_manager->get_definition($type_id);
+
+			// Pre-generated Note Mode Processing
+			if ($note_mode === 'pregenerated' && $def && !empty($def['enable_note_template']))
+			{
+				$note_fields_json = isset($def['note_template_fields']) ? $def['note_template_fields'] : '[]';
+				$note_fields_config = json_decode($note_fields_json, true);
+
+				if (is_array($note_fields_config))
+				{
+					$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+
+					// Mandatory fields validation
+					foreach ($note_fields_config as $field)
+					{
+						$var = isset($field['variable']) ? $field['variable'] : '';
+						$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
+						if (!empty($field['mandatory']) && $val === '')
+						{
+							$field_label = !empty($field['name']) ? $field['name'] : $var;
+							trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
+						}
+					}
+
+					$replacements = [
+						'{#type}' => $def['name'],
+						'{#creator}' => $this->user->data['username'],
+						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
+						'{#target}' => $this->career_manager->get_username_string($user_id),
+						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
+						'{#posterGroup}' => $this->career_manager->get_primary_group_name($viewer_id),
+					];
+
+					foreach ($note_fields_config as $field)
+					{
+						$var = isset($field['variable']) ? $field['variable'] : '';
+						$val = isset($note_fields_data[$var]) ? $note_fields_data[$var] : '';
+						$replacements['{@' . $var . '}'] = $val;
+					}
+
+					$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
+					$description = strtr($tpl_body, $replacements);
+				}
+			}
+
 			// Parse BBCode
 			$uid = $bitfield = $options = '';
 			$allow_bbcode = $allow_urls = $allow_smilies = true;
 			generate_text_for_storage($description, $uid, $bitfield, $options, $allow_bbcode, $allow_urls, $allow_smilies);
 
-			$this->career_manager->add_note($user_id, $type_id, $note_date, $description, $this->user->data['user_id'], $uid, $bitfield, $options);
+			$this->career_manager->add_note($user_id, $type_id, $note_date, $description, $viewer_id, $uid, $bitfield, $options);
 
 			// Public Post Logic
 			$make_public_post = $this->request->variable('make_public_post', 0);
-			if ($make_public_post)
+			if ($make_public_post && $def && !empty($def['enable_public_posting']))
 			{
-				$def = $this->career_manager->get_definition($type_id);
-				if ($def && !empty($def['enable_public_posting']))
+				$poster_id = !empty($def['public_posting_poster_id']) ? (int) $def['public_posting_poster_id'] : (int) $viewer_id;
+
+				$use_note_fields = !empty($def['inherit_note_fields']) && !empty($def['enable_note_template']);
+				$fields_json = $use_note_fields ? $def['note_template_fields'] : $def['public_posting_fields'];
+				$fields_config = json_decode($fields_json, true);
+
+				if (is_array($fields_config))
 				{
-					$fields_json = isset($def['public_posting_fields']) ? $def['public_posting_fields'] : '[]';
-					$fields_config = json_decode($fields_json, true);
+					$custom_fields_data = $use_note_fields && $note_mode === 'pregenerated'
+						? $this->request->variable('note_fields', array('' => ''), true)
+						: $this->request->variable('custom_fields', array('' => ''), true);
 
-					if (is_array($fields_config))
+					$replacements = [
+						'{#type}' => $def['name'],
+						'{#creator}' => $this->user->data['username'],
+						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
+						'{#target}' => $this->career_manager->get_username_string($user_id),
+						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
+						'{#posterGroup}' => $this->career_manager->get_primary_group_name($poster_id),
+					];
+
+					foreach ($fields_config as $field)
 					{
-						$custom_fields_data = $this->request->variable('custom_fields', array('' => ''), true);
-						$poster_id = !empty($def['public_posting_poster_id']) ? (int) $def['public_posting_poster_id'] : (int) $this->user->data['user_id'];
-
-						$replacements = [
-							'{#type}' => $def['name'],
-							'{#creator}' => $this->user->data['username'],
-							'{#date}' => strtoupper(date('d/M/Y', $note_date)),
-							'{#target}' => $this->career_manager->get_username_string($user_id),
-							'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
-							'{#posterGroup}' => $this->career_manager->get_primary_group_name($poster_id),
-						];
-
-						foreach ($fields_config as $field)
-						{
-							$var = $field['variable'];
-							$val = isset($custom_fields_data[$var]) ? $custom_fields_data[$var] : '';
-							$replacements['{@' . $var . '}'] = $val;
-						}
-
-						$subject = strtr($def['public_posting_subject_tpl'], $replacements);
-						$body = strtr($def['public_posting_body_tpl'], $replacements);
-
-						$this->career_manager->create_public_post($def['public_posting_forum_id'], $poster_id, $subject, $body);
+						$var = isset($field['variable']) ? $field['variable'] : '';
+						$val = isset($custom_fields_data[$var]) ? $custom_fields_data[$var] : '';
+						$replacements['{@' . $var . '}'] = $val;
 					}
+
+					$subject = strtr($def['public_posting_subject_tpl'], $replacements);
+					$body = strtr($def['public_posting_body_tpl'], $replacements);
+
+					$this->career_manager->create_public_post($def['public_posting_forum_id'], $poster_id, $subject, $body);
 				}
 			}
 
 			// Forum Group Actions
 			$execute_group_action = $this->request->variable('execute_group_action', 0);
-			if ($execute_group_action)
+			if ($execute_group_action && $def && !empty($def['enable_group_action']))
 			{
-				$def = $this->career_manager->get_definition($type_id);
-				if ($def && !empty($def['enable_group_action']))
+				$settings = [];
+				if (!empty($def['automation_settings']))
 				{
-					$settings = [];
-					if (!empty($def['automation_settings']))
-					{
-						$settings = json_decode($def['automation_settings'], true);
-					}
-					if (empty($settings))
-					{
-						// Fallback to legacy
-						$settings = [
-							[
-								'name' => 'Default Action',
-								'groups_add' => $def['group_action_add'],
-								'groups_remove' => $def['group_action_remove'],
-								'remove_all' => (strpos($def['group_action_remove'], '*') !== false),
-								'primary_group' => '',
-								'change_name' => false,
-							]
-						];
-					}
+					$settings = json_decode($def['automation_settings'], true);
+				}
+				if (empty($settings))
+				{
+					$settings = [
+						[
+							'name' => 'Default Action',
+							'groups_add' => $def['group_action_add'],
+							'groups_remove' => $def['group_action_remove'],
+							'remove_all' => (strpos($def['group_action_remove'], '*') !== false),
+							'primary_group' => '',
+							'change_name' => false,
+						]
+					];
+				}
 
-					$setting_index = $this->request->variable('automation_setting_index', 0);
-					if (isset($settings[$setting_index]))
+				$setting_index = $this->request->variable('automation_setting_index', 0);
+				if (isset($settings[$setting_index]))
+				{
+					$setting = $settings[$setting_index];
+					$groups_add = isset($setting['groups_add']) ? $setting['groups_add'] : '';
+					$groups_remove = isset($setting['groups_remove']) ? $setting['groups_remove'] : '';
+					if (!empty($setting['remove_all']))
 					{
-						$setting = $settings[$setting_index];
-						$groups_add = isset($setting['groups_add']) ? $setting['groups_add'] : '';
-						$groups_remove = isset($setting['groups_remove']) ? $setting['groups_remove'] : '';
-						if (!empty($setting['remove_all']))
+						if (strpos($groups_remove, '*') === false)
 						{
-							if (strpos($groups_remove, '*') === false)
-							{
-								$groups_remove = empty($groups_remove) ? '*' : $groups_remove . ',*';
-							}
+							$groups_remove = empty($groups_remove) ? '*' : $groups_remove . ',*';
 						}
+					}
 
-						// Execute group actions
-						$this->career_manager->execute_group_actions($user_id, $groups_add, $groups_remove);
+					$this->career_manager->execute_group_actions($user_id, $groups_add, $groups_remove);
 
-						// Set Primary Group if configured
-						$primary_group_id = isset($setting['primary_group']) ? (int) $setting['primary_group'] : 0;
-						if ($primary_group_id > 0)
+					$primary_group_id = isset($setting['primary_group']) ? (int) $setting['primary_group'] : 0;
+					if ($primary_group_id > 0)
+					{
+						$this->career_manager->set_primary_group($user_id, $primary_group_id);
+					}
+
+					if (!empty($setting['change_name']))
+					{
+						$new_username = $this->request->variable('new_username', '', true);
+						if (!empty($new_username))
 						{
-							$this->career_manager->set_primary_group($user_id, $primary_group_id);
-						}
-
-						// Change Name if enabled
-						if (!empty($setting['change_name']))
-						{
-							$new_username = $this->request->variable('new_username', '', true);
-							if (!empty($new_username))
-							{
-								$this->career_manager->change_username($user_id, $new_username);
-							}
+							$this->career_manager->change_username($user_id, $new_username);
 						}
 					}
 				}
 			}
 
 			$user_row = $this->career_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_ADDED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_CAREER_ADDED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -207,10 +237,10 @@ class main
 			trigger_error($this->user->lang['CAREER_NOTE_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
+		$viewer_level = $this->check_auth();
 		$this->assign_form_vars($user_id, null, false, $viewer_level);
 		add_form_key('add_career');
 
-		// Ruleset
 		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
 		$ruleset_uid = isset($this->config['booskit_career_ruleset_uid']) ? $this->config['booskit_career_ruleset_uid'] : '';
 		$ruleset_bitfield = isset($this->config['booskit_career_ruleset_bitfield']) ? $this->config['booskit_career_ruleset_bitfield'] : '';
@@ -227,9 +257,7 @@ class main
 
 	public function edit_note($note_id)
 	{
-		// Viewer must have at least L1 access to even be here (checked in check_auth)
-		$viewer_level = $this->check_auth();
-
+		$viewer_id = $this->user->data['user_id'];
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 		$this->user->add_lang('common');
 
@@ -239,30 +267,8 @@ class main
 			trigger_error('NO_CAREER_NOTE_RECORD');
 		}
 		$user_id = $note['user_id'];
-		$target_level = $this->career_manager->get_user_role_level($user_id);
 
-		// Edit Permission Check:
-		// 1. Viewer is Full Access (L4) -> ALLOW
-		// 2. Viewer is L2+ AND viewer > target -> ALLOW
-		// 3. Viewer is Issuer (L1+) -> ALLOW (Self-edit for issuer)
-
-		$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
-		$can_edit = false;
-
-		if ($viewer_level === 4)
-		{
-			$can_edit = true;
-		}
-		elseif ($is_issuer)
-		{
-			$can_edit = true;
-		}
-		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-		{
-			$can_edit = true;
-		}
-
-		if (!$can_edit)
+		if (!$this->career_manager->can_edit_career_note($viewer_id, $user_id, $note['issuer_user_id']))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -277,6 +283,7 @@ class main
 			$type_id = $this->request->variable('career_type_id', '');
 			$description = $this->request->variable('description', '', true);
 			$note_date_raw = $this->request->variable('note_date', '');
+			$note_mode = $this->request->variable('note_mode', 'user');
 
 			$note_date = time();
 			if (!empty($note_date_raw))
@@ -289,6 +296,50 @@ class main
 				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
 			}
 
+			$def = $this->career_manager->get_definition($type_id);
+
+			// Pre-generated Note Mode Processing
+			if ($note_mode === 'pregenerated' && $def && !empty($def['enable_note_template']))
+			{
+				$note_fields_json = isset($def['note_template_fields']) ? $def['note_template_fields'] : '[]';
+				$note_fields_config = json_decode($note_fields_json, true);
+
+				if (is_array($note_fields_config))
+				{
+					$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+
+					foreach ($note_fields_config as $field)
+					{
+						$var = isset($field['variable']) ? $field['variable'] : '';
+						$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
+						if (!empty($field['mandatory']) && $val === '')
+						{
+							$field_label = !empty($field['name']) ? $field['name'] : $var;
+							trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
+						}
+					}
+
+					$replacements = [
+						'{#type}' => $def['name'],
+						'{#creator}' => $this->user->data['username'],
+						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
+						'{#target}' => $this->career_manager->get_username_string($user_id),
+						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
+						'{#posterGroup}' => $this->career_manager->get_primary_group_name($viewer_id),
+					];
+
+					foreach ($note_fields_config as $field)
+					{
+						$var = isset($field['variable']) ? $field['variable'] : '';
+						$val = isset($note_fields_data[$var]) ? $note_fields_data[$var] : '';
+						$replacements['{@' . $var . '}'] = $val;
+					}
+
+					$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
+					$description = strtr($tpl_body, $replacements);
+				}
+			}
+
 			// Parse BBCode
 			$uid = $bitfield = $options = '';
 			$allow_bbcode = $allow_urls = $allow_smilies = true;
@@ -297,7 +348,7 @@ class main
 			$this->career_manager->update_note($note_id, $type_id, $note_date, $description, $uid, $bitfield, $options);
 
 			$user_row = $this->career_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_EDITED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_CAREER_EDITED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 
@@ -305,11 +356,10 @@ class main
 			trigger_error($this->user->lang['CAREER_NOTE_UPDATED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
 
+		$viewer_level = $this->check_auth();
 		$this->assign_form_vars($user_id, $note, true, $viewer_level);
 		add_form_key('edit_career');
 
-		// Ruleset
-		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
 		$ruleset_text = $this->config_text->get('booskit_career_ruleset');
 		$ruleset_uid = isset($this->config['booskit_career_ruleset_uid']) ? $this->config['booskit_career_ruleset_uid'] : '';
 		$ruleset_bitfield = isset($this->config['booskit_career_ruleset_bitfield']) ? $this->config['booskit_career_ruleset_bitfield'] : '';
@@ -326,8 +376,7 @@ class main
 
 	public function remove_note($note_id)
 	{
-		$viewer_level = $this->check_auth();
-
+		$viewer_id = $this->user->data['user_id'];
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 
 		$note = $this->career_manager->get_note($note_id);
@@ -336,26 +385,8 @@ class main
 			trigger_error('NO_CAREER_NOTE_RECORD');
 		}
 		$user_id = $note['user_id'];
-		$target_level = $this->career_manager->get_user_role_level($user_id);
 
-		// Remove Permission Check (Same as Edit):
-		$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
-		$can_remove = false;
-
-		if ($viewer_level === 4)
-		{
-			$can_remove = true;
-		}
-		elseif ($is_issuer)
-		{
-			$can_remove = true;
-		}
-		elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-		{
-			$can_remove = true;
-		}
-
-		if (!$can_remove)
+		if (!$this->career_manager->can_delete_career_note($viewer_id, $user_id, $note['issuer_user_id']))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -365,7 +396,7 @@ class main
 			$this->career_manager->delete_note($note_id);
 
 			$user_row = $this->career_manager->get_username_string($user_id);
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_CAREER_DELETED', time(), array($user_row));
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_CAREER_DELETED', time(), array($user_row));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
 			meta_refresh(3, $u_profile);
@@ -381,50 +412,28 @@ class main
 
 	public function view_timeline($user_id)
 	{
+		$viewer_id = $this->user->data['user_id'];
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
 
-		// Check view access
-		if (!$this->career_manager->get_user_view_access($this->user->data['user_id'], $user_id))
+		if (!$this->career_manager->can_view_career_notes($viewer_id, $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
 
 		$target_username = $this->career_manager->get_username_string($user_id);
-
-		$notes = $this->career_manager->get_user_notes($user_id); // No limit
+		$notes = $this->career_manager->get_user_notes($user_id);
 		$definitions = $this->career_manager->get_definitions();
 
-		// Map definitions by ID for easy lookup
 		$defs_map = [];
 		foreach ($definitions as $def) {
 			$defs_map[$def['id']] = $def;
 		}
 
-		// Viewer level for edit/delete checks
-		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
-		$target_level = $this->career_manager->get_user_role_level($user_id);
-
 		foreach ($notes as $note)
 		{
 			$def = isset($defs_map[$note['career_type_id']]) ? $defs_map[$note['career_type_id']] : [];
+			$has_access = $this->career_manager->can_edit_career_note($viewer_id, $user_id, $note['issuer_user_id']);
 
-			$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
-			$has_access = false;
-
-			if ($viewer_level === 4)
-			{
-				$has_access = true;
-			}
-			elseif ($is_issuer && $viewer_level >= 1)
-			{
-				$has_access = true;
-			}
-			elseif ($viewer_level >= 2 && $viewer_level > $target_level)
-			{
-				$has_access = true;
-			}
-
-			// Render BBCode
 			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
 			$bbcode_bitfield = isset($note['bbcode_bitfield']) ? $note['bbcode_bitfield'] : '';
 			$bbcode_options = isset($note['bbcode_options']) ? $note['bbcode_options'] : 7;
@@ -455,13 +464,11 @@ class main
 	{
 		$definitions = $this->career_manager->get_definitions();
 
-		// Collect all group IDs referenced
 		$all_group_ids = [];
 		foreach ($definitions as $def)
 		{
 			if (!empty($def['enable_group_action']))
 			{
-				// Legacy fields
 				$g_add = array_filter(array_map('intval', explode(',', $def['group_action_add'])));
 				$g_remove = array_map('trim', explode(',', $def['group_action_remove']));
 
@@ -471,7 +478,6 @@ class main
 					if (is_numeric($gid) && $gid > 0) $all_group_ids[] = (int) $gid;
 				}
 
-				// Automation settings
 				if (!empty($def['automation_settings']))
 				{
 					$settings = json_decode($def['automation_settings'], true);
@@ -509,7 +515,6 @@ class main
 			$default_date = date('Y-m-d', $note['note_date']);
 			$current_type = $note['career_type_id'];
 
-			// Decode BBCode for editing
 			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
 			$bbcode_options = isset($note['bbcode_options']) ? $note['bbcode_options'] : 7;
 			$text_data = generate_text_for_edit($note['description'], $bbcode_uid, $bbcode_options);

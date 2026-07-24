@@ -31,13 +31,16 @@ class career_manager
 	/** @var string */
 	protected $table_definitions;
 
+	/** @var string */
+	protected $table_perm_groups;
+
 	protected $root_path;
 	protected $php_ext;
 
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, \phpbb\cache\driver\driver_interface $cache, \phpbb\auth\auth $auth, $table, $table_definitions, $root_path, $php_ext, $table_perm_groups = '')
 	{
 		$this->config = $config;
 		$this->db = $db;
@@ -48,6 +51,12 @@ class career_manager
 		$this->table_definitions = $table_definitions;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
+		$this->table_perm_groups = !empty($table_perm_groups) ? $table_perm_groups : $this->table . '_perm_groups';
+	}
+
+	public function get_perm_system()
+	{
+		return isset($this->config['booskit_career_perm_system']) ? $this->config['booskit_career_perm_system'] : 'legacy';
 	}
 
 	public function get_definitions()
@@ -84,6 +93,10 @@ class career_manager
 					'group_action_add' => isset($row['group_action_add']) ? $row['group_action_add'] : '',
 					'group_action_remove' => isset($row['group_action_remove']) ? $row['group_action_remove'] : '',
 					'automation_settings' => isset($row['automation_settings']) ? $row['automation_settings'] : '',
+					'enable_note_template' => isset($row['enable_note_template']) ? (bool) $row['enable_note_template'] : false,
+					'inherit_note_fields' => isset($row['inherit_note_fields']) ? (bool) $row['inherit_note_fields'] : false,
+					'note_template_body_tpl' => isset($row['note_template_body_tpl']) ? $row['note_template_body_tpl'] : '',
+					'note_template_fields' => isset($row['note_template_fields']) ? $row['note_template_fields'] : '',
 				];
 			}
 			$this->db->sql_freeresult($result);
@@ -153,7 +166,7 @@ class career_manager
 		return $definitions;
 	}
 
-	public function add_local_definition($id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '')
+	public function add_local_definition($id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '', $enable_note_template = 0, $inherit_note_fields = 0, $note_template_body_tpl = '', $note_template_fields = '')
 	{
 		$sql_ary = [
 			'career_id' => $id,
@@ -170,13 +183,17 @@ class career_manager
 			'group_action_add' => $groups_add,
 			'group_action_remove' => $groups_remove,
 			'automation_settings' => $automation_settings,
+			'enable_note_template' => (int) $enable_note_template,
+			'inherit_note_fields' => (int) $inherit_note_fields,
+			'note_template_body_tpl' => $note_template_body_tpl,
+			'note_template_fields' => $note_template_fields,
 		];
 		$sql = 'INSERT INTO ' . $this->table_definitions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
 		$this->db->sql_query($sql);
 		$this->cached_definitions = null; // Clear cache
 	}
 
-	public function update_local_definition($def_id, $id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '')
+	public function update_local_definition($def_id, $id, $name, $desc, $icon, $enable_public_posting = 0, $poster_id = 0, $forum_id = 0, $subject_tpl = '', $body_tpl = '', $fields = '', $enable_group_action = 0, $groups_add = '', $groups_remove = '', $automation_settings = '', $enable_note_template = 0, $inherit_note_fields = 0, $note_template_body_tpl = '', $note_template_fields = '')
 	{
 		$sql_ary = [
 			'career_id' => $id,
@@ -193,6 +210,10 @@ class career_manager
 			'group_action_add' => $groups_add,
 			'group_action_remove' => $groups_remove,
 			'automation_settings' => $automation_settings,
+			'enable_note_template' => (int) $enable_note_template,
+			'inherit_note_fields' => (int) $inherit_note_fields,
+			'note_template_body_tpl' => $note_template_body_tpl,
+			'note_template_fields' => $note_template_fields,
 		];
 		$sql = 'UPDATE ' . $this->table_definitions . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE def_id = ' . (int) $def_id;
 		$this->db->sql_query($sql);
@@ -217,6 +238,268 @@ class career_manager
 			}
 		}
 		return null;
+	}
+
+	public function get_permission_groups()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' ORDER BY perm_group_id ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', explode(',', $row['applies_to'])) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', explode(',', $row['power_over_groups'])) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', explode(',', $row['exclude_groups'])) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+			$groups[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	public function get_permission_group($perm_group_id)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+		if ($row)
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', explode(',', $row['applies_to'])) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', explode(',', $row['power_over_groups'])) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', explode(',', $row['exclude_groups'])) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+		}
+		return $row;
+	}
+
+	public function add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'INSERT INTO ' . $this->table_perm_groups . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+	}
+
+	public function update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'UPDATE ' . $this->table_perm_groups . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_permission_group($perm_group_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function get_phpbb_groups()
+	{
+		$sql = 'SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . ' ORDER BY group_type DESC, group_name ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$name = isset($this->user->lang['G_' . $row['group_name']]) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+			$groups[] = [
+				'group_id' => (int) $row['group_id'],
+				'group_name' => $name,
+			];
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	public function get_user_groups($user_id)
+	{
+		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
+		$result = $this->db->sql_query($sql);
+		$user_groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$user_groups[] = (int) $row['group_id'];
+		}
+		$this->db->sql_freeresult($result);
+		return $user_groups;
+	}
+
+	public function get_effective_permissions($viewer_id, $target_user_id)
+	{
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		$target_groups = $this->get_user_groups($target_user_id);
+		$perm_groups = $this->get_permission_groups();
+
+		$effective = [
+			'view' => false,
+			'submit' => false,
+			'edit_own' => false,
+			'delete_own' => false,
+			'edit' => false,
+			'delete' => false,
+		];
+
+		foreach ($perm_groups as $pg)
+		{
+			if (empty($pg['applies_to_array']) || !array_intersect($viewer_groups, $pg['applies_to_array']))
+			{
+				continue;
+			}
+
+			if (!empty($pg['exclude_groups_array']) && array_intersect($target_groups, $pg['exclude_groups_array']))
+			{
+				continue;
+			}
+
+			$has_power = false;
+			if (!empty($pg['power_over_all']))
+			{
+				$has_power = true;
+			}
+			if (!$has_power && !empty($pg['power_over_self']))
+			{
+				if ($viewer_id == $target_user_id)
+				{
+					$has_power = true;
+				}
+			}
+			if (!$has_power && !empty($pg['power_over_groups_array']))
+			{
+				if (array_intersect($target_groups, $pg['power_over_groups_array']))
+				{
+					$has_power = true;
+				}
+			}
+
+			if (!$has_power)
+			{
+				continue;
+			}
+
+			$perms = $pg['permissions_array'];
+			if (is_array($perms))
+			{
+				if (!empty($perms['view'])) $effective['view'] = true;
+				if (!empty($perms['submit'])) $effective['submit'] = true;
+				if (!empty($perms['edit_own'])) $effective['edit_own'] = true;
+				if (!empty($perms['delete_own'])) $effective['delete_own'] = true;
+				if (!empty($perms['edit'])) $effective['edit'] = true;
+				if (!empty($perms['delete'])) $effective['delete'] = true;
+			}
+		}
+
+		return $effective;
+	}
+
+	public function can_view_career_notes($user_id, $target_user_id = null)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			if ($target_user_id !== null)
+			{
+				$effective = $this->get_effective_permissions($user_id, $target_user_id);
+				return !empty($effective['view']);
+			}
+			else
+			{
+				$role_level = $this->get_user_role_level($user_id);
+				if ($role_level >= 1) return true;
+				$perm_groups = $this->get_permission_groups();
+				$user_groups = $this->get_user_groups($user_id);
+				foreach ($perm_groups as $pg)
+				{
+					if (!empty($pg['applies_to_array']) && array_intersect($user_groups, $pg['applies_to_array']))
+					{
+						$perms = $pg['permissions_array'];
+						if (!empty($perms['view'])) return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		return $this->get_user_view_access_legacy($user_id, $target_user_id);
+	}
+
+	public function can_add_career_note($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['submit']);
+		}
+
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		if ($viewer_level === 0) return false;
+		$target_level = $this->get_user_role_level($target_user_id);
+		return ($viewer_level === 4 || $viewer_level > $target_level);
+	}
+
+	public function can_edit_career_note($viewer_id, $target_user_id, $issuer_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			if (!empty($effective['edit'])) return true;
+			if ($viewer_id == $issuer_id && !empty($effective['edit_own'])) return true;
+			return false;
+		}
+
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		if ($viewer_level === 0) return false;
+		$target_level = $this->get_user_role_level($target_user_id);
+		$is_issuer = ($issuer_id == $viewer_id);
+		if ($viewer_level === 4 || $is_issuer || ($viewer_level >= 2 && $viewer_level > $target_level))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public function can_delete_career_note($viewer_id, $target_user_id, $issuer_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			if (!empty($effective['delete'])) return true;
+			if ($viewer_id == $issuer_id && !empty($effective['delete_own'])) return true;
+			return false;
+		}
+
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		if ($viewer_level === 0) return false;
+		$target_level = $this->get_user_role_level($target_user_id);
+		$is_issuer = ($issuer_id == $viewer_id);
+		if ($viewer_level === 4 || $is_issuer || ($viewer_level >= 2 && $viewer_level > $target_level))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public function get_user_notes($user_id, $limit = 0)
@@ -345,7 +628,6 @@ class career_manager
 		{
 			if ($group_id > 0)
 			{
-				// group_user_add($group_id, $user_id_ary = false, $username_ary = false, $group_name = false, $default = false, $leader = 0, $pending = 0, $group_attributes = false)
 				\group_user_add($group_id, $user_id);
 			}
 		}
@@ -369,7 +651,6 @@ class career_manager
 
 		if ($remove_all)
 		{
-			// Fetch all user groups
 			$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id;
 			$result = $this->db->sql_query($sql);
 			$current_groups = [];
@@ -379,19 +660,6 @@ class career_manager
 			}
 			$this->db->sql_freeresult($result);
 
-			// Excluded groups (Admins, Mods)
-			// We can fetch them by name or define them. Usually:
-			// ADMINS = 5, BOTS = 6, REGISTERED = 2, GUESTS = 1, GLOBAL_MODS = 4.
-			// The user said: "remove all forum groups apart from administrator and global moderator."
-			// We should probably also keep Registered Users (2) otherwise they might lose access to board completely?
-			// The request was specific: "apart from administrator and global moderator".
-			// However, usually we don't want to remove them from "Registered Users" as that is the base group.
-			// But I will stick to what was asked + basic safety (Registered Users).
-			// Let's check standard group IDs.
-			// Hardcoding IDs is risky if they changed, but standard phpBB:
-			// 1: GUESTS, 2: REGISTERED, 4: GLOBAL_MODS, 5: ADMINS, 6: BOTS.
-
-			// Let's get "Administrators" and "Global Moderators" group IDs dynamically to be safe.
 			$sql = 'SELECT group_id, group_name FROM ' . GROUPS_TABLE . " WHERE group_name IN ('ADMINISTRATORS', 'GLOBAL_MODERATORS', 'REGISTERED')";
 			$result = $this->db->sql_query($sql);
 			$keep_groups = [];
@@ -401,8 +669,6 @@ class career_manager
 			}
 			$this->db->sql_freeresult($result);
 
-			// Also keep the ones we just added? The user didn't specify, but usually "Add X, Remove All" implies the final state should include X.
-			// So we should exclude $groups_to_add from removal.
 			$keep_groups = array_merge($keep_groups, $groups_to_add);
 			$keep_groups = array_unique($keep_groups);
 
@@ -471,14 +737,7 @@ class career_manager
 			];
 		}
 
-		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
-		$result = $this->db->sql_query($sql);
-		$user_groups = [];
-		while ($row = $this->db->sql_fetchrow($result))
-		{
-			$user_groups[] = (int) $row['group_id'];
-		}
-		$this->db->sql_freeresult($result);
+		$user_groups = $this->get_user_groups($user_id);
 
 		if (array_intersect($user_groups, $this->cached_role_groups['full'])) {
 			return 4;
@@ -498,21 +757,23 @@ class career_manager
 
 	public function get_user_view_access($user_id, $target_user_id = null)
 	{
-		// Check inheritence: If they have role level >= 1, they have global view access.
+		if ($this->get_perm_system() === 'groups')
+		{
+			return $this->can_view_career_notes($user_id, $target_user_id);
+		}
+
+		return $this->get_user_view_access_legacy($user_id, $target_user_id);
+	}
+
+	public function get_user_view_access_legacy($user_id, $target_user_id = null)
+	{
 		$role_level = $this->get_user_role_level($user_id);
 		if ($role_level >= 1)
 		{
 			return true;
 		}
 
-		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
-		$result = $this->db->sql_query($sql);
-		$user_groups = [];
-		while ($row = $this->db->sql_fetchrow($result))
-		{
-			$user_groups[] = (int) $row['group_id'];
-		}
-		$this->db->sql_freeresult($result);
+		$user_groups = $this->get_user_groups($user_id);
 
 		// Global View Access
 		$global_view_groups = $this->parse_groups('booskit_career_access_view_global');
@@ -556,9 +817,6 @@ class career_manager
 		$uid = $bitfield = $options = '';
 		generate_text_for_storage($text, $uid, $bitfield, $options, true, true, true);
 
-		// We need to submit the post.
-		// submit_post($mode, $subject, $username, $topic_type, &$poll, &$data, $update_message = true, $update_search_index = true)
-
 		$poll = $data = [];
 
 		$data = [
@@ -591,14 +849,12 @@ class career_manager
 			'bbcode_bitfield'		=> $bitfield,
 			'bbcode_options'		=> $options,
 			'poster_ip'				=> $this->user->ip,
-			'post_approve'          => 1, // Force approved? 1 = approved.
+			'post_approve'          => 1,
 			'post_edit_locked'		=> 0,
 			'notify_set'			=> false,
 			'notify'				=> false,
 		];
 
-		// If poster_id is different from current user, we need to temporarily swap user data
-		// so submit_post uses the correct poster_id and permissions.
 		$user_data_backup = $this->user->data;
 
 		if ($poster_id != $this->user->data['user_id'])
@@ -618,7 +874,6 @@ class career_manager
 
 		submit_post('post', $subject, $username, POST_NORMAL, $poll, $data);
 
-		// Restore original user data
 		$this->user->data = $user_data_backup;
 
 		return $data['post_id'];
@@ -648,14 +903,12 @@ class career_manager
 			return;
 		}
 
-		// Clean the new username
 		if (!function_exists('utf8_clean_string'))
 		{
 			require($this->root_path . 'includes/utf/utf_tools.' . $this->php_ext);
 		}
 		$clean_name = utf8_clean_string($new_username);
 
-		// Check if username is already taken (excluding current user)
 		$sql = 'SELECT user_id FROM ' . USERS_TABLE . " WHERE username_clean = '" . $this->db->sql_escape($clean_name) . "'";
 		$result = $this->db->sql_query($sql);
 		$row = $this->db->sql_fetchrow($result);

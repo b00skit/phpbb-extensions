@@ -11,6 +11,7 @@ services:
             - '%booskit.usercareer.table.definitions%'
             - '%core.root_path%'
             - '%core.php_ext%'
+            - '%booskit.usercareer.table.perm_groups%'
 
     booskit.usercareer.controller.main:
         class: booskit\usercareer\controller\main
@@ -45,3 +46,4 @@ services:
 parameters:
     booskit.usercareer.table.notes: %core.table_prefix%booskit_career_notes
     booskit.usercareer.table.definitions: %core.table_prefix%booskit_career_definitions
+    booskit.usercareer.table.perm_groups: %core.table_prefix%booskit_career_perm_groups

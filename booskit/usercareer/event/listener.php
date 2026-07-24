@@ -46,14 +46,14 @@ class listener implements EventSubscriberInterface
 	public function display_career_notes($event)
 	{
 		$user_id = $event['member']['user_id'];
+		$viewer_id = $this->user->data['user_id'];
 
 		// Viewer permissions - check view access first
-		if (!$this->career_manager->get_user_view_access($this->user->data['user_id'], $user_id))
+		if (!$this->career_manager->can_view_career_notes($viewer_id, $user_id))
 		{
 			return; // Don't show anything if no view access
 		}
 
-		$viewer_level = $this->career_manager->get_user_role_level($this->user->data['user_id']);
 		$notes = $this->career_manager->get_user_notes($user_id, 5); // Limit to 5
 		$definitions = $this->career_manager->get_definitions();
 
@@ -63,22 +63,10 @@ class listener implements EventSubscriberInterface
 			$defs_map[$def['id']] = $def;
 		}
 
-		$target_level = $this->career_manager->get_user_role_level($user_id);
-
 		foreach ($notes as $note)
 		{
 			$def = isset($defs_map[$note['career_type_id']]) ? $defs_map[$note['career_type_id']] : [];
-
-			$is_issuer = ($note['issuer_user_id'] == $this->user->data['user_id']);
-			$has_access = false;
-
-			if ($viewer_level === 4) {
-				$has_access = true;
-			} elseif ($is_issuer && $viewer_level >= 1) {
-				$has_access = true;
-			} elseif ($viewer_level >= 2 && $viewer_level > $target_level) {
-				$has_access = true;
-			}
+			$has_access = $this->career_manager->can_edit_career_note($viewer_id, $user_id, $note['issuer_user_id']);
 
 			// Render BBCode
 			$bbcode_uid = isset($note['bbcode_uid']) ? $note['bbcode_uid'] : '';
@@ -99,12 +87,7 @@ class listener implements EventSubscriberInterface
 		}
 
 		// Check if user can add
-		$can_add = false;
-		if ($viewer_level >= 1) {
-			if ($viewer_level === 4 || $viewer_level > $target_level) {
-				$can_add = true;
-			}
-		}
+		$can_add = $this->career_manager->can_add_career_note($viewer_id, $user_id);
 
 		$this->template->assign_vars(array(
 			'U_CAREER_ADD' => $can_add ? $this->helper->route('booskit_usercareer_add_note', array('user_id' => $user_id)) : '',
