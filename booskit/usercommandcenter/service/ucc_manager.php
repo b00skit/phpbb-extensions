@@ -244,6 +244,11 @@ class ucc_manager
 		switch ($module)
 		{
 			case 'awards':
+				if (isset($this->config['booskit_awards_perm_system']) && $this->config['booskit_awards_perm_system'] === 'groups')
+				{
+					return $this->get_groups_perm_where_clause('awards', $viewer_id, $user_groups);
+				}
+
 				$l1 = $this->get_config_groups('booskit_awards_access_l1');
 				$l2 = $this->get_config_groups('booskit_awards_access_l2');
 				$full = $this->get_config_groups('booskit_awards_access_full');
@@ -268,6 +273,11 @@ class ucc_manager
 				return $where;
 
 			case 'career':
+				if (isset($this->config['booskit_career_perm_system']) && $this->config['booskit_career_perm_system'] === 'groups')
+				{
+					return $this->get_groups_perm_where_clause('career', $viewer_id, $user_groups);
+				}
+
 				$l1 = $this->get_config_groups('booskit_career_access_l1');
 				$l2 = $this->get_config_groups('booskit_career_access_l2');
 				$l3 = $this->get_config_groups('booskit_career_access_l3');
@@ -289,6 +299,11 @@ class ucc_manager
 				return false;
 
 			case 'commendations':
+				if (isset($this->config['booskit_commendations_perm_system']) && $this->config['booskit_commendations_perm_system'] === 'groups')
+				{
+					return $this->get_groups_perm_where_clause('commendations', $viewer_id, $user_groups);
+				}
+
 				$l1 = $this->get_config_groups('booskit_commendations_access_l1');
 				$l2 = $this->get_config_groups('booskit_commendations_access_l2');
 				$l3 = $this->get_config_groups('booskit_commendations_access_l3');
@@ -310,6 +325,11 @@ class ucc_manager
 				return false;
 
 			case 'disciplinary':
+				if (isset($this->config['booskit_disciplinary_perm_system']) && $this->config['booskit_disciplinary_perm_system'] === 'groups')
+				{
+					return $this->get_groups_perm_where_clause('disciplinary', $viewer_id, $user_groups);
+				}
+
 				$l1 = $this->get_config_groups('booskit_disciplinary_access_l1');
 				$l2 = $this->get_config_groups('booskit_disciplinary_access_l2');
 				$l3 = $this->get_config_groups('booskit_disciplinary_access_l3');
@@ -375,6 +395,11 @@ class ucc_manager
 				return '(' . implode(' OR ', $where_parts) . ')';
 
 			case 'ic_disciplinary':
+				if (isset($this->config['booskit_icdisciplinary_perm_system']) && $this->config['booskit_icdisciplinary_perm_system'] === 'groups')
+				{
+					return $this->get_groups_perm_where_clause('ic_disciplinary', $viewer_id, $user_groups);
+				}
+
 				$l1 = $this->get_config_groups('booskit_icdisciplinary_access_l1');
 				$l2 = $this->get_config_groups('booskit_icdisciplinary_access_l2');
 				$full = $this->get_config_groups('booskit_icdisciplinary_access_full');
@@ -396,6 +421,141 @@ class ucc_manager
 		}
 
 		return '1=1';
+	}
+
+	protected function get_groups_perm_where_clause($module, $viewer_id, $user_groups)
+	{
+		$table = '';
+		$type_column = '';
+
+		switch ($module)
+		{
+			case 'awards':
+				$table = $this->table_prefix . 'booskit_awards_perm_groups';
+				break;
+			case 'career':
+				$table = $this->table_prefix . 'booskit_career_perm_groups';
+				break;
+			case 'commendations':
+				$table = $this->table_prefix . 'booskit_commendations_perm_groups';
+				break;
+			case 'disciplinary':
+				$table = $this->table_prefix . 'booskit_disciplinary_perm_groups';
+				$type_column = 'd.disciplinary_type_id';
+				break;
+			case 'ic_disciplinary':
+				$table = $this->table_prefix . 'booskit_icdisciplinary_perm_groups';
+				$type_column = 'r.disciplinary_type_id';
+				break;
+		}
+
+		if (empty($table))
+		{
+			return '1=1';
+		}
+
+		$sql = 'SELECT * FROM ' . $table . ' ORDER BY perm_group_id ASC';
+		$result = @$this->db->sql_query($sql);
+		if (!$result)
+		{
+			return false;
+		}
+
+		$where_clauses = [];
+
+		while ($pg = $this->db->sql_fetchrow($result))
+		{
+			$applies_to = !empty($pg['applies_to']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['applies_to'])))) : [];
+			if (empty($applies_to) || !array_intersect($user_groups, $applies_to))
+			{
+				continue;
+			}
+
+			$perms = !empty($pg['permissions']) ? json_decode($pg['permissions'], true) : [];
+
+			$allowed_types = [];
+			if ($module === 'disciplinary' || $module === 'ic_disciplinary')
+			{
+				if (empty($perms['types']) || !is_array($perms['types']))
+				{
+					continue;
+				}
+
+				foreach ($perms['types'] as $def_id => $type_perms)
+				{
+					if (!empty($type_perms['view']))
+					{
+						$allowed_types[] = $def_id;
+					}
+				}
+
+				if (empty($allowed_types))
+				{
+					continue;
+				}
+			}
+			else
+			{
+				if (empty($perms['view']))
+				{
+					continue;
+				}
+			}
+
+			$exclude_groups = !empty($pg['exclude_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['exclude_groups'])))) : [];
+			
+			$power_parts = [];
+			if (!empty($pg['power_over_all']))
+			{
+				$power_parts[] = '1=1';
+			}
+			if (!empty($pg['power_over_self']))
+			{
+				if ($module === 'awards')
+				{
+					$power_parts[] = '(u.user_id = ' . (int)$viewer_id . ' OR u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $user_groups) . '))';
+				}
+				else
+				{
+					$power_parts[] = 'u.user_id = ' . (int)$viewer_id;
+				}
+			}
+			if (!empty($pg['power_over_groups']))
+			{
+				$power_over_groups = array_map('intval', array_filter(array_map('trim', explode(',', $pg['power_over_groups']))));
+				if (!empty($power_over_groups))
+				{
+					$power_parts[] = 'u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $power_over_groups) . ')';
+				}
+			}
+
+			if (empty($power_parts))
+			{
+				continue;
+			}
+
+			$pg_clause = '(' . implode(' OR ', $power_parts) . ')';
+
+			if (!empty($exclude_groups))
+			{
+				$pg_clause .= ' AND u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $exclude_groups) . ')';
+			}
+
+			if (!empty($allowed_types) && !empty($type_column))
+			{
+				$pg_clause .= ' AND ' . $this->db->sql_in_set($type_column, $allowed_types);
+			}
+
+			$where_clauses[] = '(' . $pg_clause . ')';
+		}
+		$this->db->sql_freeresult($result);
+
+		if (empty($where_clauses))
+		{
+			return false;
+		}
+
+		return '(' . implode(' OR ', $where_clauses) . ')';
 	}
 
 	protected function get_user_groups($user_id)
