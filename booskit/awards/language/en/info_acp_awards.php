@@ -41,6 +41,27 @@ $lang = array_merge($lang, array(
 	'BOOSKIT_AWARDS_LOCAL_DEFINITIONS' => 'Local Definitions',
 	'BOOSKIT_AWARDS_LOCAL_DEFINITIONS_EXPLAIN' => 'Manage the award definitions here when "Local Settings" is selected.',
 
+	'BOOSKIT_AWARDS_PERM_SYSTEM'			=> 'Permission System',
+	'BOOSKIT_AWARDS_PERM_SYSTEM_EXPLAIN'	=> 'Choose between Legacy Access Levels (default) or New Permission Groups.',
+	'BOOSKIT_AWARDS_PERM_SYSTEM_LEGACY'	=> 'Legacy (Access Levels & Group Mapping)',
+	'BOOSKIT_AWARDS_PERM_SYSTEM_GROUPS'	=> 'New Permission Groups',
+
+	'PERMISSION_GROUPS'					=> 'Permission Groups',
+	'PERMISSION_GROUPS_EXPLAIN'			=> 'Configure custom permission groups to control access by user group, power over target groups, and global view/submit permissions.',
+	'ADD_PERMISSION_GROUP'				=> 'Add Permission Group',
+	'PERMISSION_GROUP_NAME'				=> 'Permission Group Name',
+	'APPLIES_TO_GROUPS'					=> 'Applies To Groups',
+	'APPLIES_TO_GROUPS_EXPLAIN'			=> 'Select which phpBB user groups receive these permissions.',
+	'POWER_OVER_GROUPS'					=> 'Power Over Groups',
+	'POWER_OVER_GROUPS_EXPLAIN'			=> 'Select target scopes or specific phpBB user groups this permission group has authority over.',
+	'EXCLUDE_GROUPS'					=> 'Exclude Groups',
+	'EXCLUDE_GROUPS_EXPLAIN'			=> 'Select target phpBB user groups that are explicitly excluded from this permission group.',
+	'ALL_GROUPS'						=> 'All Groups',
+	'SELF_GROUP'						=> 'Self',
+	'ENTRY_PERMISSIONS'					=> 'Global Permissions',
+	'PERM_VIEW'							=> 'View Awards',
+	'PERM_SUBMIT'						=> 'Submit Awards',
+
 	'ID' => 'ID',
 	'NAME' => 'Name',
 	'DESCRIPTION' => 'Description',
@@ -51,3 +72,4 @@ $lang = array_merge($lang, array(
 	'UPDATE' => 'Update',
 	'DELETE' => 'Delete',
 ));
+

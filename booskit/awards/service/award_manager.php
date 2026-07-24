@@ -25,16 +25,20 @@ class award_manager
 	/** @var string */
 	protected $table_definitions;
 
+	/** @var string */
+	protected $table_perm_groups;
+
 	protected $cached_definitions = null;
 	protected $cached_role_groups = null;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table, $table_definitions)
+	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\user $user, $table, $table_definitions, $table_perm_groups = '')
 	{
 		$this->config = $config;
 		$this->db = $db;
 		$this->user = $user;
 		$this->table = $table;
 		$this->table_definitions = $table_definitions;
+		$this->table_perm_groups = $table_perm_groups;
 	}
 
 	public function get_user_role_level($user_id)
@@ -421,4 +425,267 @@ class award_manager
 
 		return $data['post_id'];
 	}
+
+	public function get_perm_system()
+	{
+		return isset($this->config['booskit_awards_perm_system']) ? $this->config['booskit_awards_perm_system'] : 'legacy';
+	}
+
+	public function get_permission_groups()
+	{
+		if (empty($this->table_perm_groups))
+		{
+			return [];
+		}
+
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' ORDER BY perm_group_id ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', explode(',', $row['applies_to'])) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', explode(',', $row['power_over_groups'])) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', explode(',', $row['exclude_groups'])) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+			$groups[] = $row;
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	public function add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'INSERT INTO ' . $this->table_perm_groups . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+	}
+
+	public function update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name' => $group_name,
+			'applies_to' => $applies_str,
+			'power_over_all' => (int) $power_over_all,
+			'power_over_self' => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups' => $exclude_groups_str,
+			'permissions' => $perms_json,
+		];
+		$sql = 'UPDATE ' . $this->table_perm_groups . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_permission_group($perm_group_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function get_phpbb_groups()
+	{
+		$sql = 'SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . ' ORDER BY group_type DESC, group_name ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$name = isset($this->user->lang['G_' . $row['group_name']]) ? $this->user->lang['G_' . $row['group_name']] : $row['group_name'];
+			$groups[] = [
+				'group_id' => (int) $row['group_id'],
+				'group_name' => $name,
+			];
+		}
+		$this->db->sql_freeresult($result);
+		return $groups;
+	}
+
+	public function get_user_groups($user_id)
+	{
+		$sql = 'SELECT group_id FROM ' . USER_GROUP_TABLE . ' WHERE user_id = ' . (int) $user_id . ' AND user_pending = 0';
+		$result = $this->db->sql_query($sql);
+		$user_groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$user_groups[] = (int) $row['group_id'];
+		}
+		$this->db->sql_freeresult($result);
+		return $user_groups;
+	}
+
+	public function get_effective_permissions($viewer_id, $target_user_id)
+	{
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		$target_groups = $this->get_user_groups($target_user_id);
+		$perm_groups = $this->get_permission_groups();
+
+		$effective = [
+			'view' => false,
+			'submit' => false,
+		];
+
+		foreach ($perm_groups as $pg)
+		{
+			if (empty($pg['applies_to_array']) || !array_intersect($viewer_groups, $pg['applies_to_array']))
+			{
+				continue;
+			}
+
+			if (!empty($pg['exclude_groups_array']) && array_intersect($target_groups, $pg['exclude_groups_array']))
+			{
+				continue;
+			}
+
+			$has_power = false;
+			if (!empty($pg['power_over_all']))
+			{
+				$has_power = true;
+			}
+			if (!$has_power && !empty($pg['power_over_self']))
+			{
+				if ($viewer_id == $target_user_id || array_intersect($viewer_groups, $target_groups))
+				{
+					$has_power = true;
+				}
+			}
+			if (!$has_power && !empty($pg['power_over_groups_array']))
+			{
+				if (array_intersect($target_groups, $pg['power_over_groups_array']))
+				{
+					$has_power = true;
+				}
+			}
+
+			if (!$has_power)
+			{
+				continue;
+			}
+
+			$perms = $pg['permissions_array'];
+			if (is_array($perms))
+			{
+				if (!empty($perms['view']))
+				{
+					$effective['view'] = true;
+				}
+				if (!empty($perms['submit']))
+				{
+					$effective['submit'] = true;
+				}
+			}
+		}
+
+		return $effective;
+	}
+
+	public function can_view_awards($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['view']);
+		}
+
+		return true;
+	}
+
+	public function can_add_award($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['submit']);
+		}
+
+		$issuer_level = $this->get_user_role_level($viewer_id);
+		$target_level = $this->get_user_role_level($target_user_id);
+		return ($issuer_level >= 1 && ($issuer_level >= 3 || $target_level < $issuer_level));
+	}
+
+	public function can_remove_award($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['submit']);
+		}
+
+		$issuer_level = $this->get_user_role_level($viewer_id);
+		$target_level = $this->get_user_role_level($target_user_id);
+		return ($issuer_level >= 2 && ($issuer_level >= 3 || $target_level < $issuer_level));
+	}
+
+	public function render_user_awards_bbcode($username, $size = null)
+	{
+		$username_clean = utf8_clean_string(trim($username));
+		if (empty($username_clean))
+		{
+			return '';
+		}
+
+		$sql = 'SELECT user_id FROM ' . USERS_TABLE . ' WHERE username_clean = \'' . $this->db->sql_escape($username_clean) . '\'';
+		$result = $this->db->sql_query($sql);
+		$row = $this->db->sql_fetchrow($result);
+		$this->db->sql_freeresult($result);
+
+		if (!$row)
+		{
+			return '';
+		}
+
+		$target_user_id = (int) $row['user_id'];
+		$user_awards = $this->get_user_awards($target_user_id);
+		if (empty($user_awards))
+		{
+			return '';
+		}
+
+		$images = [];
+		foreach ($user_awards as $award)
+		{
+			$def = $this->get_definition($award['award_definition_id']);
+			if ($def && !empty($def['image']))
+			{
+				$img_src = htmlspecialchars($def['image'], ENT_QUOTES, 'UTF-8');
+				$img_name = htmlspecialchars($def['name'], ENT_QUOTES, 'UTF-8');
+
+				$style = '';
+				if ($size !== null && $size !== '' && is_numeric($size) && (int) $size > 0)
+				{
+					$height_px = (int) $size;
+					$style = 'style="height: ' . $height_px . 'px; width: auto;"';
+				}
+				else if (!empty($def['max-height']))
+				{
+					$h = is_numeric($def['max-height']) ? $def['max-height'] . 'px' : $def['max-height'];
+					$style = 'style="height: ' . htmlspecialchars($h, ENT_QUOTES, 'UTF-8') . '; width: auto;"';
+				}
+				else
+				{
+					$style = 'style="height: auto; width: auto;"';
+				}
+
+				$images[] = '<img src="' . $img_src . '" alt="' . $img_name . '" title="' . $img_name . '" ' . $style . ' />';
+			}
+		}
+
+		return implode(' ', $images);
+	}
 }
+

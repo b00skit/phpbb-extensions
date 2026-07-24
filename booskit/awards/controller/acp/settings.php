@@ -61,11 +61,81 @@ class settings
 		}
 
 		// Handle Add/Update (POST)
-		if ($this->request->is_set_post('submit_config'))
+		if ($this->request->is_set_post('submit') || $this->request->is_set_post('submit_config'))
 		{
 			if (!check_form_key($form_key))
 			{
 				trigger_error($this->user->lang['FORM_INVALID'] . adm_back_link($u_action), E_USER_WARNING);
+			}
+
+			if ($action == 'add_perm_group')
+			{
+				$group_name = $this->request->variable('new_perm_group_name', '', true);
+				$applies_to = $this->request->variable('new_applies_to', [0]);
+				$power_over_all = $this->request->variable('new_power_over_all', 0);
+				$power_over_self = $this->request->variable('new_power_over_self', 0);
+				$power_over_groups = $this->request->variable('new_power_over_groups', [0]);
+				$exclude_groups = $this->request->variable('new_exclude_groups', [0]);
+				$view = $this->request->variable('new_view', 0);
+				$submit_perm = $this->request->variable('new_submit', 0);
+
+				$permissions = [
+					'view' => (int) $view,
+					'submit' => (int) $submit_perm,
+				];
+
+				if (!empty($group_name))
+				{
+					$this->award_manager->add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions);
+					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_SETTINGS_UPDATED');
+				}
+				trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
+			}
+
+			if ($action == 'update_perm_group')
+			{
+				$perm_group_id = $this->request->variable('perm_group_id', 0);
+
+				$names = $this->request->variable('perm_group_name', [0 => ''], true);
+				$applies_to_raw = $this->request->variable('applies_to', [0 => [0]]);
+				$power_over_all_raw = $this->request->variable('power_over_all', [0 => 0]);
+				$power_over_self_raw = $this->request->variable('power_over_self', [0 => 0]);
+				$power_over_groups_raw = $this->request->variable('power_over_groups', [0 => [0]]);
+				$exclude_groups_raw = $this->request->variable('exclude_groups', [0 => [0]]);
+				$views_raw = $this->request->variable('view', [0 => 0]);
+				$submits_raw = $this->request->variable('submit_perm', [0 => 0]);
+
+				if ($perm_group_id && isset($names[$perm_group_id]))
+				{
+					$group_name = $names[$perm_group_id];
+					$applies_to = isset($applies_to_raw[$perm_group_id]) ? $applies_to_raw[$perm_group_id] : [];
+					$power_over_all = isset($power_over_all_raw[$perm_group_id]) ? (int) $power_over_all_raw[$perm_group_id] : 0;
+					$power_over_self = isset($power_over_self_raw[$perm_group_id]) ? (int) $power_over_self_raw[$perm_group_id] : 0;
+					$power_over_groups = isset($power_over_groups_raw[$perm_group_id]) ? $power_over_groups_raw[$perm_group_id] : [];
+					$exclude_groups = isset($exclude_groups_raw[$perm_group_id]) ? $exclude_groups_raw[$perm_group_id] : [];
+					$view = isset($views_raw[$perm_group_id]) ? 1 : 0;
+					$submit_perm = isset($submits_raw[$perm_group_id]) ? 1 : 0;
+
+					$permissions = [
+						'view' => $view,
+						'submit' => $submit_perm,
+					];
+
+					$this->award_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions);
+					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_SETTINGS_UPDATED');
+				}
+				trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
+			}
+
+			if ($action == 'delete_perm_group')
+			{
+				$perm_group_id = $this->request->variable('perm_group_id', 0);
+				if ($perm_group_id)
+				{
+					$this->award_manager->delete_permission_group($perm_group_id);
+					$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_AWARDS_SETTINGS_UPDATED');
+				}
+				trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
 			}
 
 			if ($action == 'add')
@@ -129,6 +199,7 @@ class settings
 			// Main Config Submit
 			if ($action == '')
 			{
+				$perm_system = $this->request->variable('booskit_awards_perm_system', 'legacy');
 				$source = $this->request->variable('booskit_awards_source', 'url');
 				$json_url = $this->request->variable('booskit_awards_json_url', '');
 				$access_l1 = $this->request->variable('booskit_awards_access_l1', '');
@@ -143,6 +214,7 @@ class settings
 
 				generate_text_for_storage($ruleset_text, $ruleset_uid, $ruleset_bitfield, $ruleset_options, true, true, true);
 
+				$this->config->set('booskit_awards_perm_system', $perm_system);
 				$this->config->set('booskit_awards_source', $source);
 				$this->config->set('booskit_awards_json_url', $json_url);
 				$this->config->set('booskit_awards_access_l1', $access_l1);
@@ -174,6 +246,9 @@ class settings
 
 		$this->template->assign_vars(array(
 			'U_ACTION' => $u_action,
+			'BOOSKIT_AWARDS_PERM_SYSTEM' => $this->award_manager->get_perm_system(),
+			'PERMISSION_GROUPS' => $this->award_manager->get_permission_groups(),
+			'PHPBB_GROUPS' => $this->award_manager->get_phpbb_groups(),
 			'BOOSKIT_AWARDS_RULESET' => $ruleset_text,
 			'BOOSKIT_AWARDS_RULESET_UID' => $ruleset_uid,
 			'BOOSKIT_AWARDS_RULESET_BITFIELD' => $ruleset_bitfield,

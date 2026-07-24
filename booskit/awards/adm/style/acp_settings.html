@@ -7,6 +7,13 @@
 <fieldset>
 	<legend>{{ lang('ACP_BOOSKIT_AWARDS_SETTINGS') }}</legend>
 	<dl>
+		<dt><label for="booskit_awards_perm_system">{{ lang('BOOSKIT_AWARDS_PERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_PERM_SYSTEM_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_awards_perm_system" value="legacy" {% if BOOSKIT_AWARDS_PERM_SYSTEM == 'legacy' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_AWARDS_PERM_SYSTEM_LEGACY') }}</label>
+			<label><input type="radio" class="radio" name="booskit_awards_perm_system" value="groups" {% if BOOSKIT_AWARDS_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_AWARDS_PERM_SYSTEM_GROUPS') }}</label>
+		</dd>
+	</dl>
+	<dl>
 		<dt><label for="booskit_awards_ruleset">{{ lang('RULES') }}{{ lang('COLON') }}</label><br><span>{{ lang('RULES_EXPLAIN') }}</span></dt>
 		<dd>
 			<textarea name="booskit_awards_ruleset" id="booskit_awards_ruleset" rows="10" cols="60" style="width: 95%;">{{ BOOSKIT_AWARDS_RULESET }}</textarea>
@@ -30,23 +37,153 @@
 		</dl>
 	</div>
 
-	<dl>
-		<dt><label for="booskit_awards_access_l1">{{ lang('BOOSKIT_AWARDS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L1_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_awards_access_l1" name="booskit_awards_access_l1" value="{{ BOOSKIT_AWARDS_ACCESS_L1 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_awards_access_l2">{{ lang('BOOSKIT_AWARDS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L2_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_awards_access_l2" name="booskit_awards_access_l2" value="{{ BOOSKIT_AWARDS_ACCESS_L2 }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_awards_access_full">{{ lang('BOOSKIT_AWARDS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_awards_access_full" name="booskit_awards_access_full" value="{{ BOOSKIT_AWARDS_ACCESS_FULL }}" size="50"></dd>
-	</dl>
+	<div id="booskit_awards_legacy_settings">
+		<dl>
+			<dt><label for="booskit_awards_access_l1">{{ lang('BOOSKIT_AWARDS_ACCESS_L1') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L1_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_awards_access_l1" name="booskit_awards_access_l1" value="{{ BOOSKIT_AWARDS_ACCESS_L1 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_awards_access_l2">{{ lang('BOOSKIT_AWARDS_ACCESS_L2') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_L2_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_awards_access_l2" name="booskit_awards_access_l2" value="{{ BOOSKIT_AWARDS_ACCESS_L2 }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_awards_access_full">{{ lang('BOOSKIT_AWARDS_ACCESS_FULL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_AWARDS_ACCESS_FULL_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_awards_access_full" name="booskit_awards_access_full" value="{{ BOOSKIT_AWARDS_ACCESS_FULL }}" size="50"></dd>
+		</dl>
+	</div>
 
 	<p class="submit-buttons">
 		<input class="button1" type="submit" name="submit_config" value="{{ lang('SUBMIT') }}" />
 	</p>
 </fieldset>
+
+<div id="booskit_awards_groups_settings">
+	<fieldset>
+		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+		<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+		{% for pg in PERMISSION_GROUPS %}
+		<div style="background: #f4f4f4; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+			<dl>
+				<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+				<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" /></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_all[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_all %}checked="checked"{% endif %} /> {{ lang('ALL_GROUPS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+						<input type="checkbox" name="power_over_self[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_self %}checked="checked"{% endif %} /> {{ lang('SELF_GROUP') }}
+					</label>
+					<br><br>
+					<select name="power_over_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.power_over_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="exclude_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="view[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.view %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="submit_perm[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.submit %}checked="checked"{% endif %} /> {{ lang('PERM_SUBMIT') }}
+					</label>
+				</dd>
+			</dl>
+			<p class="submit-buttons" style="margin-top: 10px;">
+				<button type="submit" name="submit_config" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</p>
+		</div>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+		<dl>
+			<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Senior Officers" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_all" value="1" /> {{ lang('ALL_GROUPS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 12px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_self" value="1" /> {{ lang('SELF_GROUP') }}
+				</label>
+				<br><br>
+				<select name="new_power_over_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ENTRY_PERMISSIONS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_view" value="1" /> {{ lang('PERM_VIEW') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_submit" value="1" /> {{ lang('PERM_SUBMIT') }}
+				</label>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit_config" value="{{ lang('ADD') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+		</p>
+	</fieldset>
+</div>
+
 
 <div id="booskit_awards_local_settings">
 	<fieldset>
@@ -215,7 +352,35 @@
 		radios[i].addEventListener('change', updateVisibility);
 	}
 	updateVisibility();
+
+	var legacySettings = document.getElementById('booskit_awards_legacy_settings');
+	var groupsSettings = document.getElementById('booskit_awards_groups_settings');
+	var radiosSystem = document.getElementsByName('booskit_awards_perm_system');
+
+	function updateSystemVisibility() {
+		var selected = '';
+		for (var i = 0; i < radiosSystem.length; i++) {
+			if (radiosSystem[i].checked) {
+				selected = radiosSystem[i].value;
+				break;
+			}
+		}
+
+		if (selected === 'groups') {
+			groupsSettings.style.display = 'block';
+			legacySettings.style.display = 'none';
+		} else {
+			groupsSettings.style.display = 'none';
+			legacySettings.style.display = 'block';
+		}
+	}
+
+	for (var i = 0; i < radiosSystem.length; i++) {
+		radiosSystem[i].addEventListener('change', updateSystemVisibility);
+	}
+	updateSystemVisibility();
 })();
+
 
 // Awards Settings JS
 var lang_delete = "{{ lang('DELETE') }}";

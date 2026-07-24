@@ -7,6 +7,7 @@ services:
             - '@user'
             - '%booskit.awards.tables.users%'
             - '%booskit.awards.tables.definitions%'
+            - '%booskit.awards.tables.perm_groups%'
 
     booskit.awards.controller.acp.settings:
         class: booskit\awards\controller\acp\settings
@@ -50,3 +51,5 @@ services:
 parameters:
     booskit.awards.tables.users: %core.table_prefix%booskit_awards_users
     booskit.awards.tables.definitions: %core.table_prefix%booskit_awards_definitions
+    booskit.awards.tables.perm_groups: %core.table_prefix%booskit_awards_perm_groups
+

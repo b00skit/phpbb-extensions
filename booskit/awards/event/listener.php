@@ -30,8 +30,11 @@ class listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return array(
-			'core.user_setup' => 'load_language_on_setup',
-			'core.memberlist_view_profile' => 'memberlist_view_profile',
+			'core.user_setup'                           => 'load_language_on_setup',
+			'core.memberlist_view_profile'              => 'memberlist_view_profile',
+			'core.text_formatter_s9e_configure_after'   => 'configure_s9e_bbcode',
+			'core.text_formatter_s9e_render_after'      => 'render_s9e_bbcode',
+			'core.modify_format_display_text_after'     => 'render_display_text_bbcode',
 		);
 	}
 
@@ -45,18 +48,15 @@ class listener implements EventSubscriberInterface
 		$this->user->add_lang_ext('booskit/awards', 'awards');
 
 		$member_id = $event['member']['user_id'];
+		$viewer_id = $this->user->data['user_id'];
 
-		$issuer_level = $this->award_manager->get_user_role_level($this->user->data['user_id']);
-		$target_level = $this->award_manager->get_user_role_level($member_id);
-
-		$can_remove = false;
-		if ($issuer_level >= 2)
+		if (!$this->award_manager->can_view_awards($viewer_id, $member_id))
 		{
-			if ($issuer_level >= 3 || $target_level < $issuer_level)
-			{
-				$can_remove = true;
-			}
+			return;
 		}
+
+		$can_add = $this->award_manager->can_add_award($viewer_id, $member_id);
+		$can_remove = $this->award_manager->can_remove_award($viewer_id, $member_id);
 
 		// Load awards for this user
 		$user_awards = $this->award_manager->get_user_awards($member_id);
@@ -83,18 +83,6 @@ class listener implements EventSubscriberInterface
 				));
 			}
 		}
-		// Logic:
-		// L1 (1) -> Target < 1 (0)
-		// L2 (2) -> Target < 2 (0, 1)
-		// Full (3) -> Everyone
-		$can_add = false;
-		if ($issuer_level >= 1)
-		{
-			if ($issuer_level >= 3 || $target_level < $issuer_level)
-			{
-				$can_add = true;
-			}
-		}
 
 		if ($can_add)
 		{
@@ -102,5 +90,65 @@ class listener implements EventSubscriberInterface
 				'U_ADD_AWARD' => $this->helper->route('booskit_awards_add_award', array('user_id' => $member_id)),
 			));
 		}
+	}
+
+	public function configure_s9e_bbcode($event)
+	{
+		$configurator = $event['configurator'];
+		if (!isset($configurator->BBCodes['userawards']))
+		{
+			$configurator->BBCodes->addCustom(
+				'[userawards={NUMBER?}]{TEXT}[/userawards]',
+				'<span class="phpbb-userawards"><xsl:if test="@size"><xsl:attribute name="data-size"><xsl:value-of select="@size"/></xsl:attribute></xsl:if><xsl:apply-templates/></span>'
+			);
+		}
+	}
+
+	public function render_s9e_bbcode($event)
+	{
+		if (isset($event['html']))
+		{
+			$event['html'] = $this->process_userawards_bbcode($event['html']);
+		}
+	}
+
+	public function render_display_text_bbcode($event)
+	{
+		if (isset($event['text']))
+		{
+			$event['text'] = $this->process_userawards_bbcode($event['text']);
+		}
+	}
+
+	protected function process_userawards_bbcode($html)
+	{
+		if (empty($html) || (strpos($html, 'phpbb-userawards') === false && strpos($html, '[userawards') === false))
+		{
+			return $html;
+		}
+
+		// Match s9e rendered html tags
+		$html = preg_replace_callback(
+			'#<span\s+class="phpbb-userawards"(?:\s+data-size="(\d+)")?\s*>(.*?)</span>#isU',
+			function($matches) {
+				$size = !empty($matches[1]) ? $matches[1] : null;
+				$username = strip_tags($matches[2]);
+				return $this->award_manager->render_user_awards_bbcode($username, $size);
+			},
+			$html
+		);
+
+		// Match raw BBCode tags fallback
+		$html = preg_replace_callback(
+			'#\[userawards(?:=(?:&quot;|")?(\d+)(?:&quot;|")?)?\](.*?)\[/userawards\]#isU',
+			function($matches) {
+				$size = !empty($matches[1]) ? $matches[1] : null;
+				$username = strip_tags($matches[2]);
+				return $this->award_manager->render_user_awards_bbcode($username, $size);
+			},
+			$html
+		);
+
+		return $html;
 	}
 }

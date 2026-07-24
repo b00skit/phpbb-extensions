@@ -39,20 +39,7 @@ class main
 
 	public function add_award($user_id)
 	{
-		$issuer_level = $this->award_manager->get_user_role_level($this->user->data['user_id']);
-		// Permission check: Level > 0
-		if ($issuer_level < 1)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-
-		$target_level = $this->award_manager->get_user_role_level($user_id);
-
-		// Logic:
-		// L1 (1) -> Target < 1 (0)
-		// L2 (2) -> Target < 2 (0, 1)
-		// Full (3) -> Everyone
-		if ($issuer_level < 3 && $target_level >= $issuer_level)
+		if (!$this->award_manager->can_add_award($this->user->data['user_id'], $user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
@@ -175,13 +162,6 @@ class main
 
 	public function remove_award($award_id)
 	{
-		$issuer_level = $this->award_manager->get_user_role_level($this->user->data['user_id']);
-		// Permission check: Level >= 2
-		if ($issuer_level < 2)
-		{
-			trigger_error('NOT_AUTHORISED');
-		}
-
 		$award = $this->award_manager->get_award($award_id);
 		if (!$award)
 		{
@@ -189,9 +169,7 @@ class main
 		}
 
 		$target_user_id = $award['user_id'];
-		$target_level = $this->award_manager->get_user_role_level($target_user_id);
-
-		if ($issuer_level < 3 && $target_level >= $issuer_level)
+		if (!$this->award_manager->can_remove_award($this->user->data['user_id'], $target_user_id))
 		{
 			trigger_error('NOT_AUTHORISED');
 		}
