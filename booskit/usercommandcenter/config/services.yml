@@ -18,6 +18,7 @@ services:
             - '@request'
             - '@pagination'
             - '@booskit.usercommandcenter.manager'
+            - '@log'
             - '%core.root_path%'
             - '%core.php_ext%'
 

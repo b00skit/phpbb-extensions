@@ -52,4 +52,8 @@ $lang = array_merge($lang, array(
 	'SELECT_AUTOMATION_SETTING' => 'Select Automation Action',
 	'NEW_USERNAME' => 'New Username',
 	'PRIMARY_GROUP' => 'Primary Group',
+
+	'LOG_CAREER_ADDED' => '<strong>Added career note to user</strong><br />» %s',
+	'LOG_CAREER_EDITED' => '<strong>Edited career note for user</strong><br />» %s',
+	'LOG_CAREER_DELETED' => '<strong>Deleted career note from user</strong><br />» %s',
 ));

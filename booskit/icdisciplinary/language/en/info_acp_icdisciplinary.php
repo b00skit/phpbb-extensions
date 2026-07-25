@@ -83,4 +83,11 @@ $lang = array_merge($lang, array(
 	'ADD' => 'Add',
 	'UPDATE' => 'Update',
 	'DELETE' => 'Delete',
+
+    'LOG_IC_CHARACTER_ADDED'    => '<strong>IC Character added</strong><br />» %s',
+    'LOG_IC_CHARACTER_ARCHIVED' => '<strong>IC Character archived</strong><br />» %s',
+    'LOG_IC_CHARACTER_DELETED'  => '<strong>IC Character deleted</strong><br />» %s',
+    'LOG_IC_RECORD_ADDED'       => '<strong>IC Record added</strong><br />» %s (Character: %s)',
+    'LOG_IC_RECORD_EDITED'      => '<strong>IC Record edited</strong><br />» %s (Character: %s)',
+    'LOG_IC_RECORD_DELETED'     => '<strong>IC Record deleted</strong><br />» %s (Character: %s)',
 ));

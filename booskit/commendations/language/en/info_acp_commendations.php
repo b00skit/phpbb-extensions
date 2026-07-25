@@ -72,5 +72,9 @@ $lang = array_merge($lang, array(
 	'PUBLIC_POSTING_SUBJECT_TPL_EXPLAIN'		=> 'Available tags: {CHARACTER_NAME}, {TARGET_USERNAME}, {ISSUER_USERNAME}, {TYPE}, {DATE}',
 	'PUBLIC_POSTING_BODY_TPL'					=> 'Body Template',
 	'PUBLIC_POSTING_BODY_TPL_EXPLAIN'			=> 'Available tags: {REASON}, {CHARACTER_NAME}, {TARGET_USERNAME}, {ISSUER_USERNAME}, {TYPE}, {DATE}. Leave empty for default.',
+
+	'LOG_COMMENDATION_ADDED'		=> '<strong>Added commendation for</strong><br />» %s',
+	'LOG_COMMENDATION_EDITED'		=> '<strong>Edited commendation for</strong><br />» %s',
+	'LOG_COMMENDATION_DELETED'		=> '<strong>Deleted commendation for</strong><br />» %s',
 ));
 

@@ -95,4 +95,8 @@ $lang = array_merge($lang, array(
 
 	'BOOSKIT_DISCIPLINARY_LOCALLY_VIEWABLE' => 'Self Viewable',
 	'BOOSKIT_DISCIPLINARY_GLOBALLY_VIEWABLE' => 'Mapped Viewable',
+
+	'LOG_DISCIPLINARY_ADDED'		=> '<strong>Added disciplinary action to user</strong><br>» %s',
+	'LOG_DISCIPLINARY_EDITED'		=> '<strong>Edited disciplinary action for user</strong><br>» %s',
+	'LOG_DISCIPLINARY_DELETED'		=> '<strong>Deleted disciplinary action for user</strong><br>» %s',
 ));

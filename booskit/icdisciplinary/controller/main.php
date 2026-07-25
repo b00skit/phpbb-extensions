@@ -214,7 +214,9 @@ class main
 				$reason_uid, $reason_bitfield, $reason_options,
 				$evidence_uid, $evidence_bitfield, $evidence_options);
 
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_ADDED', time(), array($type_id, $character['character_name']));
+			$def = $this->ic_manager->get_definition($type_id);
+			$type_name = $def ? $def['name'] : $type_id;
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_ADDED', time(), array($type_name, $character['character_name']));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $character_id);
 
@@ -302,7 +304,9 @@ class main
 				$evidence_uid, $evidence_bitfield, $evidence_options,
 				$this->user->data['user_id'], time());
 
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_EDITED', time(), array($type_id, $character['character_name']));
+			$def = $this->ic_manager->get_definition($type_id);
+			$type_name = $def ? $def['name'] : $type_id;
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_EDITED', time(), array($type_name, $character['character_name']));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
 
@@ -350,7 +354,9 @@ class main
 		{
 			$this->ic_manager->delete_record($record_id);
 
-			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_DELETED', time(), array($record['disciplinary_type_id'], $character['character_name']));
+			$def = $this->ic_manager->get_definition($record['disciplinary_type_id']);
+			$type_name = $def ? $def['name'] : $record['disciplinary_type_id'];
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_DELETED', time(), array($type_name, $character['character_name']));
 
 			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
 			meta_refresh(3, $u_profile);

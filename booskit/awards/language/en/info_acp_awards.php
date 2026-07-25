@@ -71,5 +71,8 @@ $lang = array_merge($lang, array(
 	'ADD' => 'Add',
 	'UPDATE' => 'Update',
 	'DELETE' => 'Delete',
+
+	'LOG_AWARD_ADDED' => '<strong>Added award to user</strong><br>» %s',
+	'LOG_AWARD_REMOVED' => '<strong>Removed award from user</strong><br>» %s',
 ));
 

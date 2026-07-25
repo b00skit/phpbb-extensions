@@ -17,12 +17,13 @@ class main
 	protected $request;
 	protected $pagination;
 	protected $ucc_manager;
+	protected $log;
 	protected $php_ext;
 	protected $root_path;
 
 	protected $db;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\request\request_interface $request, \phpbb\pagination $pagination, \booskit\usercommandcenter\service\ucc_manager $ucc_manager, $root_path, $php_ext)
+	public function __construct(\phpbb\config\config $config, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\request\request_interface $request, \phpbb\pagination $pagination, \booskit\usercommandcenter\service\ucc_manager $ucc_manager, \phpbb\log\log_interface $log, $root_path, $php_ext)
 	{
 		$this->config = $config;
 		$this->template = $template;
@@ -31,6 +32,7 @@ class main
 		$this->request = $request;
 		$this->pagination = $pagination;
 		$this->ucc_manager = $ucc_manager;
+		$this->log = $log;
 		$this->root_path = $root_path;
 		$this->php_ext = $php_ext;
 
@@ -70,6 +72,8 @@ class main
 	{
 		$this->check_access();
 		$this->user->add_lang_ext('booskit/usercommandcenter', 'ucc');
+
+		$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_UCC_VIEWED', time());
 
 		// Awards
 		$awards_defs = $this->ucc_manager->get_definitions('booskit/awards');
@@ -268,6 +272,8 @@ class main
 				}
 				break;
 		}
+
+		$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_UCC_MODULE_VIEWED', time(), array($title));
 
 		$base_url = $this->helper->route('booskit_ucc_view_list', ['module' => $module]);
 		$this->pagination->generate_template_pagination($base_url, 'pagination', 'start', $total, $limit, $start);

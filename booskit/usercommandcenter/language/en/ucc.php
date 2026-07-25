@@ -44,4 +44,7 @@ $lang = array_merge($lang, array(
 	'UCC_DATE' => 'Date',
 	'UCC_TYPE' => 'Type',
 	'UCC_CHARACTER' => 'Character',
+
+	'LOG_UCC_VIEWED' => '<strong>Viewed User Command Center dashboard</strong>',
+	'LOG_UCC_MODULE_VIEWED' => '<strong>Viewed User Command Center module</strong><br />» %s',
 ));
