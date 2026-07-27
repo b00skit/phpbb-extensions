@@ -106,6 +106,18 @@
 					<label style="display: inline-block; margin-right: 15px;">
 						<input type="checkbox" name="copy_perm[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.copy %}checked="checked"{% endif %} /> {{ lang('PERM_COPY') }}
 					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="edit_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.edit_own %}checked="checked"{% endif %} /> {{ lang('PERM_EDIT_OWN') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="delete_own[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.delete_own %}checked="checked"{% endif %} /> {{ lang('PERM_DELETE_OWN') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="edit[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.edit %}checked="checked"{% endif %} /> {{ lang('PERM_EDIT_OTHERS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px;">
+						<input type="checkbox" name="delete[{{ pg.perm_group_id }}]" value="1" {% if pg.permissions_array.delete %}checked="checked"{% endif %} /> {{ lang('PERM_DELETE_OTHERS') }}
+					</label>
 				</dd>
 			</dl>
 			<p class="submit-buttons" style="margin-top: 10px;">
@@ -170,6 +182,18 @@
 				</label>
 				<label style="display: inline-block; margin-right: 15px;">
 					<input type="checkbox" name="new_copy" value="1" /> {{ lang('PERM_COPY') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_edit_own" value="1" /> {{ lang('PERM_EDIT_OWN') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_delete_own" value="1" /> {{ lang('PERM_DELETE_OWN') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_edit" value="1" /> {{ lang('PERM_EDIT_OTHERS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px;">
+					<input type="checkbox" name="new_delete" value="1" /> {{ lang('PERM_DELETE_OTHERS') }}
 				</label>
 			</dd>
 		</dl>

@@ -131,16 +131,33 @@
 	var groupNames = {{ GROUP_NAMES_JSON|raw }};
 
 	function getDefinition(id) {
-        if (!definitions) return null;
-        for (var key in definitions) {
-            if (definitions.hasOwnProperty(key)) {
-                var def = definitions[key];
-                if (def.id == id) {
-                    return def;
-                }
-            }
-        }
+		if (!definitions || id === undefined || id === null) return null;
+		var strId = String(id).trim();
+		for (var key in definitions) {
+			if (definitions.hasOwnProperty(key)) {
+				var def = definitions[key];
+				if (!def) continue;
+				if (String(def.id) === strId || String(def.def_id) === strId || String(key) === strId) {
+					return def;
+				}
+			}
+		}
 		return null;
+	}
+
+	function parseJsonField(val) {
+		if (!val) return [];
+		if (Array.isArray(val)) return val;
+		if (typeof val === 'object') return val;
+		if (typeof val === 'string') {
+			try {
+				var parsed = JSON.parse(val);
+				return Array.isArray(parsed) ? parsed : (parsed || []);
+			} catch (e) {
+				return [];
+			}
+		}
+		return [];
 	}
 
 	function getActiveNoteMode() {
@@ -157,22 +174,17 @@
 		var modeRow = document.getElementById('note_mode_row');
 		var descRow = document.getElementById('description_row');
 		var pregensContainer = document.getElementById('pregenerated_note_fields_container');
+		var pregensRadio = document.getElementById('note_mode_pregenerated');
+		var userRadio = document.getElementById('note_mode_user');
+
+		if (modeRow) modeRow.style.display = 'none';
 
 		if (def && def.enable_note_template) {
-			if (modeRow) modeRow.style.display = 'block';
-			var currentMode = getActiveNoteMode();
-
-			if (currentMode === 'pregenerated') {
-				if (descRow) descRow.style.display = 'none';
-				if (pregensContainer) pregensContainer.style.display = 'block';
-				renderNoteTemplateFields(def);
-			} else {
-				if (descRow) descRow.style.display = 'block';
-				if (pregensContainer) pregensContainer.style.display = 'none';
-			}
+			if (pregensRadio) pregensRadio.checked = true;
+			if (descRow) descRow.style.display = 'none';
+			if (pregensContainer) pregensContainer.style.display = 'block';
+			renderNoteTemplateFields(def);
 		} else {
-			if (modeRow) modeRow.style.display = 'none';
-			var userRadio = document.getElementById('note_mode_user');
 			if (userRadio) userRadio.checked = true;
 			if (descRow) descRow.style.display = 'block';
 			if (pregensContainer) pregensContainer.style.display = 'none';
@@ -185,14 +197,7 @@
 		var container = document.getElementById('note_fields_inputs');
 		if (!container) return;
 
-		var fields = [];
-		try {
-			if (def.note_template_fields) {
-				fields = JSON.parse(def.note_template_fields);
-			}
-		} catch (e) {
-			console.error('Error parsing note template fields JSON', e);
-		}
+		var fields = parseJsonField(def.note_template_fields);
 
 		container.innerHTML = '';
 
@@ -202,7 +207,7 @@
 				var dt = document.createElement('dt');
 				var label = document.createElement('label');
 
-				label.textContent = field.name;
+				label.textContent = field.name || '';
 				if (field.mandatory) {
 					var star = document.createElement('span');
 					star.style.color = 'red';
@@ -301,6 +306,10 @@
 		if (def && def.enable_group_action) {
 			if (groupActionPanel) groupActionPanel.style.display = 'block';
 			updateGroupSettingsDropdown(def);
+			var groupActionDetails = document.getElementById('group_action_details');
+			if (groupActionDetails) {
+				groupActionDetails.style.display = (executeGroupActionCheckbox && executeGroupActionCheckbox.checked) ? 'block' : 'none';
+			}
 		} else {
 			if (groupActionPanel) groupActionPanel.style.display = 'none';
 			if (executeGroupActionCheckbox) executeGroupActionCheckbox.checked = false;
@@ -322,14 +331,7 @@
 
 		select.innerHTML = '';
 
-		var settings = [];
-		try {
-			if (def.automation_settings) {
-				settings = JSON.parse(def.automation_settings);
-			}
-		} catch (e) {
-			console.error('Error parsing automation settings', e);
-		}
+		var settings = parseJsonField(def.automation_settings);
 
 		if (settings.length === 0) {
 			var opt = document.createElement('option');
@@ -357,12 +359,7 @@
 		var index = parseInt(select.value, 10);
 		if (isNaN(index)) index = 0;
 
-		var settings = [];
-		try {
-			if (currentDef.automation_settings) {
-				settings = JSON.parse(currentDef.automation_settings);
-			}
-		} catch (e) {}
+		var settings = parseJsonField(currentDef.automation_settings);
 
 		var setting = null;
 		if (settings.length > 0 && settings[index]) {
@@ -431,14 +428,7 @@
 
         if (!fieldsContainer) return;
 
-		var fields = [];
-		try {
-			if (def.public_posting_fields) {
-				fields = JSON.parse(def.public_posting_fields);
-			}
-		} catch (e) {
-            console.error('Error parsing fields JSON', e);
-        }
+		var fields = parseJsonField(def.public_posting_fields);
 
 		fieldsContainer.innerHTML = '';
 
@@ -448,7 +438,7 @@
 				var dt = document.createElement('dt');
 				var label = document.createElement('label');
 
-				label.textContent = field.name;
+				label.textContent = field.name || '';
 				if (field.mandatory) {
 					var star = document.createElement('span');
 					star.style.color = 'red';
@@ -520,6 +510,9 @@
 
         if (typeSelect) {
             typeSelect.addEventListener('change', updateNoteFormMode);
+            if (window.jQuery) {
+                window.jQuery(typeSelect).on('change select2:select', updateNoteFormMode);
+            }
         }
         if (userRadio) {
             userRadio.addEventListener('change', updateNoteFormMode);
@@ -568,6 +561,9 @@
 
         if (settingIndexSelect) {
             settingIndexSelect.addEventListener('change', updateAutomationDetails);
+            if (window.jQuery) {
+                window.jQuery(settingIndexSelect).on('change select2:select', updateAutomationDetails);
+            }
         }
 
         updateNoteFormMode();

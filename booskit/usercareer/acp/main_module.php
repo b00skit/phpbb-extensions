@@ -188,7 +188,7 @@ class main_module
 				$edit_own_all = $request->variable('edit_own', array(0 => 0));
 				$delete_own_all = $request->variable('delete_own', array(0 => 0));
 				$view_all = $request->variable('view', array(0 => 0));
-				$submit_all = $request->variable('submit', array(0 => 0));
+				$submit_perm_all = $request->variable('submit_perm', array(0 => 0));
 				$edit_all = $request->variable('edit', array(0 => 0));
 				$delete_all = $request->variable('delete', array(0 => 0));
 
@@ -203,7 +203,7 @@ class main_module
 					$edit_own = isset($edit_own_all[$perm_group_id]) ? $edit_own_all[$perm_group_id] : 0;
 					$delete_own = isset($delete_own_all[$perm_group_id]) ? $delete_own_all[$perm_group_id] : 0;
 					$view = isset($view_all[$perm_group_id]) ? $view_all[$perm_group_id] : 0;
-					$submit = isset($submit_all[$perm_group_id]) ? $submit_all[$perm_group_id] : 0;
+					$submit = isset($submit_perm_all[$perm_group_id]) ? $submit_perm_all[$perm_group_id] : 0;
 					$edit = isset($edit_all[$perm_group_id]) ? $edit_all[$perm_group_id] : 0;
 					$delete = isset($delete_all[$perm_group_id]) ? $delete_all[$perm_group_id] : 0;
 

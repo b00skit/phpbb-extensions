@@ -86,44 +86,72 @@ class main
 			// Pre-generated Note Mode Processing
 			if ($note_mode === 'pregenerated' && $def && !empty($def['enable_note_template']))
 			{
-				$note_fields_json = isset($def['note_template_fields']) ? $def['note_template_fields'] : '[]';
-				$note_fields_config = json_decode($note_fields_json, true);
+				$note_fields_raw = isset($def['note_template_fields']) ? $def['note_template_fields'] : [];
+				$note_fields_config = is_array($note_fields_raw) ? $note_fields_raw : json_decode($note_fields_raw, true);
 
-				if (is_array($note_fields_config))
+				if (!is_array($note_fields_config))
 				{
-					$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+					$note_fields_config = [];
+				}
 
-					// Mandatory fields validation
-					foreach ($note_fields_config as $field)
+				$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+
+				// Mandatory fields validation
+				foreach ($note_fields_config as $field)
+				{
+					$var = isset($field['variable']) ? $field['variable'] : '';
+					$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
+					if (!empty($field['mandatory']) && $val === '')
 					{
-						$var = isset($field['variable']) ? $field['variable'] : '';
-						$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
-						if (!empty($field['mandatory']) && $val === '')
-						{
-							$field_label = !empty($field['name']) ? $field['name'] : $var;
-							trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
-						}
+						$field_label = !empty($field['name']) ? $field['name'] : $var;
+						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
 					}
+				}
 
-					$replacements = [
-						'{#type}' => $def['name'],
-						'{#creator}' => $this->user->data['username'],
-						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
-						'{#target}' => $this->career_manager->get_username_string($user_id),
-						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
-						'{#posterGroup}' => $this->career_manager->get_primary_group_name($viewer_id),
-					];
+				$target_username = $this->career_manager->get_username_string($user_id);
+				$target_group = $this->career_manager->get_primary_group_name($user_id);
+				$poster_group = $this->career_manager->get_primary_group_name($viewer_id);
 
-					foreach ($note_fields_config as $field)
+				$replacements = [
+					'{#type}' => $def['name'],
+					'{type}' => $def['name'],
+					'{@type}' => $def['name'],
+
+					'{#creator}' => $this->user->data['username'],
+					'{creator}' => $this->user->data['username'],
+					'{@creator}' => $this->user->data['username'],
+
+					'{#date}' => strtoupper(date('d/M/Y', $note_date)),
+					'{date}' => strtoupper(date('d/M/Y', $note_date)),
+					'{@date}' => strtoupper(date('d/M/Y', $note_date)),
+
+					'{#target}' => $target_username,
+					'{target}' => $target_username,
+					'{@target}' => $target_username,
+
+					'{#userGroup}' => $target_group,
+					'{userGroup}' => $target_group,
+					'{@userGroup}' => $target_group,
+
+					'{#posterGroup}' => $poster_group,
+					'{posterGroup}' => $poster_group,
+					'{@posterGroup}' => $poster_group,
+				];
+
+				foreach ($note_fields_config as $field)
+				{
+					$var = isset($field['variable']) ? $field['variable'] : '';
+					if ($var !== '')
 					{
-						$var = isset($field['variable']) ? $field['variable'] : '';
 						$val = isset($note_fields_data[$var]) ? $note_fields_data[$var] : '';
 						$replacements['{@' . $var . '}'] = $val;
+						$replacements['{' . $var . '}'] = $val;
+						$replacements['{#' . $var . '}'] = $val;
 					}
-
-					$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
-					$description = strtr($tpl_body, $replacements);
 				}
+
+				$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
+				$description = strtr($tpl_body, $replacements);
 			}
 
 			// Parse BBCode
@@ -140,8 +168,8 @@ class main
 				$poster_id = !empty($def['public_posting_poster_id']) ? (int) $def['public_posting_poster_id'] : (int) $viewer_id;
 
 				$use_note_fields = !empty($def['inherit_note_fields']) && !empty($def['enable_note_template']);
-				$fields_json = $use_note_fields ? $def['note_template_fields'] : $def['public_posting_fields'];
-				$fields_config = json_decode($fields_json, true);
+				$fields_raw = $use_note_fields ? $def['note_template_fields'] : $def['public_posting_fields'];
+				$fields_config = is_array($fields_raw) ? $fields_raw : json_decode($fields_raw, true);
 
 				if (is_array($fields_config))
 				{
@@ -149,20 +177,46 @@ class main
 						? $this->request->variable('note_fields', array('' => ''), true)
 						: $this->request->variable('custom_fields', array('' => ''), true);
 
+					$target_username = $this->career_manager->get_username_string($user_id);
+					$target_group = $this->career_manager->get_primary_group_name($user_id);
+					$poster_group = $this->career_manager->get_primary_group_name($poster_id);
+
 					$replacements = [
 						'{#type}' => $def['name'],
+						'{type}' => $def['name'],
+						'{@type}' => $def['name'],
+
 						'{#creator}' => $this->user->data['username'],
+						'{creator}' => $this->user->data['username'],
+						'{@creator}' => $this->user->data['username'],
+
 						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
-						'{#target}' => $this->career_manager->get_username_string($user_id),
-						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
-						'{#posterGroup}' => $this->career_manager->get_primary_group_name($poster_id),
+						'{date}' => strtoupper(date('d/M/Y', $note_date)),
+						'{@date}' => strtoupper(date('d/M/Y', $note_date)),
+
+						'{#target}' => $target_username,
+						'{target}' => $target_username,
+						'{@target}' => $target_username,
+
+						'{#userGroup}' => $target_group,
+						'{userGroup}' => $target_group,
+						'{@userGroup}' => $target_group,
+
+						'{#posterGroup}' => $poster_group,
+						'{posterGroup}' => $poster_group,
+						'{@posterGroup}' => $poster_group,
 					];
 
 					foreach ($fields_config as $field)
 					{
 						$var = isset($field['variable']) ? $field['variable'] : '';
-						$val = isset($custom_fields_data[$var]) ? $custom_fields_data[$var] : '';
-						$replacements['{@' . $var . '}'] = $val;
+						if ($var !== '')
+						{
+							$val = isset($custom_fields_data[$var]) ? $custom_fields_data[$var] : '';
+							$replacements['{@' . $var . '}'] = $val;
+							$replacements['{' . $var . '}'] = $val;
+							$replacements['{#' . $var . '}'] = $val;
+						}
 					}
 
 					$subject = strtr($def['public_posting_subject_tpl'], $replacements);
@@ -301,43 +355,71 @@ class main
 			// Pre-generated Note Mode Processing
 			if ($note_mode === 'pregenerated' && $def && !empty($def['enable_note_template']))
 			{
-				$note_fields_json = isset($def['note_template_fields']) ? $def['note_template_fields'] : '[]';
-				$note_fields_config = json_decode($note_fields_json, true);
+				$note_fields_raw = isset($def['note_template_fields']) ? $def['note_template_fields'] : [];
+				$note_fields_config = is_array($note_fields_raw) ? $note_fields_raw : json_decode($note_fields_raw, true);
 
-				if (is_array($note_fields_config))
+				if (!is_array($note_fields_config))
 				{
-					$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+					$note_fields_config = [];
+				}
 
-					foreach ($note_fields_config as $field)
+				$note_fields_data = $this->request->variable('note_fields', array('' => ''), true);
+
+				foreach ($note_fields_config as $field)
+				{
+					$var = isset($field['variable']) ? $field['variable'] : '';
+					$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
+					if (!empty($field['mandatory']) && $val === '')
 					{
-						$var = isset($field['variable']) ? $field['variable'] : '';
-						$val = isset($note_fields_data[$var]) ? trim($note_fields_data[$var]) : '';
-						if (!empty($field['mandatory']) && $val === '')
-						{
-							$field_label = !empty($field['name']) ? $field['name'] : $var;
-							trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
-						}
+						$field_label = !empty($field['name']) ? $field['name'] : $var;
+						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
 					}
+				}
 
-					$replacements = [
-						'{#type}' => $def['name'],
-						'{#creator}' => $this->user->data['username'],
-						'{#date}' => strtoupper(date('d/M/Y', $note_date)),
-						'{#target}' => $this->career_manager->get_username_string($user_id),
-						'{#userGroup}' => $this->career_manager->get_primary_group_name($user_id),
-						'{#posterGroup}' => $this->career_manager->get_primary_group_name($viewer_id),
-					];
+				$target_username = $this->career_manager->get_username_string($user_id);
+				$target_group = $this->career_manager->get_primary_group_name($user_id);
+				$poster_group = $this->career_manager->get_primary_group_name($viewer_id);
 
-					foreach ($note_fields_config as $field)
+				$replacements = [
+					'{#type}' => $def['name'],
+					'{type}' => $def['name'],
+					'{@type}' => $def['name'],
+
+					'{#creator}' => $this->user->data['username'],
+					'{creator}' => $this->user->data['username'],
+					'{@creator}' => $this->user->data['username'],
+
+					'{#date}' => strtoupper(date('d/M/Y', $note_date)),
+					'{date}' => strtoupper(date('d/M/Y', $note_date)),
+					'{@date}' => strtoupper(date('d/M/Y', $note_date)),
+
+					'{#target}' => $target_username,
+					'{target}' => $target_username,
+					'{@target}' => $target_username,
+
+					'{#userGroup}' => $target_group,
+					'{userGroup}' => $target_group,
+					'{@userGroup}' => $target_group,
+
+					'{#posterGroup}' => $poster_group,
+					'{posterGroup}' => $poster_group,
+					'{@posterGroup}' => $poster_group,
+				];
+
+				foreach ($note_fields_config as $field)
+				{
+					$var = isset($field['variable']) ? $field['variable'] : '';
+					if ($var !== '')
 					{
-						$var = isset($field['variable']) ? $field['variable'] : '';
 						$val = isset($note_fields_data[$var]) ? $note_fields_data[$var] : '';
 						$replacements['{@' . $var . '}'] = $val;
+						$replacements['{' . $var . '}'] = $val;
+						$replacements['{#' . $var . '}'] = $val;
 					}
-
-					$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
-					$description = strtr($tpl_body, $replacements);
 				}
+
+				$tpl_body = !empty($def['note_template_body_tpl']) ? $def['note_template_body_tpl'] : '';
+				$description = strtr($tpl_body, $replacements);
 			}
 
 			// Parse BBCode

@@ -173,6 +173,10 @@ class commendations_manager
 			'view' => false,
 			'submit' => false,
 			'copy' => false,
+			'edit_own' => false,
+			'delete_own' => false,
+			'edit' => false,
+			'delete' => false,
 		];
 
 		foreach ($perm_groups as $pg)
@@ -218,6 +222,10 @@ class commendations_manager
 				if (!empty($perms['view'])) $effective['view'] = true;
 				if (!empty($perms['submit'])) $effective['submit'] = true;
 				if (!empty($perms['copy'])) $effective['copy'] = true;
+				if (!empty($perms['edit_own'])) $effective['edit_own'] = true;
+				if (!empty($perms['delete_own'])) $effective['delete_own'] = true;
+				if (!empty($perms['edit'])) $effective['edit'] = true;
+				if (!empty($perms['delete'])) $effective['delete'] = true;
 			}
 		}
 
@@ -273,7 +281,8 @@ class commendations_manager
 		if ($this->get_perm_system() === 'groups')
 		{
 			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
-			if (!empty($effective['submit'])) return true;
+			if (!empty($effective['edit'])) return true;
+			if ($viewer_id == $issuer_id && !empty($effective['edit_own'])) return true;
 			return false;
 		}
 
@@ -290,7 +299,23 @@ class commendations_manager
 
 	public function can_delete_commendation($viewer_id, $target_user_id, $issuer_id)
 	{
-		return $this->can_edit_commendation($viewer_id, $target_user_id, $issuer_id);
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			if (!empty($effective['delete'])) return true;
+			if ($viewer_id == $issuer_id && !empty($effective['delete_own'])) return true;
+			return false;
+		}
+
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		if ($viewer_level === 0) return false;
+		$target_level = $this->get_user_role_level($target_user_id);
+		$is_issuer = ($issuer_id == $viewer_id);
+		if ($viewer_level === 4 || $is_issuer || ($viewer_level >= 2 && $viewer_level > $target_level))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	public function get_user_view_access($user_id, $target_user_id = null)

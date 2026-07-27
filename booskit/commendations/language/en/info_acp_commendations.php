@@ -54,6 +54,10 @@ $lang = array_merge($lang, array(
 	'PERM_VIEW'									=> 'View Commendations',
 	'PERM_SUBMIT'								=> 'Submit Commendations',
 	'PERM_COPY'									=> 'Copy to Clipboard',
+	'PERM_EDIT_OWN'								=> 'Can Edit Own Entries',
+	'PERM_DELETE_OWN'							=> 'Can Delete Own Entries',
+	'PERM_EDIT_OTHERS'							=> 'Edit Others Commendations',
+	'PERM_DELETE_OTHERS'						=> 'Delete Others Commendations',
 	'ADD_PERMISSION_GROUP'						=> 'Add Permission Group',
 
 	'CLIPBOARD_SETTINGS'						=> 'Clipboard Settings',

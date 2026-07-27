@@ -65,11 +65,19 @@ class main_module
 				$view = $request->variable('new_view', 0);
 				$submit = $request->variable('new_submit', 0);
 				$copy = $request->variable('new_copy', 0);
+				$edit_own = $request->variable('new_edit_own', 0);
+				$delete_own = $request->variable('new_delete_own', 0);
+				$edit = $request->variable('new_edit', 0);
+				$delete = $request->variable('new_delete', 0);
 
 				$permissions = [
 					'view' => $view,
 					'submit' => $submit,
 					'copy' => $copy,
+					'edit_own' => $edit_own,
+					'delete_own' => $delete_own,
+					'edit' => $edit,
+					'delete' => $delete,
 				];
 
 				if (!empty($group_name))
@@ -92,6 +100,10 @@ class main_module
 				$view_all = $request->variable('view', array(0 => 0));
 				$submit_perm_all = $request->variable('submit_perm', array(0 => 0));
 				$copy_perm_all = $request->variable('copy_perm', array(0 => 0));
+				$edit_own_all = $request->variable('edit_own', array(0 => 0));
+				$delete_own_all = $request->variable('delete_own', array(0 => 0));
+				$edit_all = $request->variable('edit', array(0 => 0));
+				$delete_all = $request->variable('delete', array(0 => 0));
 
 				if ($perm_group_id && isset($group_names[$perm_group_id]))
 				{
@@ -104,11 +116,19 @@ class main_module
 					$view = isset($view_all[$perm_group_id]) ? $view_all[$perm_group_id] : 0;
 					$submit = isset($submit_perm_all[$perm_group_id]) ? $submit_perm_all[$perm_group_id] : 0;
 					$copy = isset($copy_perm_all[$perm_group_id]) ? $copy_perm_all[$perm_group_id] : 0;
+					$edit_own = isset($edit_own_all[$perm_group_id]) ? $edit_own_all[$perm_group_id] : 0;
+					$delete_own = isset($delete_own_all[$perm_group_id]) ? $delete_own_all[$perm_group_id] : 0;
+					$edit = isset($edit_all[$perm_group_id]) ? $edit_all[$perm_group_id] : 0;
+					$delete = isset($delete_all[$perm_group_id]) ? $delete_all[$perm_group_id] : 0;
 
 					$permissions = [
 						'view' => $view,
 						'submit' => $submit,
 						'copy' => $copy,
+						'edit_own' => $edit_own,
+						'delete_own' => $delete_own,
+						'edit' => $edit,
+						'delete' => $delete,
 					];
 
 					$commendations_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions);

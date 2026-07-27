@@ -57,15 +57,22 @@ namespace phpbb\db\driver {
     interface driver_interface {}
     class driver implements driver_interface {
         public $rows = [];
+        public $user_groups_override = null;
         public function sql_escape($str) { return addslashes($str); }
         public function sql_in_set($field, $array) { return "$field IN (" . implode(',', array_map('intval', $array)) . ")"; }
-        public function sql_query($sql) { return new DummyResult($this->rows); }
+        public function sql_query($sql) {
+            if ($this->user_groups_override !== null && strpos($sql, 'phpbb_user_group') !== false) {
+                return new DummyResult($this->user_groups_override);
+            }
+            return new DummyResult($this->rows);
+        }
         public function sql_fetchrow($res) {
             if ($res instanceof DummyResult && !empty($res->rows)) {
                 return array_shift($res->rows);
             }
             return false;
         }
+        public function sql_build_array($action, $array) { return "col='val'"; }
         public function sql_freeresult($res) {}
         public function sql_nextid() { return 100; }
     }
@@ -139,6 +146,48 @@ assert_test($manager->get_user_role_level(123) === 4, 'User with group 40 has fu
 $manager = new career_manager($config, $db, $user, $cache, $auth, 'phpbb_usercareer', 'phpbb_usercareer_defs', './', 'php');
 $db->rows = [['group_id' => 10]];
 assert_test($manager->get_user_role_level(123) === 1, 'User with group 10 has role level 1');
+
+// 3. Permission Group Submit Permission Check
+$manager->update_permission_group(1, 'Test Group', [10], 1, 0, [], [], [
+    'view' => 1,
+    'submit' => 1,
+    'edit_own' => 0,
+    'delete_own' => 0,
+    'edit' => 0,
+    'delete' => 0
+]);
+$db->rows = [
+    [
+        'perm_group_id' => 1,
+        'group_name' => 'Test Group',
+        'applies_to' => '10',
+        'power_over_all' => 1,
+        'power_over_self' => 0,
+        'power_over_groups' => '',
+        'exclude_groups' => '',
+        'permissions' => '{"view":1,"submit":1,"edit_own":0,"delete_own":0,"edit":0,"delete":0}'
+    ]
+];
+$db->user_groups_override = [['group_id' => 10]];
+$effective = $manager->get_effective_permissions(123, 456);
+// 4. Test Pre-generated Note Field Replacement
+$tpl_body = "Reason: {note_var_8i45s}, User: {target}, Date: {@date}";
+$replacements = [
+    '{#target}' => 'JohnDoe',
+    '{target}' => 'JohnDoe',
+    '{@target}' => 'JohnDoe',
+    '{#date}' => '01/JAN/2026',
+    '{date}' => '01/JAN/2026',
+    '{@date}' => '01/JAN/2026',
+];
+$field_var = 'note_var_8i45s';
+$field_val = 'Speeding Violation';
+$replacements['{@' . $field_var . '}'] = $field_val;
+$replacements['{' . $field_var . '}'] = $field_val;
+$replacements['{#' . $field_var . '}'] = $field_val;
+
+$parsed = strtr($tpl_body, $replacements);
+assert_test($parsed === "Reason: Speeding Violation, User: JohnDoe, Date: 01/JAN/2026", 'Parses pre-generated note variables without required @ or # prefix');
 
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";

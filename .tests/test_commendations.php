@@ -57,11 +57,17 @@ namespace phpbb\db\driver {
     interface driver_interface {}
     class driver implements driver_interface {
         public $rows = [];
+        public $query_map = [];
         public $query_log = [];
         public function sql_escape($str) { return addslashes($str); }
         public function sql_in_set($field, $array) { return "$field IN (" . implode(',', array_map('intval', $array)) . ")"; }
         public function sql_query($sql) {
             $this->query_log[] = $sql;
+            foreach ($this->query_map as $pattern => $rows) {
+                if (stripos($sql, $pattern) !== false) {
+                    return new DummyResult($rows);
+                }
+            }
             return new DummyResult($this->rows);
         }
         public function sql_fetchrow($res) {
@@ -75,7 +81,7 @@ namespace phpbb\db\driver {
     }
     class DummyResult {
         public $rows;
-        public function __construct($rows = []) { $this->rows = $rows; }
+        public function __construct($rows = []) { $this->rows = is_array($rows) ? $rows : []; }
     }
 }
 
@@ -163,6 +169,52 @@ assert_test($manager->can_delete_commendation(123, 456, 999) === true, 'Level 4 
 $manager = new commendations_manager($config, $db, $user, $cache, $auth, 'phpbb_');
 $db->rows = [['group_id' => 10]]; // Level 1
 assert_test($manager->can_edit_commendation(123, 456, 123) === true, 'Issuer can edit own issued commendation');
+
+// 5. Test Group Permission System Edit / Delete Permissions
+$groups_config = new \phpbb\config\config([
+    'booskit_commendations_perm_system' => 'groups'
+]);
+$manager = new commendations_manager($groups_config, $db, $user, $cache, $auth, 'phpbb_');
+
+// Mock get_permission_groups method by testing effective permissions calculation via mock DB
+// User 10 in group 100, target 200 in group 200
+$perm_group_edit_own = [
+    'perm_group_id' => 1,
+    'group_name' => 'Officer Group',
+    'applies_to' => '100',
+    'power_over_all' => 1,
+    'power_over_self' => 0,
+    'power_over_groups' => '',
+    'exclude_groups' => '',
+    'permissions' => json_encode(['submit' => 1, 'edit_own' => 1, 'delete_own' => 1])
+];
+
+$db->query_map = [
+    'user_group' => [['group_id' => 100], ['group_id' => 200]],
+    'perm_groups' => [$perm_group_edit_own]
+];
+
+assert_test($manager->can_edit_commendation(10, 200, 10) === true, 'Group perms: Issuer can edit own entry with edit_own perm');
+assert_test($manager->can_edit_commendation(10, 200, 999) === false, 'Group perms: User cannot edit someone elses entry without edit perm');
+
+$perm_group_edit_all = [
+    'perm_group_id' => 2,
+    'group_name' => 'Admin Group',
+    'applies_to' => '100',
+    'power_over_all' => 1,
+    'power_over_self' => 0,
+    'power_over_groups' => '',
+    'exclude_groups' => '',
+    'permissions' => json_encode(['submit' => 1, 'edit' => 1, 'delete' => 1])
+];
+
+$db->query_map['perm_groups'] = [$perm_group_edit_all];
+assert_test($manager->can_edit_commendation(10, 200, 999) === true, 'Group perms: User with edit perm can edit others entry');
+assert_test($manager->can_delete_commendation(10, 200, 999) === true, 'Group perms: User with delete perm can delete others entry');
+
+// 6. Test Migration v103
+require_once $ext_dir . '/migrations/v103_edit_delete_permissions.php';
+assert_test(class_exists('\booskit\commendations\migrations\v103_edit_delete_permissions'), 'v103_edit_delete_permissions migration class exists');
 
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";
