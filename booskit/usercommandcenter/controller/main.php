@@ -181,6 +181,14 @@ class main
 	{
 		$this->check_access();
 		$this->user->add_lang_ext('booskit/usercommandcenter', 'ucc');
+		if ($this->ucc_manager->is_ext_enabled('booskit/disciplinary'))
+		{
+			$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
+		}
+		if ($this->ucc_manager->is_ext_enabled('booskit/icdisciplinary'))
+		{
+			$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
+		}
 
 		$start = $this->request->variable('start', 0);
 		$limit = 20;
@@ -253,12 +261,23 @@ class main
 				{
 					$is_archived = !empty($row['is_archived']);
 					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
+
+					$evidence_html = '';
+					if (!empty($row['evidence']) && $this->ucc_manager->can_view_private_notes('disciplinary', $this->user->data['user_id'], $row['user_id'], $row['disciplinary_type_id']))
+					{
+						$evidence_uid = isset($row['evidence_bbcode_uid']) ? $row['evidence_bbcode_uid'] : '';
+						$evidence_bitfield = isset($row['evidence_bbcode_bitfield']) ? $row['evidence_bbcode_bitfield'] : '';
+						$evidence_options = isset($row['evidence_bbcode_options']) ? $row['evidence_bbcode_options'] : 7;
+						$evidence_html = generate_text_for_display($row['evidence'], $evidence_uid, $evidence_bitfield, $evidence_options);
+					}
+
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/disciplinary', $row['disciplinary_type_id'], $defs),
 						'CONTENT' => $content,
+						'EVIDENCE' => $evidence_html,
 						'IS_ARCHIVED' => $is_archived,
 						'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
 						'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',
@@ -276,6 +295,16 @@ class main
 				{
 					$is_archived = !empty($row['is_archived']);
 					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
+
+					$evidence_html = '';
+					if (!empty($row['evidence']) && $this->ucc_manager->can_view_private_notes('ic_disciplinary', $this->user->data['user_id'], $row['user_id'], $row['disciplinary_type_id']))
+					{
+						$evidence_uid = isset($row['evidence_bbcode_uid']) ? $row['evidence_bbcode_uid'] : '';
+						$evidence_bitfield = isset($row['evidence_bbcode_bitfield']) ? $row['evidence_bbcode_bitfield'] : '';
+						$evidence_options = isset($row['evidence_bbcode_options']) ? $row['evidence_bbcode_options'] : 7;
+						$evidence_html = generate_text_for_display($row['evidence'], $evidence_uid, $evidence_bitfield, $evidence_options);
+					}
+
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 						'CHARACTER' => $row['character_name'],
@@ -283,6 +312,7 @@ class main
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/icdisciplinary', $row['disciplinary_type_id'], $defs),
 						'CONTENT' => $content,
+						'EVIDENCE' => $evidence_html,
 						'IS_ARCHIVED' => $is_archived,
 						'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
 						'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',

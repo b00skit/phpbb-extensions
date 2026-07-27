@@ -59,4 +59,7 @@ $lang = array_merge($lang, array(
 	'ARCHIVED_BY'					=> 'Archived by',
 	'UNARCHIVE'						=> 'Unarchive',
 	'ARCHIVE'						=> 'Archive',
+	'COPY_TO_CLIPBOARD'				=> 'Copy to Clipboard',
+	'COPIED_TO_CLIPBOARD'			=> 'Copied to clipboard!',
+	'RESTRICTED_PRIVATE_NOTES'		=> 'Restricted Private Notes',
 ));

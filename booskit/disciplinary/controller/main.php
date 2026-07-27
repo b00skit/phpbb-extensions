@@ -375,6 +375,8 @@ class main
 			$can_delete = $this->disciplinary_manager->can_delete_record($viewer_id, $record);
 			$can_archive = empty($record['is_archived']) && $this->disciplinary_manager->can_archive_record($viewer_id, $record);
 			$can_unarchive = !empty($record['is_archived']) && $this->disciplinary_manager->can_unarchive_record($viewer_id, $record);
+			$can_copy = $this->disciplinary_manager->can_copy_record($viewer_id, $record);
+			$clipboard_text = $can_copy ? $this->disciplinary_manager->format_clipboard_text($record, $target_username, $issuer_name, $definition, !empty($access['show_evidence'])) : '';
 
 			$was_edited = !empty($record['edited_by_user_id']) && !empty($record['last_edited_time']);
 			$edited_by_name = $was_edited ? (isset($user_names[$record['edited_by_user_id']]) ? $user_names[$record['edited_by_user_id']] : $this->user->lang['GUEST']) : '';
@@ -420,6 +422,8 @@ class main
 				'U_DELETE' => $can_delete ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
 				'U_ARCHIVE' => $can_archive ? $this->helper->route('booskit_disciplinary_archive_record', array('record_id' => $record['record_id'])) : '',
 				'U_UNARCHIVE' => $can_unarchive ? $this->helper->route('booskit_disciplinary_unarchive_record', array('record_id' => $record['record_id'])) : '',
+				'S_CAN_COPY' => $can_copy,
+				'CLIPBOARD_TEXT' => utf8_htmlspecialchars($clipboard_text),
 			));
 		}
 

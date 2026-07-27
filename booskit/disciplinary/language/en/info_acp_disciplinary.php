@@ -85,6 +85,11 @@ $lang = array_merge($lang, array(
 	'PERM_UNARCHIVE'					=> 'Unarchive',
 	'PERM_EDIT'							=> 'Edit Others',
 	'PERM_DELETE'						=> 'Delete Others',
+	'PERM_COPY'							=> 'Copy to Clipboard',
+
+	'CLIPBOARD_SETTINGS'				=> 'Clipboard Settings',
+	'BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL' => 'Clipboard Format',
+	'BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL_EXPLAIN' => 'Format string when copying a disciplinary action to the clipboard.<br />Available variables: {METADATA}, {CONTENT}, {PRIVATE}, {TYPE_COLOR}, {TYPE_ID}, {TYPE_NAME}, {TYPE_DESCRIPTION}, {TARGET_NAME}, {ISSUER_NAME}, {DATE}, {RECORD_ID}, {CHARACTER_NAME}.',
 
 	'ID' => 'ID',
 	'NAME' => 'Name',

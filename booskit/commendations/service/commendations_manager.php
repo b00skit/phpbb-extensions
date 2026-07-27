@@ -172,6 +172,7 @@ class commendations_manager
 		$effective = [
 			'view' => false,
 			'submit' => false,
+			'copy' => false,
 		];
 
 		foreach ($perm_groups as $pg)
@@ -216,6 +217,7 @@ class commendations_manager
 			{
 				if (!empty($perms['view'])) $effective['view'] = true;
 				if (!empty($perms['submit'])) $effective['submit'] = true;
+				if (!empty($perms['copy'])) $effective['copy'] = true;
 			}
 		}
 
@@ -580,5 +582,50 @@ class commendations_manager
 		}
 
 		return 0;
+	}
+
+	public function can_copy_commendation($viewer_id, $target_user_id)
+	{
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['copy']);
+		}
+
+		// Legacy system
+		return ($this->get_user_role_level($viewer_id) >= 1);
+	}
+
+	public function format_clipboard_text($comm, $target_username, $issuer_username)
+	{
+		$tpl = isset($this->config['booskit_commendations_clipboard_tpl']) ? $this->config['booskit_commendations_clipboard_tpl'] : "{METADATA}\n\n{CONTENT}";
+		$date_str = $this->user->format_date($comm['commendation_date'], 'D M d, Y');
+		$type_id = (strtolower($comm['commendation_type']) === 'ic') ? 'ic' : 'ooc';
+		$type_name = ($type_id === 'ic') ? 'IC Commendation' : 'OOC Commendation';
+		$metadata = "Issued to: " . $target_username . " - Issued by: " . $issuer_username . " - Date Issued: " . $date_str . " - " . $type_name;
+		$char_name = isset($comm['character_name']) ? $comm['character_name'] : '';
+
+		$bbcode_uid = isset($comm['bbcode_uid']) ? $comm['bbcode_uid'] : '';
+		$bbcode_options = isset($comm['bbcode_options']) ? (int) $comm['bbcode_options'] : 7;
+		$reason_data = generate_text_for_edit($comm['reason'], $bbcode_uid, $bbcode_options);
+		$reason_raw = isset($reason_data['text']) ? $reason_data['text'] : $comm['reason'];
+
+		$replacements = [
+			'{METADATA}'         => $metadata,
+			'{CONTENT}'          => $reason_raw,
+			'{PRIVATE}'          => '',
+			'{TYPE_COLOR}'       => '',
+			'{TYPE_ID}'          => $type_id,
+			'{TYPE_NAME}'        => $type_name,
+			'{TYPE_DESCRIPTION}' => '',
+			'{TARGET_NAME}'      => $target_username,
+			'{RECIPIENT_NAME}'   => $target_username,
+			'{ISSUER_NAME}'      => $issuer_username,
+			'{DATE}'             => $date_str,
+			'{RECORD_ID}'        => isset($comm['commendation_id']) ? $comm['commendation_id'] : '',
+			'{CHARACTER_NAME}'   => $char_name,
+		];
+
+		return str_replace(array_keys($replacements), array_values($replacements), $tpl);
 	}
 }

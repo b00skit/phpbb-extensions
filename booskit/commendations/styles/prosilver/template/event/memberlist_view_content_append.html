@@ -18,6 +18,9 @@
 					<span class="commendation-date">{{ comm.DATE }}</span>
 					<span class="commendation-character">{{ lang('COMMENDATION_CHARACTER') }}{{ lang('COLON') }} <strong>{{ comm.CHARACTER }}</strong></span>
 					<div class="commendation-actions">
+						{% if comm.S_CAN_COPY %}
+						<a href="#" class="btn-booskit-copy" data-clipboard-text="{{ comm.CLIPBOARD_TEXT }}" title="{{ lang('COPY_TO_CLIPBOARD') }}" onclick="booskitCopyToClipboard(this); return false;"><i class="icon fa-clipboard fa-fw" aria-hidden="true"></i></a>
+						{% endif %}
 						{% if comm.U_EDIT %}
 						<a href="{{ comm.U_EDIT }}" title="{{ lang('EDIT') }}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
 						{% endif %}
@@ -45,4 +48,31 @@
 		{% endif %}
 	</div>
 </div>
+
+<script>
+if (typeof booskitCopyToClipboard === 'undefined') {
+	window.booskitCopyToClipboard = function(el) {
+		var text = el.getAttribute('data-clipboard-text');
+		if (!text) return;
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function() {
+				alert('{{ lang('COPIED_TO_CLIPBOARD') }}');
+			}).catch(function() {
+				fallbackCopy(text);
+			});
+		} else {
+			fallbackCopy(text);
+		}
+		function fallbackCopy(txt) {
+			var ta = document.createElement('textarea');
+			ta.value = txt;
+			document.body.appendChild(ta);
+			ta.select();
+			document.execCommand('copy');
+			document.body.removeChild(ta);
+			alert('{{ lang('COPIED_TO_CLIPBOARD') }}');
+		}
+	};
+}
+</script>
 {% endif %}

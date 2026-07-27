@@ -53,7 +53,12 @@ $lang = array_merge($lang, array(
 	'ENTRY_PERMISSIONS'							=> 'Permissions',
 	'PERM_VIEW'									=> 'View Commendations',
 	'PERM_SUBMIT'								=> 'Submit Commendations',
+	'PERM_COPY'									=> 'Copy to Clipboard',
 	'ADD_PERMISSION_GROUP'						=> 'Add Permission Group',
+
+	'CLIPBOARD_SETTINGS'						=> 'Clipboard Settings',
+	'BOOSKIT_COMMENDATIONS_CLIPBOARD_TPL'		=> 'Clipboard Format',
+	'BOOSKIT_COMMENDATIONS_CLIPBOARD_TPL_EXPLAIN' => 'Format string when copying a commendation to the clipboard.<br />Available variables: {METADATA}, {CONTENT}, {PRIVATE}, {TYPE_COLOR}, {TYPE_ID}, {TYPE_NAME}, {TYPE_DESCRIPTION}, {TARGET_NAME}, {ISSUER_NAME}, {DATE}, {RECORD_ID}, {CHARACTER_NAME}.',
 
 	'PUBLIC_POSTING_SETTINGS'					=> 'Public Posting Settings',
 	'ENABLE_PUBLIC_POSTING'						=> 'Enable Public Posting',

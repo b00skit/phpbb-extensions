@@ -71,9 +71,14 @@ class listener implements EventSubscriberInterface
 		}
 		$issuer_names = $this->commendations_manager->get_usernames(array_unique($issuer_ids));
 
+		$target_username = $this->commendations_manager->get_username_string($user_id);
+		$can_copy = $this->commendations_manager->can_copy_commendation($this->user->data['user_id'], $user_id);
+
 		foreach ($commendations as $comm)
 		{
 			$has_access = $this->commendations_manager->can_edit_commendation($this->user->data['user_id'], $user_id, $comm['issuer_user_id']);
+			$issuer_name = isset($issuer_names[$comm['issuer_user_id']]) ? $issuer_names[$comm['issuer_user_id']] : 'Unknown';
+			$clipboard_text = $can_copy ? $this->commendations_manager->format_clipboard_text($comm, $target_username, $issuer_name) : '';
 
 			// Render BBCode
 			$bbcode_uid = isset($comm['bbcode_uid']) ? $comm['bbcode_uid'] : '';
@@ -88,10 +93,12 @@ class listener implements EventSubscriberInterface
 				'CHARACTER' => $comm['character_name'],
 				'REASON' => $reason_html,
 				'DATE' => $this->user->format_date($comm['commendation_date'], 'D M d, Y'),
-				'ISSUER' => isset($issuer_names[$comm['issuer_user_id']]) ? $issuer_names[$comm['issuer_user_id']] : 'Unknown',
+				'ISSUER' => $issuer_name,
 				'U_ISSUER' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $comm['issuer_user_id']),
 				'U_EDIT' => $has_access ? $this->helper->route('booskit_commendations_edit', array('commendation_id' => $comm['commendation_id'])) : '',
 				'U_REMOVE' => $has_access ? $this->helper->route('booskit_commendations_remove', array('commendation_id' => $comm['commendation_id'])) : '',
+				'S_CAN_COPY' => $can_copy,
+				'CLIPBOARD_TEXT' => utf8_htmlspecialchars($clipboard_text),
 			));
 		}
 

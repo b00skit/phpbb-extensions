@@ -84,6 +84,17 @@
 	</p>
 </fieldset>
 
+<fieldset>
+	<legend>{{ lang('CLIPBOARD_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_disciplinary_clipboard_tpl">{{ lang('BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL_EXPLAIN') }}</span></dt>
+		<dd><textarea id="booskit_disciplinary_clipboard_tpl" name="booskit_disciplinary_clipboard_tpl" rows="6" style="width: 95%;">{{ BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL }}</textarea></dd>
+	</dl>
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
 <div id="booskit_disciplinary_groups_settings">
 	<fieldset>
 		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
@@ -160,6 +171,7 @@
 								<th style="text-align: center;">{{ lang('PERM_UNARCHIVE') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_EDIT') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_DELETE') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_COPY') }}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -192,6 +204,9 @@
 								</td>
 								<td style="text-align: center;">
 									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][delete]" value="1" {% if type_perms[def.id]['delete'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][copy]" value="1" {% if type_perms[def.id]['copy'] %}checked="checked"{% endif %} />
 								</td>
 							</tr>
 							{% endfor %}

@@ -23,6 +23,11 @@
 				{% endif %}
 				<div class="ucc-item-type">{{ item.TYPE }} {% if S_IC_DISCIPLINARY %}({{ item.CHARACTER }}){% endif %}{% if item.IS_ARCHIVED %} <span class="ucc-badge-archived" style="background: #7f8c8d; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.8em; text-transform: uppercase;">Archived</span>{% endif %}</div>
 				<div class="ucc-item-content">{{ item.CONTENT | raw }}</div>
+				{% if item.EVIDENCE %}
+				<div class="ucc-item-evidence" style="margin-top: 6px; font-size: 0.9em; border-top: 1px dashed #ddd; padding-top: 6px;">
+					<strong>{{ lang('PRIVATE_NOTES') }}:</strong> {{ item.EVIDENCE | raw }}
+				</div>
+				{% endif %}
 			</div>
 			<div class="ucc-item-meta">
 				<span class="ucc-item-meta-issuer">{{ item.ISSUER }}</span>

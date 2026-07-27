@@ -200,6 +200,8 @@ class disciplinary_module
 				$config->set('booskit_disciplinary_access_view_global', $request->variable('booskit_disciplinary_access_view_global', ''));
 				$config->set('booskit_disciplinary_access_view_limited_map', $request->variable('booskit_disciplinary_access_view_limited_map', '', true));
 
+				$config->set('booskit_disciplinary_clipboard_tpl', $request->variable('booskit_disciplinary_clipboard_tpl', '', true));
+
 				// Ruleset
 				$ruleset_text = $request->variable('booskit_disciplinary_ruleset', '', true);
 				$ruleset_uid = $request->variable('booskit_disciplinary_ruleset_uid', '');
@@ -249,6 +251,7 @@ class disciplinary_module
 			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED' => $config['booskit_disciplinary_access_view_limited'],
 			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_GLOBAL' => $config['booskit_disciplinary_access_view_global'],
 			'BOOSKIT_DISCIPLINARY_ACCESS_VIEW_LIMITED_MAP' => $config['booskit_disciplinary_access_view_limited_map'],
+			'BOOSKIT_DISCIPLINARY_CLIPBOARD_TPL' => isset($config['booskit_disciplinary_clipboard_tpl']) ? $config['booskit_disciplinary_clipboard_tpl'] : '',
 			'LOCAL_DEFINITIONS'				=> $local_definitions,
 			'DEFINITIONS'					=> $definitions,
 			'PHPBB_GROUPS'					=> $phpbb_groups,

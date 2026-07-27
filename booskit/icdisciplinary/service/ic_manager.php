@@ -550,6 +550,7 @@ class ic_manager
 				'unarchive' => false,
 				'edit' => false,
 				'delete' => false,
+				'copy' => false,
 			];
 		}
 
@@ -638,6 +639,7 @@ class ic_manager
 								'unarchive' => false,
 								'edit' => false,
 								'delete' => false,
+								'copy' => false,
 							];
 						}
 						if (!empty($p['view']))
@@ -675,6 +677,10 @@ class ic_manager
 						if (!empty($p['delete']))
 						{
 							$effective['types'][$def_id]['delete'] = true;
+						}
+						if (!empty($p['copy']))
+						{
+							$effective['types'][$def_id]['copy'] = true;
 						}
 					}
 				}
@@ -904,5 +910,67 @@ class ic_manager
 		}
 
 		return ['allowed' => false, 'show_evidence' => false];
+	}
+
+	public function can_copy_record($viewer_id, $record, $target_user_id)
+	{
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['types'][$def_id]['copy']);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		return ($viewer_level > 0);
+	}
+
+	public function format_clipboard_text($record, $character_name, $issuer_username, $definition = null, $can_view_private = false)
+	{
+		$tpl = isset($this->config['booskit_icdisciplinary_clipboard_tpl']) ? $this->config['booskit_icdisciplinary_clipboard_tpl'] : "{METADATA}\n\n{CONTENT}\n\n{PRIVATE}";
+		$date_str = $this->user->format_date($record['issue_date'], 'D M d, Y');
+		$type_id = isset($record['disciplinary_type_id']) ? $record['disciplinary_type_id'] : '';
+		$type_name = $definition ? $definition['name'] : $type_id;
+		$type_desc = $definition ? (isset($definition['description']) ? $definition['description'] : '') : '';
+		$type_color = $definition ? (isset($definition['color']) ? $definition['color'] : '') : '';
+		$metadata = "Issued to: " . $character_name . " - Issued by: " . $issuer_username . " - Date Issued: " . $date_str . " - " . $type_name;
+
+		$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
+		$reason_options = isset($record['reason_bbcode_options']) ? (int) $record['reason_bbcode_options'] : 7;
+		$reason_data = generate_text_for_edit($record['reason'], $reason_uid, $reason_options);
+		$reason_raw = isset($reason_data['text']) ? $reason_data['text'] : (isset($record['reason']) ? $record['reason'] : '');
+
+		$private_notes = '';
+		if (!$can_view_private)
+		{
+			$private_notes = isset($this->user->lang['RESTRICTED_PRIVATE_NOTES']) ? $this->user->lang['RESTRICTED_PRIVATE_NOTES'] : 'Restricted Private Notes';
+		}
+		else if (!empty($record['evidence']))
+		{
+			$evidence_uid = isset($record['evidence_bbcode_uid']) ? $record['evidence_bbcode_uid'] : '';
+			$evidence_options = isset($record['evidence_bbcode_options']) ? (int) $record['evidence_bbcode_options'] : 7;
+			$evidence_data = generate_text_for_edit($record['evidence'], $evidence_uid, $evidence_options);
+			$private_notes = isset($evidence_data['text']) ? $evidence_data['text'] : $record['evidence'];
+		}
+
+		$replacements = [
+			'{METADATA}'         => $metadata,
+			'{CONTENT}'          => $reason_raw,
+			'{PRIVATE}'          => $private_notes,
+			'{TYPE_COLOR}'       => $type_color,
+			'{TYPE_ID}'          => $type_id,
+			'{TYPE_NAME}'        => $type_name,
+			'{TYPE_DESCRIPTION}' => $type_desc,
+			'{TARGET_NAME}'      => $character_name,
+			'{RECIPIENT_NAME}'   => $character_name,
+			'{ISSUER_NAME}'      => $issuer_username,
+			'{DATE}'             => $date_str,
+			'{RECORD_ID}'        => isset($record['record_id']) ? $record['record_id'] : '',
+			'{CHARACTER_NAME}'   => $character_name,
+		];
+
+		return str_replace(array_keys($replacements), array_values($replacements), $tpl);
 	}
 }

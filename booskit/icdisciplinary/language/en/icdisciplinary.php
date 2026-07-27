@@ -80,4 +80,7 @@ $lang = array_merge($lang, array(
 	'ACTION'						=> 'Action',
 	'DATE'							=> 'Date',
 	'CHARACTER_NAME_EMPTY'			=> 'Character name cannot be empty.',
+	'COPY_TO_CLIPBOARD'				=> 'Copy to Clipboard',
+	'COPIED_TO_CLIPBOARD'			=> 'Copied to clipboard!',
+	'RESTRICTED_PRIVATE_NOTES'		=> 'Restricted Private Notes',
 ));

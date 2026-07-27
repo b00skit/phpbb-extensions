@@ -718,4 +718,156 @@ class ucc_manager
 		$this->db->sql_freeresult($result);
 		return $usernames;
 	}
+
+	public function can_view_private_notes($module, $viewer_id, $target_user_id, $def_id)
+	{
+		$viewer_groups = $this->get_user_groups($viewer_id);
+
+		if ($module === 'disciplinary')
+		{
+			if (isset($this->config['booskit_disciplinary_perm_system']) && $this->config['booskit_disciplinary_perm_system'] === 'groups')
+			{
+				return $this->check_groups_private_notes_perm('disciplinary', $viewer_id, $target_user_id, $def_id, $viewer_groups);
+			}
+
+			// Legacy system
+			$l1 = $this->get_config_groups('booskit_disciplinary_access_l1');
+			$l2 = $this->get_config_groups('booskit_disciplinary_access_l2');
+			$l3 = $this->get_config_groups('booskit_disciplinary_access_l3');
+			$full = $this->get_config_groups('booskit_disciplinary_access_full');
+
+			$viewer_level = 0;
+			if (array_intersect($viewer_groups, $full)) $viewer_level = 4;
+			else if (array_intersect($viewer_groups, $l3)) $viewer_level = 3;
+			else if (array_intersect($viewer_groups, $l2)) $viewer_level = 2;
+			else if (array_intersect($viewer_groups, $l1)) $viewer_level = 1;
+
+			$target_groups = $this->get_user_groups($target_user_id);
+			$target_level = 0;
+			if (array_intersect($target_groups, $full)) $target_level = 4;
+			else if (array_intersect($target_groups, $l3)) $target_level = 3;
+			else if (array_intersect($target_groups, $l2)) $target_level = 2;
+			else if (array_intersect($target_groups, $l1)) $target_level = 1;
+
+			if ($viewer_level > 0 && ($viewer_level === 4 || $viewer_level > $target_level))
+			{
+				return true;
+			}
+
+			$exempted = $this->get_config_groups('booskit_disciplinary_access_view_exempted');
+			if ($viewer_id == $target_user_id && array_intersect($viewer_groups, $exempted))
+			{
+				return true;
+			}
+
+			return false;
+		}
+		else if ($module === 'ic_disciplinary')
+		{
+			if (isset($this->config['booskit_icdisciplinary_perm_system']) && $this->config['booskit_icdisciplinary_perm_system'] === 'groups')
+			{
+				return $this->check_groups_private_notes_perm('ic_disciplinary', $viewer_id, $target_user_id, $def_id, $viewer_groups);
+			}
+
+			// Legacy system
+			$l1 = $this->get_config_groups('booskit_icdisciplinary_access_l1');
+			$l2 = $this->get_config_groups('booskit_icdisciplinary_access_l2');
+			$full = $this->get_config_groups('booskit_icdisciplinary_access_full');
+
+			$viewer_level = 0;
+			if (array_intersect($viewer_groups, $full)) $viewer_level = 4;
+			else if (array_intersect($viewer_groups, $l2)) $viewer_level = 2;
+			else if (array_intersect($viewer_groups, $l1)) $viewer_level = 1;
+
+			$target_groups = $this->get_user_groups($target_user_id);
+			$target_level = 0;
+			if (array_intersect($target_groups, $full)) $target_level = 4;
+			else if (array_intersect($target_groups, $l2)) $target_level = 2;
+			else if (array_intersect($target_groups, $l1)) $target_level = 1;
+
+			if ($viewer_level > 0 && ($viewer_level === 4 || $viewer_level > $target_level))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		return false;
+	}
+
+	protected function check_groups_private_notes_perm($module, $viewer_id, $target_user_id, $def_id, $viewer_groups)
+	{
+		$table = ($module === 'disciplinary') ? $this->table_prefix . 'booskit_disciplinary_perm_groups' : $this->table_prefix . 'booskit_icdisciplinary_perm_groups';
+		
+		$sql = 'SELECT * FROM ' . $table . ' ORDER BY perm_group_id ASC';
+		$result = @$this->db->sql_query($sql);
+		if (!$result)
+		{
+			return false;
+		}
+
+		$target_groups = null;
+
+		while ($pg = $this->db->sql_fetchrow($result))
+		{
+			$applies_to = !empty($pg['applies_to']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['applies_to'])))) : [];
+			if (empty($applies_to) || !array_intersect($viewer_groups, $applies_to))
+			{
+				continue;
+			}
+
+			$perms = !empty($pg['permissions']) ? json_decode($pg['permissions'], true) : [];
+			if (empty($perms['types'][$def_id]['view_private_notes']))
+			{
+				continue;
+			}
+
+			// Check power over target user
+			$has_power = false;
+			if (!empty($pg['power_over_all']))
+			{
+				$has_power = true;
+			}
+			if (!$has_power && !empty($pg['power_over_self']) && $viewer_id == $target_user_id)
+			{
+				$has_power = true;
+			}
+			if (!$has_power && !empty($pg['power_over_groups']))
+			{
+				if ($target_groups === null)
+				{
+					$target_groups = $this->get_user_groups($target_user_id);
+				}
+				$power_over_groups = array_map('intval', array_filter(array_map('trim', explode(',', $pg['power_over_groups']))));
+				if (array_intersect($target_groups, $power_over_groups))
+				{
+					$has_power = true;
+				}
+			}
+
+			if ($has_power)
+			{
+				// Check exclude groups
+				$exclude_groups = !empty($pg['exclude_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['exclude_groups'])))) : [];
+				if (!empty($exclude_groups))
+				{
+					if ($target_groups === null)
+					{
+						$target_groups = $this->get_user_groups($target_user_id);
+					}
+					if (array_intersect($target_groups, $exclude_groups))
+					{
+						continue;
+					}
+				}
+
+				$this->db->sql_freeresult($result);
+				return true;
+			}
+		}
+		$this->db->sql_freeresult($result);
+
+		return false;
+	}
 }

@@ -202,6 +202,8 @@ class icdisciplinary_module
 				$config->set('booskit_icdisciplinary_access_l2', $request->variable('booskit_icdisciplinary_access_l2', ''));
 				$config->set('booskit_icdisciplinary_access_full', $request->variable('booskit_icdisciplinary_access_full', ''));
 
+				$config->set('booskit_icdisciplinary_clipboard_tpl', $request->variable('booskit_icdisciplinary_clipboard_tpl', '', true));
+
 				// Ruleset
 				$ruleset_text = $request->variable('booskit_icdisciplinary_ruleset', '', true);
 				$ruleset_uid = $request->variable('booskit_icdisciplinary_ruleset_uid', '');
@@ -245,6 +247,7 @@ class icdisciplinary_module
 			'BOOSKIT_ICDISCIPLINARY_ACCESS_L1'	=> isset($config['booskit_icdisciplinary_access_l1']) ? $config['booskit_icdisciplinary_access_l1'] : '',
 			'BOOSKIT_ICDISCIPLINARY_ACCESS_L2'	=> isset($config['booskit_icdisciplinary_access_l2']) ? $config['booskit_icdisciplinary_access_l2'] : '',
 			'BOOSKIT_ICDISCIPLINARY_ACCESS_FULL'	=> isset($config['booskit_icdisciplinary_access_full']) ? $config['booskit_icdisciplinary_access_full'] : '',
+			'BOOSKIT_ICDISCIPLINARY_CLIPBOARD_TPL'	=> isset($config['booskit_icdisciplinary_clipboard_tpl']) ? $config['booskit_icdisciplinary_clipboard_tpl'] : '',
 			'LOCAL_DEFINITIONS'				=> $local_definitions,
 			'DEFINITIONS'					=> $definitions,
 			'PHPBB_GROUPS'					=> $phpbb_groups,

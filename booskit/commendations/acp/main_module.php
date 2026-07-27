@@ -64,10 +64,12 @@ class main_module
 				$exclude_groups = $request->variable('new_exclude_groups', array(0));
 				$view = $request->variable('new_view', 0);
 				$submit = $request->variable('new_submit', 0);
+				$copy = $request->variable('new_copy', 0);
 
 				$permissions = [
 					'view' => $view,
 					'submit' => $submit,
+					'copy' => $copy,
 				];
 
 				if (!empty($group_name))
@@ -89,6 +91,7 @@ class main_module
 				$exclude_groups_all = $request->variable('exclude_groups', array(0 => array(0)));
 				$view_all = $request->variable('view', array(0 => 0));
 				$submit_perm_all = $request->variable('submit_perm', array(0 => 0));
+				$copy_perm_all = $request->variable('copy_perm', array(0 => 0));
 
 				if ($perm_group_id && isset($group_names[$perm_group_id]))
 				{
@@ -100,10 +103,12 @@ class main_module
 					$exclude_groups = isset($exclude_groups_all[$perm_group_id]) ? $exclude_groups_all[$perm_group_id] : array();
 					$view = isset($view_all[$perm_group_id]) ? $view_all[$perm_group_id] : 0;
 					$submit = isset($submit_perm_all[$perm_group_id]) ? $submit_perm_all[$perm_group_id] : 0;
+					$copy = isset($copy_perm_all[$perm_group_id]) ? $copy_perm_all[$perm_group_id] : 0;
 
 					$permissions = [
 						'view' => $view,
 						'submit' => $submit,
+						'copy' => $copy,
 					];
 
 					$commendations_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions);
@@ -120,6 +125,8 @@ class main_module
 				$config->set('booskit_commendations_access_l2', $request->variable('booskit_commendations_access_l2', ''));
 				$config->set('booskit_commendations_access_l3', $request->variable('booskit_commendations_access_l3', ''));
 				$config->set('booskit_commendations_access_full', $request->variable('booskit_commendations_access_full', ''));
+
+				$config->set('booskit_commendations_clipboard_tpl', $request->variable('booskit_commendations_clipboard_tpl', '', true));
 
 				$config->set('booskit_commendations_enable_public_posting', $request->variable('booskit_commendations_enable_public_posting', 0));
 				$config->set('booskit_commendations_public_posting_mode', $request->variable('booskit_commendations_public_posting_mode', 'forum'));
@@ -144,6 +151,8 @@ class main_module
 			'BOOSKIT_COMMENDATIONS_ACCESS_L2'			=> isset($config['booskit_commendations_access_l2']) ? $config['booskit_commendations_access_l2'] : '',
 			'BOOSKIT_COMMENDATIONS_ACCESS_L3'			=> isset($config['booskit_commendations_access_l3']) ? $config['booskit_commendations_access_l3'] : '',
 			'BOOSKIT_COMMENDATIONS_ACCESS_FULL'			=> isset($config['booskit_commendations_access_full']) ? $config['booskit_commendations_access_full'] : '',
+
+			'BOOSKIT_COMMENDATIONS_CLIPBOARD_TPL'		=> isset($config['booskit_commendations_clipboard_tpl']) ? $config['booskit_commendations_clipboard_tpl'] : '',
 
 			'BOOSKIT_COMMENDATIONS_ENABLE_PUBLIC_POSTING'	=> isset($config['booskit_commendations_enable_public_posting']) ? $config['booskit_commendations_enable_public_posting'] : 0,
 			'BOOSKIT_COMMENDATIONS_PUBLIC_POSTING_MODE'	=> isset($config['booskit_commendations_public_posting_mode']) ? $config['booskit_commendations_public_posting_mode'] : 'forum',

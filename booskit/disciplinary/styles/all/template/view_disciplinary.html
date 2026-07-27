@@ -25,8 +25,11 @@
 					<span class="disciplinary-type-badge" style="background-color: #7f8c8d; font-size: 0.8em; text-transform: uppercase;">{L_ARCHIVED_STATUS}</span>
 					<!-- ENDIF -->
 					<span class="disciplinary-date">{disciplinary.DATE}</span>
-					<!-- IF disciplinary.U_EDIT || disciplinary.U_DELETE || disciplinary.U_ARCHIVE || disciplinary.U_UNARCHIVE -->
+					<!-- IF disciplinary.U_EDIT || disciplinary.U_DELETE || disciplinary.U_ARCHIVE || disciplinary.U_UNARCHIVE || disciplinary.S_CAN_COPY -->
 					<div class="disciplinary-actions">
+						<!-- IF disciplinary.S_CAN_COPY -->
+						<a href="#" class="btn-booskit-copy" data-clipboard-text="{disciplinary.CLIPBOARD_TEXT}" title="{L_COPY_TO_CLIPBOARD}" onclick="booskitCopyToClipboard(this); return false;"><i class="icon fa-clipboard fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
 						<!-- IF disciplinary.U_ARCHIVE -->
 						<a href="{disciplinary.U_ARCHIVE}" title="{L_ARCHIVE}"><i class="icon fa-archive fa-fw" aria-hidden="true"></i></a>
 						<!-- ENDIF -->
@@ -66,5 +69,32 @@
 		</div>
 	</div>
 </div>
+
+<script>
+if (typeof booskitCopyToClipboard === 'undefined') {
+	window.booskitCopyToClipboard = function(el) {
+		var text = el.getAttribute('data-clipboard-text');
+		if (!text) return;
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function() {
+				alert('{L_COPIED_TO_CLIPBOARD}');
+			}).catch(function() {
+				fallbackCopy(text);
+			});
+		} else {
+			fallbackCopy(text);
+		}
+		function fallbackCopy(txt) {
+			var ta = document.createElement('textarea');
+			ta.value = txt;
+			document.body.appendChild(ta);
+			ta.select();
+			document.execCommand('copy');
+			document.body.removeChild(ta);
+			alert('{L_COPIED_TO_CLIPBOARD}');
+		}
+	};
+}
+</script>
 
 <!-- INCLUDE overall_footer.html -->
