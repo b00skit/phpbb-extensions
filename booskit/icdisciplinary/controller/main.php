@@ -370,6 +370,88 @@ class main
 		}
 	}
 
+	public function archive_record($record_id)
+	{
+		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
+		$this->user->add_lang('common');
+
+		$record = $this->ic_manager->get_record($record_id);
+		if (!$record)
+		{
+			trigger_error('NO_IC_RECORDS');
+		}
+		$character = $this->ic_manager->get_character($record['character_id']);
+		$target_user_id = $character['user_id'];
+
+		if (!$this->ic_manager->can_archive_record($this->user->data['user_id'], $record, $target_user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+
+		if ($this->request->is_set_post('submit'))
+		{
+			if (!check_form_key('archive_ic_record'))
+			{
+				trigger_error('FORM_INVALID');
+			}
+
+			$reason = $this->request->variable('archive_reason', '', true);
+			if (empty($reason))
+			{
+				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'] . $this->helper->previous_route(), E_USER_WARNING);
+			}
+
+			$this->ic_manager->archive_record($record_id, $reason, $this->user->data['user_id']);
+
+			$def = $this->ic_manager->get_definition($record['disciplinary_type_id']);
+			$type_name = $def ? $def['name'] : $record['disciplinary_type_id'];
+			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_ARCHIVED', time(), array($type_name, $character['character_name']));
+
+			meta_refresh(3, $u_profile);
+			trigger_error($this->user->lang['IC_RECORD_ARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
+		}
+
+		add_form_key('archive_ic_record');
+
+		$this->template->assign_vars(array(
+			'ARCHIVE_REASON' => isset($record['archive_reason']) ? $record['archive_reason'] : '',
+			'U_ACTION' => $this->helper->route('booskit_icdisciplinary_archive_record', array('record_id' => $record_id)),
+			'U_BACK' => $u_profile,
+		));
+
+		return $this->helper->render('archive_ic_record.html', $this->user->lang['ARCHIVE_IC_RECORD']);
+	}
+
+	public function unarchive_record($record_id)
+	{
+		$this->user->add_lang_ext('booskit/icdisciplinary', 'icdisciplinary');
+
+		$record = $this->ic_manager->get_record($record_id);
+		if (!$record)
+		{
+			trigger_error('NO_IC_RECORDS');
+		}
+		$character = $this->ic_manager->get_character($record['character_id']);
+		$target_user_id = $character['user_id'];
+
+		if (!$this->ic_manager->can_unarchive_record($this->user->data['user_id'], $record, $target_user_id))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$this->ic_manager->unarchive_record($record_id);
+
+		$def = $this->ic_manager->get_definition($record['disciplinary_type_id']);
+		$type_name = $def ? $def['name'] : $record['disciplinary_type_id'];
+		$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_UNARCHIVED', time(), array($type_name, $character['character_name']));
+
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+		meta_refresh(3, $u_profile);
+		trigger_error($this->user->lang['IC_RECORD_UNARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
+	}
+
 	protected function assign_form_vars($user_id, $character_id, $record = null, $is_edit = false)
 	{
 		$definitions = $this->ic_manager->get_definitions();

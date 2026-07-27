@@ -1,0 +1,24 @@
+<!-- INCLUDE overall_header.html -->
+
+<h2 class="solo">{L_ARCHIVE_IC_RECORD}</h2>
+
+<form id="archive_ic_record" method="post" action="{U_ACTION}">
+	<div class="panel">
+		<div class="inner">
+			<fieldset>
+				<dl>
+					<dt><label for="archive_reason">{L_ARCHIVE_REASON}:</label><br><span>{L_ARCHIVE_IC_RECORD_REASON_EXPLAIN}</span></dt>
+					<dd><textarea name="archive_reason" id="archive_reason" rows="6" cols="50" class="inputbox" required>{ARCHIVE_REASON}</textarea></dd>
+				</dl>
+			</fieldset>
+		</div>
+	</div>
+
+	<fieldset class="submit-buttons">
+		<input type="submit" accesskey="s" tabindex="1" name="submit" value="{L_ARCHIVE}" class="button1" />&nbsp;
+		<a href="{U_BACK}" class="button2">{L_CANCEL}</a>
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

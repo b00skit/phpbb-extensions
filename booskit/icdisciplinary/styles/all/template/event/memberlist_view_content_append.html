@@ -44,12 +44,30 @@
 		<div class="icdisciplinary-list">
             <!-- IF .ic_records -->
 			<!-- BEGIN ic_records -->
-			<div class="icdisciplinary-item">
+			<div class="icdisciplinary-item"<!-- IF ic_records.S_IS_ARCHIVED --> style="opacity: 0.85; border-left: 4px solid #e74c3c;"<!-- ENDIF -->>
+				<!-- IF ic_records.S_IS_ARCHIVED -->
+				<div class="icdisciplinary-archive-notice" style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 6px 10px; margin-bottom: 8px; border-radius: 4px; font-size: 0.9em;">
+					<i class="icon fa-archive fa-fw" aria-hidden="true"></i>
+					<strong>{L_ARCHIVED_STATUS}:</strong> {ic_records.ARCHIVE_REASON}
+					<!-- IF ic_records.ARCHIVED_BY_NAME -->
+					<span style="font-style: italic; margin-left: 10px;">({L_ARCHIVED_BY}: <strong>{ic_records.ARCHIVED_BY_NAME}</strong> {L_ON} {ic_records.ARCHIVE_DATE})</span>
+					<!-- ENDIF -->
+				</div>
+				<!-- ENDIF -->
 				<div class="icdisciplinary-header">
 					<span class="icdisciplinary-type-badge" style="background-color: {ic_records.COLOR}">{ic_records.TYPE}</span>
+					<!-- IF ic_records.S_IS_ARCHIVED -->
+					<span class="icdisciplinary-type-badge" style="background-color: #7f8c8d; font-size: 0.8em; text-transform: uppercase;">{L_ARCHIVED_STATUS}</span>
+					<!-- ENDIF -->
 					<span class="icdisciplinary-date">{ic_records.DATE}</span>
-					<!-- IF ic_records.U_EDIT || ic_records.U_DELETE -->
+					<!-- IF ic_records.U_EDIT || ic_records.U_DELETE || ic_records.U_ARCHIVE || ic_records.U_UNARCHIVE -->
 					<div class="icdisciplinary-actions">
+						<!-- IF ic_records.U_ARCHIVE -->
+						<a href="{ic_records.U_ARCHIVE}" title="{L_ARCHIVE}"><i class="icon fa-archive fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
+						<!-- IF ic_records.U_UNARCHIVE -->
+						<a href="{ic_records.U_UNARCHIVE}" title="{L_UNARCHIVE}"><i class="icon fa-undo fa-fw" aria-hidden="true"></i></a>
+						<!-- ENDIF -->
 						<!-- IF ic_records.U_EDIT -->
 						<a href="{ic_records.U_EDIT}" title="{L_EDIT}"><i class="icon fa-pencil fa-fw" aria-hidden="true"></i></a>
 						<!-- ENDIF -->

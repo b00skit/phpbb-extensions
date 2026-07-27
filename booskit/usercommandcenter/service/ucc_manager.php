@@ -167,10 +167,11 @@ class ucc_manager
 		$where = $this->get_module_where_clause('disciplinary', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT d.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
+		$sql = 'SELECT d.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour, a.username as archived_by_name, a.user_colour as archived_by_colour
 				FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
 				JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON d.issuer_user_id = i.user_id
+				LEFT JOIN ' . USERS_TABLE . ' a ON d.archived_by_user_id = a.user_id
 				LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
 				WHERE ' . $where . '
 				ORDER BY d.issue_date DESC';
@@ -205,11 +206,12 @@ class ucc_manager
 		$where = $this->get_module_where_clause('ic_disciplinary', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
+		$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour, a.username as archived_by_name, a.user_colour as archived_by_colour
 				FROM ' . $this->table_prefix . 'booskit_ic_records r
 				JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
 				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON r.issuer_user_id = i.user_id
+				LEFT JOIN ' . USERS_TABLE . ' a ON r.archived_by_user_id = a.user_id
 				WHERE ' . $where . '
 				ORDER BY r.issue_date DESC';
 		$result = $this->db->sql_query_limit($sql, $limit, $start);
@@ -474,6 +476,7 @@ class ucc_manager
 			$perms = !empty($pg['permissions']) ? json_decode($pg['permissions'], true) : [];
 
 			$allowed_types = [];
+			$allowed_types_archived = [];
 			if ($module === 'disciplinary' || $module === 'ic_disciplinary')
 			{
 				if (empty($perms['types']) || !is_array($perms['types']))
@@ -487,9 +490,13 @@ class ucc_manager
 					{
 						$allowed_types[] = $def_id;
 					}
+					if (!empty($type_perms['view_archived']))
+					{
+						$allowed_types_archived[] = $def_id;
+					}
 				}
 
-				if (empty($allowed_types))
+				if (empty($allowed_types) && empty($allowed_types_archived))
 				{
 					continue;
 				}
@@ -541,9 +548,23 @@ class ucc_manager
 				$pg_clause .= ' AND u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $exclude_groups) . ')';
 			}
 
-			if (!empty($allowed_types) && !empty($type_column))
+			if (!empty($type_column))
 			{
-				$pg_clause .= ' AND ' . $this->db->sql_in_set($type_column, $allowed_types);
+				$arch_column = ($module === 'disciplinary') ? 'd.is_archived' : 'r.is_archived';
+				$type_conds = [];
+				if (!empty($allowed_types))
+				{
+					$type_conds[] = '(' . $arch_column . ' = 0 AND ' . $this->db->sql_in_set($type_column, $allowed_types) . ')';
+				}
+				if (!empty($allowed_types_archived))
+				{
+					$type_conds[] = '(' . $arch_column . ' = 1 AND ' . $this->db->sql_in_set($type_column, $allowed_types_archived) . ')';
+				}
+
+				if (!empty($type_conds))
+				{
+					$pg_clause .= ' AND (' . implode(' OR ', $type_conds) . ')';
+				}
 			}
 
 			$where_clauses[] = '(' . $pg_clause . ')';

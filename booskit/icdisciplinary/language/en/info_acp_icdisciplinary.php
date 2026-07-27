@@ -71,6 +71,9 @@ $lang = array_merge($lang, array(
 	'PERM_VIEW_PRIVATE_NOTES'			=> 'View Private Notes',
 	'PERM_ISSUE'						=> 'Issue',
 	'PERM_ISSUE_PRIVATE_NOTES'			=> 'Issue Private Notes',
+	'PERM_ARCHIVE'						=> 'Archive',
+	'PERM_VIEW_ARCHIVED'				=> 'View Archived',
+	'PERM_UNARCHIVE'					=> 'Unarchive',
 	'PERM_EDIT'							=> 'Edit Others',
 	'PERM_DELETE'						=> 'Delete Others',
 

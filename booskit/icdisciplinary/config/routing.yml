@@ -33,3 +33,15 @@ booskit_icdisciplinary_delete_record:
     defaults: { _controller: booskit.icdisciplinary.controller.main:delete_record }
     requirements:
         record_id: \d+
+
+booskit_icdisciplinary_archive_record:
+    path: /icdisciplinary/record/archive/{record_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:archive_record }
+    requirements:
+        record_id: \d+
+
+booskit_icdisciplinary_unarchive_record:
+    path: /icdisciplinary/record/unarchive/{record_id}
+    defaults: { _controller: booskit.icdisciplinary.controller.main:unarchive_record }
+    requirements:
+        record_id: \d+

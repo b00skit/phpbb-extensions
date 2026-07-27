@@ -155,6 +155,9 @@
 								<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_ARCHIVE') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_VIEW_ARCHIVED') }}</th>
+								<th style="text-align: center;">{{ lang('PERM_UNARCHIVE') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_EDIT') }}</th>
 								<th style="text-align: center;">{{ lang('PERM_DELETE') }}</th>
 							</tr>
@@ -174,6 +177,15 @@
 								</td>
 								<td style="text-align: center;">
 									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][issue_private_notes]" value="1" {% if type_perms[def.id]['issue_private_notes'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][archive]" value="1" {% if type_perms[def.id]['archive'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][view_archived]" value="1" {% if type_perms[def.id]['view_archived'] %}checked="checked"{% endif %} />
+								</td>
+								<td style="text-align: center;">
+									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][unarchive]" value="1" {% if type_perms[def.id]['unarchive'] %}checked="checked"{% endif %} />
 								</td>
 								<td style="text-align: center;">
 									<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ def.id }}][edit]" value="1" {% if type_perms[def.id]['edit'] %}checked="checked"{% endif %} />
@@ -260,6 +272,9 @@
 							<th style="text-align: center;">{{ lang('PERM_VIEW_PRIVATE_NOTES') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_ISSUE') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_ISSUE_PRIVATE_NOTES') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_ARCHIVE') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_VIEW_ARCHIVED') }}</th>
+							<th style="text-align: center;">{{ lang('PERM_UNARCHIVE') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_EDIT') }}</th>
 							<th style="text-align: center;">{{ lang('PERM_DELETE') }}</th>
 						</tr>
@@ -279,6 +294,15 @@
 							</td>
 							<td style="text-align: center;">
 								<input type="checkbox" name="new_perms[{{ def.id }}][issue_private_notes]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][archive]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][view_archived]" value="1" />
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="new_perms[{{ def.id }}][unarchive]" value="1" />
 							</td>
 							<td style="text-align: center;">
 								<input type="checkbox" name="new_perms[{{ def.id }}][edit]" value="1" />

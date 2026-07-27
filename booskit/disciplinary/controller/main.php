@@ -251,6 +251,88 @@ class main
 		}
 	}
 
+	public function archive_record($record_id)
+	{
+		$viewer_id = $this->user->data['user_id'];
+
+		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
+		$this->user->add_lang('common');
+
+		$record = $this->disciplinary_manager->get_record($record_id);
+		if (!$record)
+		{
+			trigger_error('NO_DISCIPLINARY_RECORD');
+		}
+		$user_id = $record['user_id'];
+
+		if (!$this->disciplinary_manager->can_archive_record($viewer_id, $record))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
+
+		if ($this->request->is_set_post('submit'))
+		{
+			if (!check_form_key('archive_disciplinary'))
+			{
+				trigger_error('FORM_INVALID');
+			}
+
+			$reason = $this->request->variable('archive_reason', '', true);
+			if (empty($reason))
+			{
+				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'] . $this->helper->previous_route(), E_USER_WARNING);
+			}
+
+			$this->disciplinary_manager->archive_record($record_id, $reason, $viewer_id);
+
+			$user_row = $this->disciplinary_manager->get_username_string($user_id);
+			$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_ARCHIVED', time(), array($user_row));
+
+			meta_refresh(3, $u_profile);
+			trigger_error($this->user->lang['DISCIPLINARY_ARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
+		}
+
+		add_form_key('archive_disciplinary');
+
+		$this->template->assign_vars(array(
+			'ARCHIVE_REASON' => isset($record['archive_reason']) ? $record['archive_reason'] : '',
+			'U_ACTION' => $this->helper->route('booskit_disciplinary_archive_record', array('record_id' => $record_id)),
+			'U_BACK' => $u_profile,
+		));
+
+		return $this->helper->render('archive_disciplinary.html', $this->user->lang['ARCHIVE_DISCIPLINARY']);
+	}
+
+	public function unarchive_record($record_id)
+	{
+		$viewer_id = $this->user->data['user_id'];
+
+		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
+
+		$record = $this->disciplinary_manager->get_record($record_id);
+		if (!$record)
+		{
+			trigger_error('NO_DISCIPLINARY_RECORD');
+		}
+		$user_id = $record['user_id'];
+
+		if (!$this->disciplinary_manager->can_unarchive_record($viewer_id, $record))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$this->disciplinary_manager->unarchive_record($record_id);
+
+		$user_row = $this->disciplinary_manager->get_username_string($user_id);
+		$this->log->add('mod', $viewer_id, $this->user->ip, 'LOG_DISCIPLINARY_UNARCHIVED', time(), array($user_row));
+
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
+		meta_refresh(3, $u_profile);
+		trigger_error($this->user->lang['DISCIPLINARY_UNARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
+	}
+
 	public function view_all($user_id)
 	{
 		$this->user->add_lang_ext('booskit/disciplinary', 'disciplinary');
@@ -262,7 +344,8 @@ class main
 		$records = $this->disciplinary_manager->get_user_records($user_id);
 		$user_ids_to_fetch = array_unique(array_filter(array_merge(
 			array_column($records, 'issuer_user_id'),
-			array_column($records, 'edited_by_user_id')
+			array_column($records, 'edited_by_user_id'),
+			array_column($records, 'archived_by_user_id')
 		)));
 		$user_names = $this->disciplinary_manager->get_usernames($user_ids_to_fetch);
 
@@ -277,6 +360,12 @@ class main
 				continue;
 			}
 
+			// Check Archived Access
+			if (!empty($record['is_archived']) && !$this->disciplinary_manager->can_view_archived_record($viewer_id, $record))
+			{
+				continue;
+			}
+
 			$type_name = $definition ? $definition['name'] : $record['disciplinary_type_id'];
 			$color = isset($definition['color']) ? $definition['color'] : '';
 
@@ -284,10 +373,17 @@ class main
 
 			$can_edit = $this->disciplinary_manager->can_edit_record($viewer_id, $record);
 			$can_delete = $this->disciplinary_manager->can_delete_record($viewer_id, $record);
+			$can_archive = empty($record['is_archived']) && $this->disciplinary_manager->can_archive_record($viewer_id, $record);
+			$can_unarchive = !empty($record['is_archived']) && $this->disciplinary_manager->can_unarchive_record($viewer_id, $record);
 
 			$was_edited = !empty($record['edited_by_user_id']) && !empty($record['last_edited_time']);
 			$edited_by_name = $was_edited ? (isset($user_names[$record['edited_by_user_id']]) ? $user_names[$record['edited_by_user_id']] : $this->user->lang['GUEST']) : '';
 			$last_edited_time = $was_edited ? $this->user->format_date($record['last_edited_time'], 'D M d, Y H:i') : '';
+
+			$is_archived = !empty($record['is_archived']);
+			$archived_by_name = $is_archived ? (isset($user_names[$record['archived_by_user_id']]) ? $user_names[$record['archived_by_user_id']] : $this->user->lang['GUEST']) : '';
+			$archive_date = ($is_archived && !empty($record['archive_date'])) ? $this->user->format_date($record['archive_date'], 'D M d, Y H:i') : '';
+			$archive_reason = $is_archived ? (isset($record['archive_reason']) ? $record['archive_reason'] : '') : '';
 
 			// Parse BBCode
 			$reason_uid = isset($record['reason_bbcode_uid']) ? $record['reason_bbcode_uid'] : '';
@@ -316,8 +412,14 @@ class main
 				'EDITED_BY_NAME' => $edited_by_name,
 				'LAST_EDITED_TIME' => $last_edited_time,
 				'S_WAS_EDITED' => $was_edited,
+				'S_IS_ARCHIVED' => $is_archived,
+				'ARCHIVE_REASON' => utf8_htmlspecialchars($archive_reason),
+				'ARCHIVED_BY_NAME' => $archived_by_name,
+				'ARCHIVE_DATE' => $archive_date,
 				'U_EDIT' => $can_edit ? $this->helper->route('booskit_disciplinary_edit_record', array('record_id' => $record['record_id'])) : '',
 				'U_DELETE' => $can_delete ? $this->helper->route('booskit_disciplinary_delete_record', array('record_id' => $record['record_id'])) : '',
+				'U_ARCHIVE' => $can_archive ? $this->helper->route('booskit_disciplinary_archive_record', array('record_id' => $record['record_id'])) : '',
+				'U_UNARCHIVE' => $can_unarchive ? $this->helper->route('booskit_disciplinary_unarchive_record', array('record_id' => $record['record_id'])) : '',
 			));
 		}
 

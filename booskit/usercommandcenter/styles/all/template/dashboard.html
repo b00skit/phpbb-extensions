@@ -100,12 +100,18 @@
 		</div>
 		<div class="ucc-card-body">
 			{% for item in disciplinary %}
-			<div class="ucc-item">
+			<div class="ucc-item{% if item.IS_ARCHIVED %} ucc-item-archived{% endif %}"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #e74c3c; background-color: rgba(231, 76, 60, 0.05);"{% endif %}>
 				<div class="ucc-item-user">
 					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
 				</div>
 				<div class="ucc-item-main">
-					<div class="ucc-item-type">{{ item.TYPE }}</div>
+					{% if item.IS_ARCHIVED %}
+					<div class="ucc-archive-header" style="font-size: 0.85em; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 4px 8px; border-radius: 3px; margin-bottom: 5px;">
+						<i class="icon fa-archive fa-fw" aria-hidden="true"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+						{% if item.ARCHIVED_BY %}<span style="font-style: italic; opacity: 0.8;">({{ lang('ARCHIVED_BY') }}: {{ item.ARCHIVED_BY|raw }} {{ lang('ON') }} {{ item.ARCHIVE_DATE }})</span>{% endif %}
+					</div>
+					{% endif %}
+					<div class="ucc-item-type">{{ item.TYPE }}{% if item.IS_ARCHIVED %} <span class="ucc-badge-archived" style="background: #7f8c8d; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.8em; text-transform: uppercase;">Archived</span>{% endif %}</div>
 					<div class="ucc-item-content">{{ item.CONTENT }}</div>
 				</div>
 				<div class="ucc-item-meta">
@@ -130,12 +136,18 @@
 		</div>
 		<div class="ucc-card-body">
 			{% for item in ic_disciplinary %}
-			<div class="ucc-item">
+			<div class="ucc-item{% if item.IS_ARCHIVED %} ucc-item-archived{% endif %}"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #e74c3c; background-color: rgba(231, 76, 60, 0.05);"{% endif %}>
 				<div class="ucc-item-user">
 					<a href="{{ item.U_VIEW }}">{{ item.USERNAME }}</a>
 				</div>
 				<div class="ucc-item-main">
-					<div class="ucc-item-type">{{ item.TYPE }} ({{ item.CHARACTER }})</div>
+					{% if item.IS_ARCHIVED %}
+					<div class="ucc-archive-header" style="font-size: 0.85em; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 4px 8px; border-radius: 3px; margin-bottom: 5px;">
+						<i class="icon fa-archive fa-fw" aria-hidden="true"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+						{% if item.ARCHIVED_BY %}<span style="font-style: italic; opacity: 0.8;">({{ lang('ARCHIVED_BY') }}: {{ item.ARCHIVED_BY|raw }} {{ lang('ON') }} {{ item.ARCHIVE_DATE }})</span>{% endif %}
+					</div>
+					{% endif %}
+					<div class="ucc-item-type">{{ item.TYPE }} ({{ item.CHARACTER }}){% if item.IS_ARCHIVED %} <span class="ucc-badge-archived" style="background: #7f8c8d; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 0.8em; text-transform: uppercase;">Archived</span>{% endif %}</div>
 					<div class="ucc-item-content">{{ item.CONTENT }}</div>
 				</div>
 				<div class="ucc-item-meta">

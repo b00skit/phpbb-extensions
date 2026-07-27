@@ -124,12 +124,17 @@ class main
 		$disciplinary = $this->ucc_manager->get_latest_disciplinary($this->user->data['user_id']);
 		foreach ($disciplinary as $row)
 		{
+			$is_archived = !empty($row['is_archived']);
 			$this->template->assign_block_vars('disciplinary', [
 				'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 				'ISSUER' => get_username_string('full', $row['issuer_user_id'], $row['issuer_name'], $row['issuer_colour']),
 				'DATE' => $this->user->format_date($row['issue_date']),
 				'TYPE' => $this->ucc_manager->get_definition_name('booskit/disciplinary', $row['disciplinary_type_id'], $disc_defs),
 				'CONTENT' => $this->truncate($row['reason']),
+				'IS_ARCHIVED' => $is_archived,
+				'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
+				'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',
+				'ARCHIVE_DATE' => ($is_archived && !empty($row['archive_date'])) ? $this->user->format_date($row['archive_date']) : '',
 				'U_VIEW' => $this->helper->route('booskit_disciplinary_view_all', ['user_id' => $row['user_id']]),
 			]);
 		}
@@ -139,6 +144,7 @@ class main
 		$ic_disciplinary = $this->ucc_manager->get_latest_ic_disciplinary($this->user->data['user_id']);
 		foreach ($ic_disciplinary as $row)
 		{
+			$is_archived = !empty($row['is_archived']);
 			$this->template->assign_block_vars('ic_disciplinary', [
 				'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
 				'CHARACTER' => $row['character_name'],
@@ -146,6 +152,10 @@ class main
 				'DATE' => $this->user->format_date($row['issue_date']),
 				'TYPE' => $this->ucc_manager->get_definition_name('booskit/icdisciplinary', $row['disciplinary_type_id'], $ic_defs),
 				'CONTENT' => $this->truncate($row['reason']),
+				'IS_ARCHIVED' => $is_archived,
+				'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
+				'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',
+				'ARCHIVE_DATE' => ($is_archived && !empty($row['archive_date'])) ? $this->user->format_date($row['archive_date']) : '',
 				'U_VIEW' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $row['user_id'] . '&character_id=' . $row['character_id']),
 			]);
 		}
@@ -241,6 +251,7 @@ class main
 				$title = $this->user->lang['UCC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
 				{
+					$is_archived = !empty($row['is_archived']);
 					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
@@ -248,6 +259,10 @@ class main
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/disciplinary', $row['disciplinary_type_id'], $defs),
 						'CONTENT' => $content,
+						'IS_ARCHIVED' => $is_archived,
+						'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
+						'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',
+						'ARCHIVE_DATE' => ($is_archived && !empty($row['archive_date'])) ? $this->user->format_date($row['archive_date']) : '',
 						'U_VIEW' => $this->helper->route('booskit_disciplinary_view_all', ['user_id' => $row['user_id']]),
 					]);
 				}
@@ -259,6 +274,7 @@ class main
 				$title = $this->user->lang['UCC_IC_DISCIPLINARY_TITLE'];
 				foreach ($items as $row)
 				{
+					$is_archived = !empty($row['is_archived']);
 					$content = generate_text_for_display($row['reason'], $row['reason_bbcode_uid'], $row['reason_bbcode_bitfield'], $row['reason_bbcode_options']);
 					$this->template->assign_block_vars($template_block, [
 						'USERNAME' => get_username_string('full', $row['user_id'], $row['username'], $row['user_colour']),
@@ -267,6 +283,10 @@ class main
 						'DATE' => $this->user->format_date($row['issue_date']),
 						'TYPE' => $this->ucc_manager->get_definition_name('booskit/icdisciplinary', $row['disciplinary_type_id'], $defs),
 						'CONTENT' => $content,
+						'IS_ARCHIVED' => $is_archived,
+						'ARCHIVE_REASON' => $is_archived ? utf8_htmlspecialchars($row['archive_reason']) : '',
+						'ARCHIVED_BY' => ($is_archived && !empty($row['archived_by_user_id'])) ? get_username_string('full', $row['archived_by_user_id'], $row['archived_by_name'], $row['archived_by_colour']) : '',
+						'ARCHIVE_DATE' => ($is_archived && !empty($row['archive_date'])) ? $this->user->format_date($row['archive_date']) : '',
 						'U_VIEW' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $row['user_id'] . '&character_id=' . $row['character_id']),
 					]);
 				}

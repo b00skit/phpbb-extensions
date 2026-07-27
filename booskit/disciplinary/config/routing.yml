@@ -16,6 +16,18 @@ booskit_disciplinary_delete_record:
     requirements:
         record_id: \d+
 
+booskit_disciplinary_archive_record:
+    path: /disciplinary/archive/{record_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:archive_record' }
+    requirements:
+        record_id: \d+
+
+booskit_disciplinary_unarchive_record:
+    path: /disciplinary/unarchive/{record_id}
+    defaults: { _controller: 'booskit.disciplinary.controller.main:unarchive_record' }
+    requirements:
+        record_id: \d+
+
 booskit_disciplinary_view_all:
     path: /disciplinary/view/{user_id}
     defaults: { _controller: 'booskit.disciplinary.controller.main:view_all' }

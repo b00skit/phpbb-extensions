@@ -474,6 +474,9 @@ class disciplinary_manager
 				'view_private_notes' => false,
 				'issue' => false,
 				'issue_private_notes' => false,
+				'archive' => false,
+				'view_archived' => false,
+				'unarchive' => false,
 				'edit' => false,
 				'delete' => false,
 			];
@@ -546,6 +549,9 @@ class disciplinary_manager
 								'view_private_notes' => false,
 								'issue' => false,
 								'issue_private_notes' => false,
+								'archive' => false,
+								'view_archived' => false,
+								'unarchive' => false,
 								'edit' => false,
 								'delete' => false,
 							];
@@ -565,6 +571,18 @@ class disciplinary_manager
 						if (!empty($p['issue_private_notes']))
 						{
 							$effective['types'][$def_id]['issue_private_notes'] = true;
+						}
+						if (!empty($p['archive']))
+						{
+							$effective['types'][$def_id]['archive'] = true;
+						}
+						if (!empty($p['view_archived']))
+						{
+							$effective['types'][$def_id]['view_archived'] = true;
+						}
+						if (!empty($p['unarchive']))
+						{
+							$effective['types'][$def_id]['unarchive'] = true;
 						}
 						if (!empty($p['edit']))
 						{
@@ -674,6 +692,84 @@ class disciplinary_manager
 		$viewer_level = $this->get_user_role_level($viewer_id);
 		$is_issuer = ($viewer_id == $record['issuer_user_id']);
 		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
+	}
+
+	public function can_archive_record($viewer_id, $record)
+	{
+		$target_user_id = $record['user_id'];
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['types'][$def_id]['archive']);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$is_issuer = ($viewer_id == $record['issuer_user_id']);
+		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
+	}
+
+	public function can_unarchive_record($viewer_id, $record)
+	{
+		$target_user_id = $record['user_id'];
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['types'][$def_id]['unarchive']);
+		}
+
+		// Legacy system
+		$viewer_level = $this->get_user_role_level($viewer_id);
+		$is_issuer = ($viewer_id == $record['issuer_user_id']);
+		return ($viewer_level == 4 || ($viewer_level > 0 && $is_issuer));
+	}
+
+	public function can_view_archived_record($viewer_id, $record)
+	{
+		if (empty($record['is_archived']))
+		{
+			return true;
+		}
+
+		$target_user_id = $record['user_id'];
+		$def_id = $record['disciplinary_type_id'];
+
+		if ($this->get_perm_system() === 'groups')
+		{
+			$effective = $this->get_effective_permissions($viewer_id, $target_user_id);
+			return !empty($effective['types'][$def_id]['view_archived']);
+		}
+
+		// Legacy system: people with view permissions can see archived records
+		return true;
+	}
+
+	public function archive_record($record_id, $reason, $archived_by_user_id)
+	{
+		$sql_ary = [
+			'is_archived' => 1,
+			'archive_reason' => $reason,
+			'archived_by_user_id' => (int) $archived_by_user_id,
+			'archive_date' => time(),
+		];
+		$sql = 'UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE record_id = ' . (int) $record_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function unarchive_record($record_id)
+	{
+		$sql_ary = [
+			'is_archived' => 0,
+			'archive_reason' => '',
+			'archived_by_user_id' => 0,
+			'archive_date' => 0,
+		];
+		$sql = 'UPDATE ' . $this->table . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE record_id = ' . (int) $record_id;
+		$this->db->sql_query($sql);
 	}
 
 	public function can_modify_record($viewer_id, $record)
