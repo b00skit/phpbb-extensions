@@ -56,4 +56,5 @@ $lang = array_merge($lang, array(
 	'LOG_CAREER_ADDED' => '<strong>Added career note to user</strong><br />» %s',
 	'LOG_CAREER_EDITED' => '<strong>Edited career note for user</strong><br />» %s',
 	'LOG_CAREER_DELETED' => '<strong>Deleted career note from user</strong><br />» %s',
+	'FORM_ALREADY_SUBMITTED' => 'This form has already been submitted.',
 ));

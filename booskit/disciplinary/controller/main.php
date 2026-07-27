@@ -55,6 +55,12 @@ class main
 				trigger_error('FORM_INVALID');
 			}
 
+			$form_token = $this->request->variable('form_token', '');
+			if ($this->is_duplicate_submission($form_token))
+			{
+				trigger_error('FORM_ALREADY_SUBMITTED');
+			}
+
 			$type_id = $this->request->variable('disciplinary_type_id', '');
 			$reason = $this->request->variable('reason', '', true);
 			$evidence = $this->request->variable('evidence', '', true);
@@ -146,6 +152,12 @@ class main
 			if (!check_form_key('edit_disciplinary'))
 			{
 				trigger_error('FORM_INVALID');
+			}
+
+			$form_token = $this->request->variable('form_token', '');
+			if ($this->is_duplicate_submission($form_token))
+			{
+				trigger_error('FORM_ALREADY_SUBMITTED');
 			}
 
 			$type_id = $this->request->variable('disciplinary_type_id', '');
@@ -277,6 +289,12 @@ class main
 			if (!check_form_key('archive_disciplinary'))
 			{
 				trigger_error('FORM_INVALID');
+			}
+
+			$form_token = $this->request->variable('form_token', '');
+			if ($this->is_duplicate_submission($form_token))
+			{
+				trigger_error('FORM_ALREADY_SUBMITTED');
 			}
 
 			$reason = $this->request->variable('archive_reason', '', true);
@@ -523,5 +541,35 @@ class main
 			'S_LINKS_ALLOWED'  => true,
 			'S_SMILIES_ALLOWED'=> true,
 		));
+	}
+
+	protected function is_duplicate_submission($token)
+	{
+		if (empty($token))
+		{
+			return false;
+		}
+		if (session_status() === PHP_SESSION_NONE && !headers_sent())
+		{
+			@session_start();
+		}
+		if (isset($_SESSION['booskit_submitted_tokens'][$token]))
+		{
+			return true;
+		}
+		$_SESSION['booskit_submitted_tokens'][$token] = time();
+
+		if (!empty($_SESSION['booskit_submitted_tokens']) && count($_SESSION['booskit_submitted_tokens']) > 50)
+		{
+			$now = time();
+			foreach ($_SESSION['booskit_submitted_tokens'] as $tok => $t)
+			{
+				if ($now - $t > 3600)
+				{
+					unset($_SESSION['booskit_submitted_tokens'][$tok]);
+				}
+			}
+		}
+		return false;
 	}
 }

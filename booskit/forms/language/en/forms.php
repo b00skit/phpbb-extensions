@@ -27,4 +27,5 @@ $lang = array_merge($lang, array(
 	'PREVIEW'					=> 'Preview',
 	'TOPIC_SUBJECT'				=> 'Topic Subject',
 	'REQUIRED_FIELDS_EXPLAIN'	=> 'Denotes a required field',
+	'FORM_ALREADY_SUBMITTED'	=> 'This form has already been submitted.',
 ));

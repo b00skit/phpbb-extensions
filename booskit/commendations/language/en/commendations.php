@@ -47,4 +47,5 @@ $lang = array_merge($lang, array(
 	'MAKE_PUBLIC_POST_EXPLAIN'		=> 'Post a public announcement post/reply for this commendation.',
 	'COPY_TO_CLIPBOARD'				=> 'Copy to Clipboard',
 	'COPIED_TO_CLIPBOARD'			=> 'Copied to clipboard!',
+	'FORM_ALREADY_SUBMITTED'		=> 'This form has already been submitted.',
 ));

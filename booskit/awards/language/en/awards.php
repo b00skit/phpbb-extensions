@@ -48,4 +48,5 @@ $lang = array_merge($lang, array(
 	'NO_AWARDS_FOUND' => 'No awards found for this user',
 	'PUBLIC_POST_SETTINGS' => 'Public Post Settings',
 	'MAKE_PUBLIC_POST' => 'Make Public Post',
+	'FORM_ALREADY_SUBMITTED' => 'This form has already been submitted.',
 ));

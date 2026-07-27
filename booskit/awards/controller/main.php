@@ -54,6 +54,12 @@ class main
 				trigger_error('FORM_INVALID');
 			}
 
+			$form_token = $this->request->variable('form_token', '');
+			if ($this->is_duplicate_submission($form_token))
+			{
+				trigger_error('FORM_ALREADY_SUBMITTED');
+			}
+
 			$award_def_id = $this->request->variable('award_definition_id', '');
 			$comment = $this->request->variable('comment', '', true);
 
@@ -191,5 +197,35 @@ class main
 				'award_id' => $award_id,
 			)));
 		}
+	}
+
+	protected function is_duplicate_submission($token)
+	{
+		if (empty($token))
+		{
+			return false;
+		}
+		if (session_status() === PHP_SESSION_NONE && !headers_sent())
+		{
+			@session_start();
+		}
+		if (isset($_SESSION['booskit_submitted_tokens'][$token]))
+		{
+			return true;
+		}
+		$_SESSION['booskit_submitted_tokens'][$token] = time();
+
+		if (!empty($_SESSION['booskit_submitted_tokens']) && count($_SESSION['booskit_submitted_tokens']) > 50)
+		{
+			$now = time();
+			foreach ($_SESSION['booskit_submitted_tokens'] as $tok => $t)
+			{
+				if ($now - $t > 3600)
+				{
+					unset($_SESSION['booskit_submitted_tokens'][$tok]);
+				}
+			}
+		}
+		return false;
 	}
 }

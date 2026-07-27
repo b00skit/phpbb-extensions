@@ -156,6 +156,8 @@ class main
 			}
 		}
 
+		add_form_key('booskit_forms');
+
 		$this->template->assign_vars([
 			'FORM_NAME'		=> $form['form_name'],
 			'FORM_DESC'		=> $form['form_desc'],
@@ -706,6 +708,8 @@ class main
 				}
 			}
 
+			add_form_key('booskit_forms');
+
 			$this->template->assign_vars([
 				'FORM_NAME'			=> $form['form_name'],
 				'PREVIEW_SUBJECT'	=> $subject,
@@ -716,10 +720,46 @@ class main
 			return $this->helper->render('form_preview.html', $this->user->lang['PREVIEW'] . ': ' . $form['form_name']);
 		}
 
+		$form_token = $this->request->variable('form_token', '');
+		if ($this->is_duplicate_submission($form_token))
+		{
+			return $this->helper->error($this->user->lang['FORM_ALREADY_SUBMITTED'], 400);
+		}
+
 		$post_id = $this->form_manager->create_post($form['forum_id'], $form['poster_id'], $subject, $body);
 
 		return $this->helper->message($this->user->lang['FORM_SUBMITTED_SUCCESS'], array_values([
 			$this->user->lang['BACK_TO_FORM'] => $this->helper->route('booskit_forms_view', ['form_id' => $form_id]),
 		]), 'INFORMATION');
+	}
+
+	protected function is_duplicate_submission($token)
+	{
+		if (empty($token))
+		{
+			return false;
+		}
+		if (session_status() === PHP_SESSION_NONE && !headers_sent())
+		{
+			@session_start();
+		}
+		if (isset($_SESSION['booskit_submitted_tokens'][$token]))
+		{
+			return true;
+		}
+		$_SESSION['booskit_submitted_tokens'][$token] = time();
+
+		if (!empty($_SESSION['booskit_submitted_tokens']) && count($_SESSION['booskit_submitted_tokens']) > 50)
+		{
+			$now = time();
+			foreach ($_SESSION['booskit_submitted_tokens'] as $tok => $t)
+			{
+				if ($now - $t > 3600)
+				{
+					unset($_SESSION['booskit_submitted_tokens'][$tok]);
+				}
+			}
+		}
+		return false;
 	}
 }

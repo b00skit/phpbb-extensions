@@ -83,4 +83,5 @@ $lang = array_merge($lang, array(
 	'COPY_TO_CLIPBOARD'				=> 'Copy to Clipboard',
 	'COPIED_TO_CLIPBOARD'			=> 'Copied to clipboard!',
 	'RESTRICTED_PRIVATE_NOTES'		=> 'Restricted Private Notes',
+	'FORM_ALREADY_SUBMITTED'		=> 'This form has already been submitted.',
 ));

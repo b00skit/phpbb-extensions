@@ -62,4 +62,27 @@
 
 </form>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	document.querySelectorAll('form').forEach(function(form) {
+		form.addEventListener('submit', function(e) {
+			if (e.defaultPrevented) return;
+			if (form.dataset.submitting === 'true') {
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			}
+			form.dataset.submitting = 'true';
+			setTimeout(function() {
+				var submitBtns = form.querySelectorAll('input[type="submit"], button[type="submit"]');
+				submitBtns.forEach(function(btn) {
+					btn.disabled = true;
+					btn.classList.add('disabled');
+				});
+			}, 0);
+		});
+	});
+});
+</script>
+
 {% INCLUDE 'overall_footer.html' %}
