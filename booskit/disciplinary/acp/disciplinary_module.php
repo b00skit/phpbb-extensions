@@ -16,6 +16,7 @@ class disciplinary_module
 	{
 		global $user, $template, $request, $config, $phpbb_container;
 
+		$user->add_lang('posting');
 		$user->add_lang_ext('booskit/disciplinary', 'info_acp_disciplinary');
 
 		$this->tpl_name = 'acp_disciplinary_settings';

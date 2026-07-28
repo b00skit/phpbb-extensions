@@ -29,6 +29,7 @@ class main
 
 	public function handle($u_action)
 	{
+		$this->user->add_lang('posting');
 		$this->user->add_lang_ext('booskit/forms', 'info_acp_forms');
 
 		$action = $this->request->variable('action', '');

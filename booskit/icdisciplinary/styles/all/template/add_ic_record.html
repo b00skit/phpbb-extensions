@@ -26,7 +26,7 @@
 				<dl>
 					<dt><label for="disciplinary_type_id">{L_DISCIPLINARY_TYPE}:</label></dt>
 					<dd>
-						<select name="disciplinary_type_id" id="disciplinary_type_id">
+						<select name="disciplinary_type_id" id="disciplinary_type_id" required>
 							<option value="">{L_SELECT_DISCIPLINARY_TYPE}</option>
 							<!-- BEGIN types -->
 							<option value="{types.ID}" data-can-notes="{types.CAN_ISSUE_PRIVATE_NOTES}"<!-- IF types.SELECTED --> selected="selected"<!-- ENDIF -->>{types.NAME}</option>

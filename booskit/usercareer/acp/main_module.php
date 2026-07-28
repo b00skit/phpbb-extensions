@@ -16,6 +16,7 @@ class main_module
 	{
 		global $user, $template, $request, $config, $phpbb_container;
 
+		$user->add_lang('posting');
 		$user->add_lang_ext('booskit/usercareer', 'info_acp_career');
 
 		$this->tpl_name = 'acp_career_settings';

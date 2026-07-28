@@ -16,6 +16,7 @@ class icdisciplinary_module
 	{
 		global $user, $template, $request, $config, $phpbb_container;
 
+		$user->add_lang('posting');
 		$user->add_lang_ext('booskit/icdisciplinary', 'info_acp_icdisciplinary');
 
 		$this->tpl_name = 'acp_icdisciplinary_settings';

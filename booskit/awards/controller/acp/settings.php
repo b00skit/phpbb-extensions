@@ -33,6 +33,7 @@ class settings
 	{
 		$form_key = 'acp_booskit_awards';
 		add_form_key($form_key);
+		$this->user->add_lang('posting');
 		$this->user->add_lang_ext('booskit/awards', 'info_acp_awards');
 
 		$action = $this->request->variable('action', '');

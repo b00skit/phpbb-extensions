@@ -22,7 +22,13 @@
 </div>
 <!-- ENDIF -->
 
-<form id="postform" method="post" action="{U_ACTION}">
+<!-- IF S_HAS_ERRORS -->
+<div class="errorbox" style="margin-bottom: 20px;">
+	<p style="color: #bc2a2a; font-weight: bold; margin: 0;">{ERROR_MSG}</p>
+</div>
+<!-- ENDIF -->
+
+<form id="postform" method="post" action="{U_ACTION}" data-submitted="{SUBMITTED_DATA_JSON}">
 
 <!-- DEFINE $PANEL_OPEN = false -->
 <!-- DEFINE $IN_SECTION = false -->
@@ -252,12 +258,13 @@ function addGroupRow(groupName) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-	var submittedDataRaw = '{SUBMITTED_DATA_JSON}';
+	var formElem = document.getElementById('postform');
+	var submittedDataRaw = formElem ? formElem.getAttribute('data-submitted') : '';
 	if (!submittedDataRaw) return;
 	
 	var submittedData = {};
 	try {
-		submittedData = JSON.parse(submittedDataRaw.replace(/&quot;/g, '"'));
+		submittedData = JSON.parse(submittedDataRaw);
 	} catch (e) {
 		console.error('Failed to parse submitted data JSON', e);
 		return;

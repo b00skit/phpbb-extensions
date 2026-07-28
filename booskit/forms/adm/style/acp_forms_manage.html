@@ -43,13 +43,48 @@
 				<dt><label for="form_subject_tpl">{{ lang('FORM_SUBJECT_TPL') }}:</label><br /><span>{{ lang('FORM_SUBJECT_TPL_EXPLAIN') }}</span></dt>
 				<dd><input type="text" id="form_subject_tpl" name="form_subject_tpl" value="{FORM_SUBJECT_TPL}" size="40" /></dd>
 			</dl>
-			<div class="rules" style="margin: 10px 0;">
-				<p>{{ lang('FORM_LOOPS_HELP') }}</p>
-			</div>
 			<dl>
 				<dt><label for="form_template">{{ lang('FORM_TEMPLATE') }}:</label><br /><span>{{ lang('FORM_TEMPLATE_EXPLAIN') }}</span></dt>
 				<dd><textarea id="form_template" name="form_template" rows="10" cols="40">{FORM_TEMPLATE}</textarea></dd>
 			</dl>
+			<div class="rules" style="margin: 20px 0; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #2563eb; border-radius: 8px; font-size: 0.95em; color: #1e293b;">
+				<h3 style="margin-top: 0; margin-bottom: 8px; color: #1e3a8a; font-size: 1.1em; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+					<span>💡</span> {{ lang('FORM_VARS_GUIDE_TITLE') }}
+				</h3>
+				<p style="margin-bottom: 12px; font-size: 0.9em; color: #475569;">{{ lang('FORM_VARS_GUIDE_INTRO') }}</p>
+				
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 10px;">
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">1. {{ lang('FORM_VARS_SINGLE_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_SINGLE_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace;">&#123;&#123;variable_name&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">2. {{ lang('FORM_VARS_CHECKBOX_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_CHECKBOX_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;#checkbox_var&#125;&#125;&#10;  - &#123;&#123;label&#125;&#125;&#10;&#123;&#123;/checkbox_var&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">3. {{ lang('FORM_VARS_LOOPS_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_LOOPS_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;#fields&#125;&#125;&#10;**&#123;&#123;label&#125;&#125;**: &#123;&#123;value&#125;&#125;&#10;&#123;&#123;/fields&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">4. {{ lang('FORM_VARS_GROUP_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_GROUP_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace;">&#123;&#123;field_inside_group&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; grid-column: 1 / -1;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">5. {{ lang('FORM_VARS_MULTI_GROUP_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_MULTI_GROUP_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;#group_name&#125;&#125;&#10;Field 1: &#123;&#123;field1_var&#125;&#125; | Field 2: &#123;&#123;field2_var&#125;&#125;&#10;&#123;&#123;/group_name&#125;&#125;</code>
+					</div>
+				</div>
+			</div>
 			<dl>
 				<dt><label>{{ lang('FORM_FIELDS') }}:</label><br /><span>{{ lang('FORM_FIELDS_EXPLAIN') }}</span></dt>
 				<dd style="margin-left: 0; clear: both; float: none; width: 100%;">
@@ -328,6 +363,79 @@
 
 	var formItems = [];
 
+	function escapeHtml(str) {
+		if (str === null || str === undefined) return '';
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
+	function parseOptions(rawOptions) {
+		if (!rawOptions) return [];
+		var parsed = rawOptions;
+		if (typeof rawOptions === 'string') {
+			try {
+				parsed = JSON.parse(rawOptions);
+			} catch(e) {
+				var result = [];
+				var lines = rawOptions.split(/[\r\n,]+/);
+				lines.forEach(function(line) {
+					line = line.trim();
+					if (!line) return;
+					var parts = line.split(':');
+					if (parts.length >= 2) {
+						var val = parts[0].trim();
+						var lbl = parts.slice(1).join(':').trim();
+						result.push({ value: val, label: lbl });
+					} else {
+						result.push({ value: line, label: line });
+					}
+				});
+				return result;
+			}
+		}
+		
+		if (Array.isArray(parsed)) {
+			return parsed.map(function(item) {
+				if (typeof item === 'object' && item !== null) {
+					var val = (item.value !== undefined) ? String(item.value) : (item.label !== undefined ? String(item.label) : '');
+					var lbl = (item.label !== undefined) ? String(item.label) : val;
+					return { value: val, label: lbl };
+				} else {
+					var str = String(item);
+					return { value: str, label: str };
+				}
+			});
+		} else if (typeof parsed === 'object' && parsed !== null) {
+			var result = [];
+			for (var key in parsed) {
+				if (parsed.hasOwnProperty(key)) {
+					result.push({ value: String(key), label: String(parsed[key]) });
+				}
+			}
+			return result;
+		}
+		
+		return [];
+	}
+
+	function getFieldObject(secIdx, grpIdx, fldIdx) {
+		if (grpIdx !== null) {
+			if (secIdx === null) {
+				return formItems[grpIdx].fields[fldIdx];
+			} else {
+				return formItems[secIdx].fields[grpIdx].fields[fldIdx];
+			}
+		} else if (secIdx !== null) {
+			return formItems[secIdx].fields[fldIdx];
+		} else {
+			return formItems[fldIdx];
+		}
+	}
+
 	function deserialize() {
 		var flat = [];
 		try {
@@ -358,7 +466,7 @@
 					var opts = { columns: 2, multi: false };
 					try {
 						if (f.options) {
-							var parsed = JSON.parse(f.options);
+							var parsed = typeof f.options === 'string' ? JSON.parse(f.options) : f.options;
 							if (parsed) {
 								opts.columns = parsed.columns || 2;
 								opts.multi = !!parsed.multi;
@@ -388,7 +496,7 @@
 						name: f.name || '',
 						description: f.description || '',
 						fieldType: f.type || 'text',
-						options: typeof f.options === 'string' ? f.options : JSON.stringify(f.options || ''),
+						options: parseOptions(f.options),
 						required: !!f.required
 					};
 					if (currentInputGroup) {
@@ -549,7 +657,7 @@
 			name: 'question_' + Math.random().toString(36).substr(2, 5),
 			description: '',
 			fieldType: 'text',
-			options: '',
+			options: [],
 			required: false
 		};
 
@@ -569,7 +677,7 @@
 			name: 'question_' + Math.random().toString(36).substr(2, 5),
 			description: '',
 			fieldType: 'text',
-			options: '',
+			options: [],
 			required: false
 		};
 
@@ -693,47 +801,131 @@
 		formItems.forEach(function(item, idx) {
 			if (item.type === 'section') {
 				var isSelected = (currentSecIdx === idx && currentGrpIdx === null);
-				html += '<option value="sec_' + idx + '"' + (isSelected ? ' selected' : '') + '>Section: ' + (item.label || 'Unnamed') + '</option>';
+				html += '<option value="sec_' + idx + '"' + (isSelected ? ' selected' : '') + '>Section: ' + escapeHtml(item.label || 'Unnamed') + '</option>';
 				if (Array.isArray(item.fields)) {
 					item.fields.forEach(function(subItem, subIdx) {
 						if (subItem.type === 'input_group') {
 							var isSubSelected = (currentSecIdx === idx && currentGrpIdx === subIdx);
-							html += '<option value="grp_' + idx + '_' + subIdx + '"' + (isSubSelected ? ' selected' : '') + '>&nbsp;&nbsp;&nbsp;&nbsp;Group: ' + (subItem.label || 'Unnamed') + '</option>';
+							html += '<option value="grp_' + idx + '_' + subIdx + '"' + (isSubSelected ? ' selected' : '') + '>&nbsp;&nbsp;&nbsp;&nbsp;Group: ' + escapeHtml(subItem.label || 'Unnamed') + '</option>';
 						}
 					});
 				}
 			} else if (item.type === 'input_group') {
 				var isSelected = (currentSecIdx === null && currentGrpIdx === idx);
-				html += '<option value="grp_null_' + idx + '"' + (isSelected ? ' selected' : '') + '>Group: ' + (item.label || 'Unnamed') + '</option>';
+				html += '<option value="grp_null_' + idx + '"' + (isSelected ? ' selected' : '') + '>Group: ' + escapeHtml(item.label || 'Unnamed') + '</option>';
 			}
 		});
 		return html;
 	}
 
-	function renderFieldCard(field, secIdx, grpIdx, fldIdx) {
-		var escLabel = field.label.replace(/'/g, "&#39;");
-		var escName = field.name.replace(/'/g, "&#39;");
-		var escDesc = field.description.replace(/'/g, "&#39;");
-		var escOptions = field.options.replace(/'/g, "&#39;");
+	window.addOptionToField = function(secIdx, grpIdx, fldIdx) {
+		var field = getFieldObject(secIdx, grpIdx, fldIdx);
+		if (!field) return;
+		if (!Array.isArray(field.options)) {
+			field.options = parseOptions(field.options);
+		}
+		var num = field.options.length + 1;
+		field.options.push({
+			value: 'option_' + num,
+			label: 'Option ' + num
+		});
+		serialize();
+		renderBuilder();
+	};
 
+	window.updateOptionData = function(secIdx, grpIdx, fldIdx, optIdx, key, val) {
+		var field = getFieldObject(secIdx, grpIdx, fldIdx);
+		if (field && Array.isArray(field.options) && field.options[optIdx]) {
+			field.options[optIdx][key] = val;
+			serialize();
+		}
+	};
+
+	window.deleteOption = function(secIdx, grpIdx, fldIdx, optIdx) {
+		var field = getFieldObject(secIdx, grpIdx, fldIdx);
+		if (field && Array.isArray(field.options)) {
+			field.options.splice(optIdx, 1);
+			serialize();
+			renderBuilder();
+		}
+	};
+
+	window.moveOption = function(secIdx, grpIdx, fldIdx, optIdx, dir) {
+		var field = getFieldObject(secIdx, grpIdx, fldIdx);
+		if (field && Array.isArray(field.options)) {
+			var newIdx = optIdx + dir;
+			if (newIdx >= 0 && newIdx < field.options.length) {
+				var temp = field.options[optIdx];
+				field.options[optIdx] = field.options[newIdx];
+				field.options[newIdx] = temp;
+				serialize();
+				renderBuilder();
+			}
+		}
+	};
+
+	function renderFieldCard(field, secIdx, grpIdx, fldIdx) {
+		if (!Array.isArray(field.options)) {
+			field.options = parseOptions(field.options);
+		}
+
+		var isOptionField = (field.fieldType === 'select' || field.fieldType === 'checkbox' || field.fieldType === 'radio');
 		var sectionOptionsHtml = getContainerOptionsHtml(secIdx, grpIdx);
 
 		var card = document.createElement('div');
 		card.className = 'field-card';
 
+		var optionsHtml = '';
+		if (isOptionField) {
+			var itemsHtml = '';
+			if (Array.isArray(field.options) && field.options.length > 0) {
+				field.options.forEach(function(opt, optIdx) {
+					itemsHtml += 
+						'<div class="option-row" style="display: flex; gap: 8px; align-items: flex-end; background: #ffffff; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">' +
+							'<div style="flex: 1; display: flex; flex-direction: column; gap: 2px;">' +
+								'<span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Value</span>' +
+								'<input type="text" value="' + escapeHtml(opt.value) + '" placeholder="Value (e.g. option_1)" oninput="updateOptionData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',' + optIdx + ',\'value\',this.value)" style="padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85em; width: 100%; box-sizing: border-box;" />' +
+							'</div>' +
+							'<div style="flex: 1.5; display: flex; flex-direction: column; gap: 2px;">' +
+								'<span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Label</span>' +
+								'<input type="text" value="' + escapeHtml(opt.label) + '" placeholder="Label (e.g. Option 1)" oninput="updateOptionData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',' + optIdx + ',\'label\',this.value)" style="padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85em; width: 100%; box-sizing: border-box;" />' +
+							'</div>' +
+							'<div style="display: flex; gap: 4px;">' +
+								'<button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 0.8em;" onclick="moveOption(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',' + optIdx + ',-1)">&uarr;</button>' +
+								'<button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 0.8em;" onclick="moveOption(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',' + optIdx + ',1)">&darr;</button>' +
+								'<button type="button" class="btn-danger" style="padding: 4px 8px; font-size: 0.8em;" onclick="deleteOption(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',' + optIdx + ')">&times;</button>' +
+							'</div>' +
+						'</div>';
+				});
+			} else {
+				itemsHtml = '<p style="color: #94a3b8; font-style: italic; font-size: 0.85em; margin: 4px 0;">No options defined. Click "+ Add Option" above to add options.</p>';
+			}
+
+			optionsHtml = 
+				'<div class="options-builder-container" style="margin-top: 12px; margin-bottom: 12px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">' +
+					'<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px;">' +
+						'<span style="font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase;">{{ lang('FIELD_OPTIONS') }}</span>' +
+						'<button type="button" class="btn-secondary" style="padding: 3px 10px; font-size: 0.82em;" onclick="addOptionToField(' + secIdx + ',' + grpIdx + ',' + fldIdx + ')">+ Add Option</button>' +
+					'</div>' +
+					'<div class="options-list-items" style="display: flex; flex-direction: column; gap: 8px;">' +
+						itemsHtml +
+					'</div>' +
+				'</div>';
+		}
+
 		card.innerHTML = 
 			'<div class="field-grid">' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_LABEL') }}</label>' +
-					'<input type="text" value=\'' + escLabel + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'label\',this.value)" />' +
+					'<input type="text" value="' + escapeHtml(field.label) + '" oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'label\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_NAME') }}</label>' +
-					'<input type="text" value=\'' + escName + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'name\',this.value)" />' +
+					'<input type="text" value="' + escapeHtml(field.name) + '" oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'name\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_DESC') }}</label>' +
-					'<input type="text" value=\'' + escDesc + '\' oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'description\',this.value)" />' +
+					'<input type="text" value="' + escapeHtml(field.description) + '" oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'description\',this.value)" />' +
 				'</div>' +
 				'<div class="field-item">' +
 					'<label>{{ lang('FIELD_TYPE') }}</label>' +
@@ -747,15 +939,12 @@
 						'<option value="date"' + (field.fieldType === 'date' ? ' selected' : '') + '>Date</option>' +
 					'</select>' +
 				'</div>' +
-				'<div class="field-item">' +
-					'<label>{{ lang('FIELD_OPTIONS') }}</label>' +
-					'<input type="text" value=\'' + escOptions + '\' placeholder="Val1:Label1,Val2:Label2" oninput="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'options\',this.value)" />' +
-				'</div>' +
 				'<div class="field-item field-item-checkbox">' +
 					'<input type="checkbox" ' + (field.required ? 'checked' : '') + ' onchange="updateFieldData(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',\'required\',this.checked)" />' +
 					'<label style="margin: 0; cursor: pointer;">{{ lang('FIELD_REQUIRED') }}</label>' +
 				'</div>' +
 			'</div>' +
+			optionsHtml +
 			'<div class="field-controls">' +
 				'<div class="control-buttons-group">' +
 					'<button type="button" class="btn-secondary" onclick="' + (grpIdx !== null ? 'moveGroupField(' + secIdx + ',' + grpIdx + ',' + fldIdx + ',-1)' : (secIdx === null ? 'moveTopLevel(' + fldIdx + ',-1)' : 'moveNested(' + secIdx + ',' + fldIdx + ',-1)')) + '">&uarr; Move Up</button>' +
@@ -771,18 +960,21 @@
 	}
 
 	window.updateFieldData = function(secIdx, grpIdx, fldIdx, key, val, needsReRender) {
-		var field;
-		if (grpIdx !== null) {
-			if (secIdx === null) {
-				field = formItems[grpIdx].fields[fldIdx];
-			} else {
-				field = formItems[secIdx].fields[grpIdx].fields[fldIdx];
+		var field = getFieldObject(secIdx, grpIdx, fldIdx);
+		if (!field) return;
+
+		if (key === 'fieldType') {
+			if (val === 'select' || val === 'checkbox' || val === 'radio') {
+				field.options = parseOptions(field.options);
+				if (!Array.isArray(field.options) || field.options.length === 0) {
+					field.options = [
+						{ value: 'option_1', label: 'Option 1' },
+						{ value: 'option_2', label: 'Option 2' }
+					];
+				}
 			}
-		} else if (secIdx !== null) {
-			field = formItems[secIdx].fields[fldIdx];
-		} else {
-			field = formItems[fldIdx];
 		}
+
 		field[key] = val;
 		serialize();
 		if (needsReRender) {
@@ -805,9 +997,9 @@
 	};
 
 	function renderInputGroupCard(group, secIdx, grpIdx) {
-		var escLabel = group.label.replace(/'/g, "&#39;");
-		var escName = (group.name || '').replace(/'/g, "&#39;");
-		var escDesc = (group.description || '').replace(/'/g, "&#39;");
+		var escLabel = escapeHtml(group.label);
+		var escName = escapeHtml(group.name || '');
+		var escDesc = escapeHtml(group.description || '');
 		var columns = group.columns || 2;
 		var isMulti = !!group.multi;
 
@@ -817,9 +1009,9 @@
 		groupEl.innerHTML = 
 			'<div class="input-group-header">' +
 				'<div class="section-title-wrapper" style="flex-wrap: wrap;">' +
-					'<input type="text" value=\'' + escLabel + '\' placeholder="Group Title" style="font-weight: bold; width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'label\',this.value)" />' +
-					'<input type="text" value=\'' + escName + '\' placeholder="Group Name / BBCode tag" style="width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'name\',this.value)" />' +
-					'<input type="text" value=\'' + escDesc + '\' placeholder="Group Description / Help text" style="width: 30%; min-width: 150px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'description\',this.value)" />' +
+					'<input type="text" value="' + escLabel + '" placeholder="Group Title" style="font-weight: bold; width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'label\',this.value)" />' +
+					'<input type="text" value="' + escName + '" placeholder="Group Name / BBCode tag" style="width: 20%; min-width: 120px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'name\',this.value)" />' +
+					'<input type="text" value="' + escDesc + '" placeholder="Group Description / Help text" style="width: 30%; min-width: 150px;" oninput="updateGroupData(' + secIdx + ',' + grpIdx + ',\'description\',this.value)" />' +
 					'<select style="width: auto; padding: 4px;" onchange="updateGroupData(' + secIdx + ',' + grpIdx + ',\'columns\',parseInt(this.value))">' +
 						'<option value="1"' + (columns === 1 ? ' selected' : '') + '>1 Column</option>' +
 						'<option value="2"' + (columns === 2 ? ' selected' : '') + '>2 Columns</option>' +
@@ -869,8 +1061,8 @@
 				sectionEl.innerHTML = 
 					'<div class="section-header">' +
 						'<div class="section-title-wrapper">' +
-							'<input type="text" value=\'' + item.label.replace(/'/g, "&#39;") + '\' placeholder="Section Title" style="font-weight: bold; width: 40%;" oninput="updateSectionData(' + idx + ',\'label\',this.value)" />' +
-							'<input type="text" value=\'' + item.description.replace(/'/g, "&#39;") + '\' placeholder="Section Description / Help text" style="width: 55%;" oninput="updateSectionData(' + idx + ',\'description\',this.value)" />' +
+							'<input type="text" value="' + escapeHtml(item.label) + '" placeholder="Section Title" style="font-weight: bold; width: 40%;" oninput="updateSectionData(' + idx + ',\'label\',this.value)" />' +
+							'<input type="text" value="' + escapeHtml(item.description) + '" placeholder="Section Description / Help text" style="width: 55%;" oninput="updateSectionData(' + idx + ',\'description\',this.value)" />' +
 						'</div>' +
 						'<div class="control-buttons-group">' +
 							'<button type="button" class="btn-secondary" onclick="moveTopLevel(' + idx + ',-1)">&uarr;</button>' +

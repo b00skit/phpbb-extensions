@@ -88,7 +88,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			$def = $this->career_manager->get_definition($type_id);
@@ -114,7 +114,7 @@ class main
 					if (!empty($field['mandatory']) && $val === '')
 					{
 						$field_label = !empty($field['name']) ? $field['name'] : $var;
-						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
+						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label), E_USER_WARNING);
 					}
 				}
 
@@ -362,7 +362,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_CAREER_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			$def = $this->career_manager->get_definition($type_id);
@@ -387,7 +387,7 @@ class main
 					if (!empty($field['mandatory']) && $val === '')
 					{
 						$field_label = !empty($field['name']) ? $field['name'] : $var;
-						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label) . $this->helper->previous_route(), E_USER_WARNING);
+						trigger_error(sprintf($this->user->lang['MANDATORY_FIELD_REQUIRED'], $field_label), E_USER_WARNING);
 					}
 				}
 

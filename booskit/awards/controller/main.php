@@ -74,7 +74,7 @@ class main
 
 			if (empty($award_def_id))
 			{
-				trigger_error($this->user->lang['NO_AWARD_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_AWARD_SELECTED'], E_USER_WARNING);
 			}
 
 			// Parse BBCode

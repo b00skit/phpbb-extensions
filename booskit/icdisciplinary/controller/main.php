@@ -66,7 +66,7 @@ class main
 
 			if (empty($name))
 			{
-				trigger_error($this->user->lang['CHARACTER_NAME_EMPTY'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['CHARACTER_NAME_EMPTY'], E_USER_WARNING);
 			}
 
 			$this->ic_manager->add_character($user_id, $name);
@@ -74,7 +74,7 @@ class main
 			$user_row = $this->ic_manager->get_username_string($user_id);
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_CHARACTER_ADDED', time(), array($name));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '#icdisciplinary');
 
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['CHARACTER_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
@@ -84,7 +84,7 @@ class main
 
 		$this->template->assign_vars(array(
 			'U_ACTION' => $this->helper->route('booskit_icdisciplinary_add_character', array('user_id' => $user_id)),
-			'U_BACK' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
+			'U_BACK' => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '#icdisciplinary'),
 		));
 
 		return $this->helper->render('add_character.html', $this->user->lang['ADD_CHARACTER']);
@@ -114,7 +114,7 @@ class main
 
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_CHARACTER_ARCHIVED', time(), array($character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id . '#icdisciplinary');
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['CHARACTER_ARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
@@ -148,7 +148,7 @@ class main
 
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_CHARACTER_DELETED', time(), array($character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '#icdisciplinary');
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['CHARACTER_DELETED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
@@ -205,7 +205,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			// Validation: Check if user has access to issue this type
@@ -230,7 +230,7 @@ class main
 			$type_name = $def ? $def['name'] : $type_id;
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_ADDED', time(), array($type_name, $character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $character_id);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $character_id . '#icdisciplinary');
 
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['IC_RECORD_ADDED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
@@ -300,7 +300,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			// Validation: Check if user has access to issue this type
@@ -326,7 +326,7 @@ class main
 			$type_name = $def ? $def['name'] : $type_id;
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_EDITED', time(), array($type_name, $character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id'] . '#icdisciplinary');
 
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['IC_RECORD_UPDATED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
@@ -376,7 +376,7 @@ class main
 			$type_name = $def ? $def['name'] : $record['disciplinary_type_id'];
 			$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_DELETED', time(), array($type_name, $character['character_name']));
 
-			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+			$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id'] . '#icdisciplinary');
 			meta_refresh(3, $u_profile);
 			trigger_error($this->user->lang['IC_RECORD_DELETED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 		}
@@ -406,7 +406,7 @@ class main
 			trigger_error('NOT_AUTHORISED');
 		}
 
-		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id'] . '#icdisciplinary');
 
 		if ($this->request->is_set_post('submit'))
 		{
@@ -424,7 +424,7 @@ class main
 			$reason = $this->request->variable('archive_reason', '', true);
 			if (empty($reason))
 			{
-				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'], E_USER_WARNING);
 			}
 
 			$this->ic_manager->archive_record($record_id, $reason, $this->user->data['user_id']);
@@ -471,7 +471,7 @@ class main
 		$type_name = $def ? $def['name'] : $record['disciplinary_type_id'];
 		$this->log->add('mod', $this->user->data['user_id'], $this->user->ip, 'LOG_IC_RECORD_UNARCHIVED', time(), array($type_name, $character['character_name']));
 
-		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id']);
+		$u_profile = append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $target_user_id . '&character_id=' . $record['character_id'] . '#icdisciplinary');
 		meta_refresh(3, $u_profile);
 		trigger_error($this->user->lang['IC_RECORD_UNARCHIVED'] . '<br><br>' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $u_profile . '">', '</a>'));
 	}
@@ -534,7 +534,7 @@ class main
 			'U_ACTION'			=> $is_edit
 				? $this->helper->route('booskit_icdisciplinary_edit_record', array('record_id' => $record['record_id']))
 				: $this->helper->route('booskit_icdisciplinary_add_record', array('character_id' => $character_id)),
-			'U_BACK'			=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id),
+			'U_BACK'			=> append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id . '&character_id=' . $character_id . '#icdisciplinary'),
 			'S_BBCODE_ALLOWED' => true,
 			'S_BBCODE_QUOTE'   => true,
 			'S_BBCODE_IMG'     => true,

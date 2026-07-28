@@ -27,7 +27,7 @@ class main
 		$this->form_manager = $form_manager;
 	}
 
-	public function display($form_id)
+	public function display($form_id, array $errors = [])
 	{
 		$this->user->add_lang_ext('booskit/forms', 'forms');
 		$form = $this->form_manager->get_form($form_id);
@@ -51,6 +51,44 @@ class main
 		}
 
 		$fields = $this->form_manager->get_form_fields($form['form_id']);
+
+		// Map input groups and member fields
+		$input_groups = [];
+		$current_group_name = null;
+		foreach ($fields as $field)
+		{
+			if ($field['field_type'] == 'input_group_start')
+			{
+				$options_decoded = json_decode($field['field_options'], true);
+				$multi = isset($options_decoded['multi']) ? (bool) $options_decoded['multi'] : false;
+				$current_group_name = $field['field_name'];
+				$input_groups[$current_group_name] = [
+					'name'   => $current_group_name,
+					'multi'  => $multi,
+					'fields' => [],
+				];
+			}
+			else if ($field['field_type'] == 'input_group_end')
+			{
+				$current_group_name = null;
+			}
+			else if ($field['field_type'] != 'section_start' && $field['field_type'] != 'section_end')
+			{
+				if ($current_group_name !== null)
+				{
+					$input_groups[$current_group_name]['fields'][] = $field;
+				}
+			}
+		}
+
+		$field_to_group = [];
+		foreach ($input_groups as $group_name => $group_info)
+		{
+			foreach ($group_info['fields'] as $gf)
+			{
+				$field_to_group[$gf['field_name']] = $group_info;
+			}
+		}
 
 		foreach ($fields as $field)
 		{
@@ -84,11 +122,37 @@ class main
 				continue;
 			}
 
-			$current_value = $this->request->variable($field['field_name'], '', true);
-			if (empty($current_value))
+			$name = $field['field_name'];
+			$is_in_multi_group = isset($field_to_group[$name]) && $field_to_group[$name]['multi'];
+
+			if ($is_in_multi_group)
 			{
-				$current_value = $this->request->variable($field['field_name'], array(''), true);
+				if ($field['field_type'] == 'checkbox')
+				{
+					$current_value = $this->request->variable($name, array(array('')), true);
+					$row0_val = (isset($current_value[0]) && is_array($current_value[0])) ? $current_value[0] : [];
+				}
+				else
+				{
+					$current_value = $this->request->variable($name, array(''), true);
+					$row0_val = isset($current_value[0]) ? (string)$current_value[0] : '';
+				}
 			}
+			else
+			{
+				if ($field['field_type'] == 'checkbox')
+				{
+					$current_value = $this->request->variable($name, array(''), true);
+					$row0_val = $current_value;
+				}
+				else
+				{
+					$current_value = $this->request->variable($name, '', true);
+					$row0_val = $current_value;
+				}
+			}
+
+			$default_value_for_tpl = is_array($row0_val) ? '' : $row0_val;
 
 			$this->template->assign_block_vars('fields', [
 				'NAME'			=> $field['field_name'],
@@ -96,7 +160,7 @@ class main
 				'TYPE'			=> $field['field_type'],
 				'REQUIRED'		=> (bool) $field['field_required'],
 				'EXPLAIN'		=> $field['field_desc'],
-				'DEFAULT_VALUE'	=> is_array($current_value) ? '' : $current_value,
+				'DEFAULT_VALUE'	=> $default_value_for_tpl,
 				'S_TEXT'		=> $field['field_type'] == 'text',
 				'S_TEXTAREA'	=> $field['field_type'] == 'textarea',
 				'S_SELECT'		=> $field['field_type'] == 'select',
@@ -116,10 +180,11 @@ class main
 			{
 				foreach ($options as $val => $label)
 				{
+					$is_selected = is_array($row0_val) ? in_array((string)$val, $row0_val) : ((string)$val == (string)$row0_val);
 					$this->template->assign_block_vars('fields.options', [
 						'VALUE'		=> $val,
 						'LABEL'		=> $label,
-						'S_SELECTED' => is_array($current_value) ? in_array((string)$val, $current_value) : ((string)$val == (string)$current_value),
+						'S_SELECTED' => $is_selected,
 					]);
 				}
 			}
@@ -129,7 +194,7 @@ class main
 		$form['form_desc'] = generate_text_for_display($form['form_desc'], $form['form_desc_uid'], $form['form_desc_bitfield'], $form['form_desc_options']);
 		$form['form_header'] = generate_text_for_display($form['form_header'], $form['form_header_uid'], $form['form_header_bitfield'], $form['form_header_options']);
 
-		// Fetch submitted values for re-populating (in case of validation error)
+		// Fetch submitted values for re-populating
 		$submitted_data = [];
 		foreach ($fields as $field)
 		{
@@ -137,21 +202,36 @@ class main
 			{
 				continue;
 			}
-			if ($this->request->is_set_post($field['field_name']))
+			$name = $field['field_name'];
+			if ($this->request->is_set_post($name))
 			{
-				$val = $this->request->variable($field['field_name'], array(array('')), true);
-				if (empty($val) || (count($val) == 1 && isset($val[0]) && $val[0] === array('')))
+				$is_in_multi_group = isset($field_to_group[$name]) && $field_to_group[$name]['multi'];
+				if ($is_in_multi_group)
 				{
-					$val = $this->request->variable($field['field_name'], array(''), true);
+					if ($field['field_type'] == 'checkbox')
+					{
+						$val = $this->request->variable($name, array(array('')), true);
+					}
+					else
+					{
+						$val = $this->request->variable($name, array(''), true);
+					}
 				}
-				if (empty($val) || (count($val) == 1 && isset($val[0]) && $val[0] === ''))
+				else
 				{
-					$val = $this->request->variable($field['field_name'], '', true);
+					if ($field['field_type'] == 'checkbox')
+					{
+						$val = $this->request->variable($name, array(''), true);
+					}
+					else
+					{
+						$val = $this->request->variable($name, '', true);
+					}
 				}
 
 				if ($val !== '' && !empty($val))
 				{
-					$submitted_data[$field['field_name']] = $val;
+					$submitted_data[$name] = $val;
 				}
 			}
 		}
@@ -159,11 +239,13 @@ class main
 		add_form_key('booskit_forms');
 
 		$this->template->assign_vars([
-			'FORM_NAME'		=> $form['form_name'],
-			'FORM_DESC'		=> $form['form_desc'],
-			'FORM_HEADER'	=> $form['form_header'],
-			'U_ACTION'		=> $this->helper->route('booskit_forms_submit', ['form_id' => $form_id]),
-			'SUBMITTED_DATA_JSON' => !empty($submitted_data) ? json_encode($submitted_data) : '',
+			'FORM_NAME'           => $form['form_name'],
+			'FORM_DESC'           => $form['form_desc'],
+			'FORM_HEADER'         => $form['form_header'],
+			'U_ACTION'            => $this->helper->route('booskit_forms_submit', ['form_id' => $form_id]),
+			'SUBMITTED_DATA_JSON' => !empty($submitted_data) ? htmlspecialchars(json_encode($submitted_data), ENT_QUOTES, 'UTF-8') : '',
+			'S_HAS_ERRORS'        => !empty($errors),
+			'ERROR_MSG'           => implode('<br />', $errors),
 		]);
 
 		return $this->helper->render('form_display.html', $form['form_name']);
@@ -171,29 +253,71 @@ class main
 
 	protected function get_field_options($field)
 	{
-		$options = $field['field_options'];
-		$decoded_options = json_decode($options, true);
-		
-		if (json_last_error() === JSON_ERROR_NONE && is_array($decoded_options))
+		$options = isset($field['field_options']) ? $field['field_options'] : '';
+		if (is_array($options))
 		{
-			return $decoded_options;
+			$decoded_options = $options;
 		}
-		else if (strpos($options, ':') !== false)
+		else
+		{
+			$decoded_options = json_decode($options, true);
+		}
+		
+		if ((json_last_error() === JSON_ERROR_NONE || is_array($options)) && is_array($decoded_options))
+		{
+			$result = [];
+			$is_list_of_items = isset($decoded_options[0]) && is_array($decoded_options[0]) && (isset($decoded_options[0]['label']) || isset($decoded_options[0]['value']));
+			if ($is_list_of_items)
+			{
+				foreach ($decoded_options as $item)
+				{
+					$val = isset($item['value']) && $item['value'] !== '' ? (string)$item['value'] : (isset($item['label']) ? (string)$item['label'] : '');
+					$lbl = isset($item['label']) ? (string)$item['label'] : $val;
+					if ($val !== '')
+					{
+						$result[$val] = $lbl;
+					}
+				}
+				return $result;
+			}
+			else
+			{
+				foreach ($decoded_options as $k => $v)
+				{
+					if (is_array($v))
+					{
+						$val = isset($v['value']) && $v['value'] !== '' ? (string)$v['value'] : (isset($v['label']) ? (string)$v['label'] : (string)$k);
+						$lbl = isset($v['label']) ? (string)$v['label'] : $val;
+						$result[$val] = $lbl;
+					}
+					else if (is_int($k))
+					{
+						$result[(string)$v] = (string)$v;
+					}
+					else
+					{
+						$result[(string)$k] = (string)$v;
+					}
+				}
+				return $result;
+			}
+		}
+		else if (is_string($options) && strpos($options, ':') !== false)
 		{
 			$pairs = explode(',', $options);
-			$options = [];
+			$res = [];
 			foreach ($pairs as $p)
 			{
 				$kv = explode(':', $p);
 				if (count($kv) == 2)
 				{
-					$options[trim($kv[0])] = trim($kv[1]);
+					$res[trim($kv[0])] = trim($kv[1]);
 				}
 			}
-			return $options;
+			return $res;
 		}
 
-		return [$options => $options];
+		return is_string($options) && $options !== '' ? [$options => $options] : [];
 	}
 
 	public function submit($form_id)
@@ -451,9 +575,7 @@ class main
 
 		if (!empty($errors))
 		{
-			$error_msg = implode('<br />', $errors);
-			$back_url = $this->helper->route('booskit_forms_view', ['form_id' => $form_id]);
-			trigger_error($error_msg . '<br /><br />' . sprintf($this->user->lang['RETURN_PAGE'], '<a href="' . $back_url . '">', '</a>'), E_USER_WARNING);
+			return $this->display($form_id, $errors);
 		}
 
 		$subject = $form['form_subject_tpl'];
@@ -673,7 +795,7 @@ class main
 							{
 								$this->template->assign_block_vars('hidden_fields', [
 									'NAME'  => $key . '[' . $row_idx . '][]',
-									'VALUE' => $v,
+									'VALUE' => htmlspecialchars($v, ENT_QUOTES, 'UTF-8'),
 								]);
 							}
 						}
@@ -681,7 +803,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[' . $row_idx . ']',
-								'VALUE' => $row_val,
+								'VALUE' => htmlspecialchars($row_val, ENT_QUOTES, 'UTF-8'),
 							]);
 						}
 					}
@@ -694,7 +816,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[]',
-								'VALUE' => $v,
+								'VALUE' => htmlspecialchars($v, ENT_QUOTES, 'UTF-8'),
 							]);
 						}
 					}
@@ -702,7 +824,7 @@ class main
 					{
 						$this->template->assign_block_vars('hidden_fields', [
 							'NAME'  => $key,
-							'VALUE' => isset($val[0]) ? $val[0] : '',
+							'VALUE' => htmlspecialchars(isset($val[0]) ? $val[0] : '', ENT_QUOTES, 'UTF-8'),
 						]);
 					}
 				}

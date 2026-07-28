@@ -74,7 +74,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			// Validation: Check if user has access to issue this type
@@ -173,7 +173,7 @@ class main
 
 			if (empty($type_id))
 			{
-				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_DISCIPLINARY_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			if (!$this->disciplinary_manager->can_issue_type($viewer_id, $user_id, $type_id))
@@ -300,7 +300,7 @@ class main
 			$reason = $this->request->variable('archive_reason', '', true);
 			if (empty($reason))
 			{
-				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['ARCHIVE_REASON_EMPTY'], E_USER_WARNING);
 			}
 
 			$this->disciplinary_manager->archive_record($record_id, $reason, $viewer_id);

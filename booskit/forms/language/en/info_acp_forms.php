@@ -34,7 +34,18 @@ $lang = array_merge($lang, array(
 	'FORM_SUBJECT_TPL_EXPLAIN'			=> 'The subject of the created topic. Use {{variable_name}} for field values. For checkboxes, you can use loops: {{#variable_name}}{{value}}{{/variable_name}}.',
 	'FORM_TEMPLATE'						=> 'Body Template',
 	'FORM_TEMPLATE_EXPLAIN'				=> 'The content of the created post. Use {{variable_name}} for field values.',
-	'FORM_LOOPS_HELP'					=> '<strong>Loop Usage for Checkboxes:</strong><br />For fields like checkboxes that can have multiple values, you can use loops in your subject or body template:<br /><code>{{#variable_name}} - {{label}}<br />{{/variable_name}}</code><br />Inside the loop, you can use <code>{{label}}</code> for the display name and <code>{{value}}</code> for the raw value.',
+	'FORM_VARS_GUIDE_TITLE'			=> 'Template Variable Guide',
+	'FORM_VARS_GUIDE_INTRO'			=> 'Use variables in your Subject and Body templates to output user submitted data. Below is how each variable type works:',
+	'FORM_VARS_SINGLE_TITLE'		=> 'Single Variable (Standard Fields)',
+	'FORM_VARS_SINGLE_DESC'			=> 'Outputs the selected value or entered text from any single field (Text, Textarea, Select, Radio, etc.).',
+	'FORM_VARS_CHECKBOX_TITLE'		=> 'Checkbox Field',
+	'FORM_VARS_CHECKBOX_DESC'		=> 'Outputs multiple selected options. Use simple tag for comma-separated values, or a loop to format as a list with {{label}} and {{value}}.',
+	'FORM_VARS_LOOPS_TITLE'			=> 'Field & Global Loops',
+	'FORM_VARS_LOOPS_DESC'			=> 'Use {{#fields}}...{{/fields}} with {{name}}, {{label}}, {{value}} to automatically list all filled fields in the form.',
+	'FORM_VARS_GROUP_TITLE'			=> 'Standard Group',
+	'FORM_VARS_GROUP_DESC'			=> 'Standard input groups organize fields into columns visually. Use child variable names directly inside your body template.',
+	'FORM_VARS_MULTI_GROUP_TITLE'	=> 'Multi Group (Repeater)',
+	'FORM_VARS_MULTI_GROUP_DESC'	=> 'Allows users to dynamically add multiple rows of responses. Loop over the Group Name to output each row.',
 	
 	'FORM_FIELDS'						=> 'Form Fields',
 	'FORM_FIELDS_EXPLAIN'				=> 'Define the fields for this form.',
@@ -71,7 +82,5 @@ $lang = array_merge($lang, array(
 	'SUBMIT'							=> 'Submit',
 	'RESET'								=> 'Reset',
 	'DELETE'							=> 'Delete',
-
-	// Award title was used in template by mistake or copy-paste, ensuring it works
-	'ACP_BOOSKIT_AWARDS_TITLE'			=> 'Custom Forms',
 ));
+

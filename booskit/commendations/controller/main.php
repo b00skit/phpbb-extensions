@@ -69,7 +69,7 @@ class main
 
 			if (empty($type))
 			{
-				trigger_error($this->user->lang['NO_COMMENDATION_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_COMMENDATION_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			// Parse BBCode
@@ -174,7 +174,7 @@ class main
 
 			if (empty($type))
 			{
-				trigger_error($this->user->lang['NO_COMMENDATION_TYPE_SELECTED'] . $this->helper->previous_route(), E_USER_WARNING);
+				trigger_error($this->user->lang['NO_COMMENDATION_TYPE_SELECTED'], E_USER_WARNING);
 			}
 
 			// Parse BBCode
