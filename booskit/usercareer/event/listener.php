@@ -35,6 +35,10 @@ class listener implements EventSubscriberInterface
 
 	public function load_language_on_setup($event)
 	{
+		if (defined('E_DEPRECATED'))
+		{
+			@error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+		}
 		$lang_set_ext = $event['lang_set_ext'];
 		$lang_set_ext[] = array(
 			'ext_name' => 'booskit/usercareer',

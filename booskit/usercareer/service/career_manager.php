@@ -801,6 +801,8 @@ class career_manager
 
 	public function create_public_post($forum_id, $poster_id, $subject, $body)
 	{
+		$this->user->add_lang('posting');
+
 		if (empty($poster_id))
 		{
 			$poster_id = $this->user->data['user_id'];
@@ -898,7 +900,7 @@ class career_manager
 		}
 
 		$old_username = $this->get_username_string($user_id);
-		if (empty($old_username) || $old_username === 'Unknown')
+		if (empty($old_username) || $old_username === 'Unknown' || $old_username === $new_username)
 		{
 			return;
 		}
@@ -919,6 +921,14 @@ class career_manager
 			trigger_error('USERNAME_TAKEN', E_USER_WARNING);
 		}
 
+		// Direct update USERS_TABLE for target user_id
+		$sql = 'UPDATE ' . USERS_TABLE . "
+			SET username = '" . $this->db->sql_escape($new_username) . "',
+				username_clean = '" . $this->db->sql_escape($clean_name) . "'
+			WHERE user_id = " . (int) $user_id;
+		$this->db->sql_query($sql);
+
+		// Perform phpBB cascading name updates on posts, topics, forums, logs
 		if (!function_exists('user_update_name'))
 		{
 			require($this->root_path . 'includes/functions_user.' . $this->php_ext);
@@ -928,5 +938,9 @@ class career_manager
 		{
 			\user_update_name($old_username, $new_username);
 		}
+
+		// Invalidate phpBB user cache so new username takes effect immediately
+		$this->cache->destroy('sql', USERS_TABLE);
+		$this->cache->destroy('user_' . $user_id);
 	}
 }

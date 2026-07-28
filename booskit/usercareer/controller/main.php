@@ -24,6 +24,10 @@ class main
 
 	public function __construct(\phpbb\config\config $config, \phpbb\db\driver\driver_interface $db, \phpbb\request\request_interface $request, \phpbb\template\template $template, \phpbb\user $user, \phpbb\controller\helper $helper, \phpbb\auth\auth $auth, \phpbb\log\log_interface $log, \booskit\usercareer\service\career_manager $career_manager, $root_path, $php_ext, $table_prefix)
 	{
+		if (defined('E_DEPRECATED'))
+		{
+			@error_reporting(error_reporting() & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+		}
 		$this->config = $config;
 		$this->config_text = new \phpbb\config\db_text($db, $table_prefix . 'config_text');
 		$this->request = $request;
@@ -56,7 +60,7 @@ class main
 		}
 
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
-		$this->user->add_lang('common');
+		$this->user->add_lang(array('common', 'posting'));
 
 		if ($this->request->is_set_post('submit'))
 		{
@@ -277,13 +281,12 @@ class main
 						$this->career_manager->set_primary_group($user_id, $primary_group_id);
 					}
 
-					if (!empty($setting['change_name']))
+					$change_name_enabled = !empty($setting['change_name']) && $setting['change_name'] !== 'false' && $setting['change_name'] !== '0';
+					$new_username = $this->request->variable('new_username', '', true);
+
+					if (($change_name_enabled || !empty($new_username)) && !empty($new_username))
 					{
-						$new_username = $this->request->variable('new_username', '', true);
-						if (!empty($new_username))
-						{
-							$this->career_manager->change_username($user_id, $new_username);
-						}
+						$this->career_manager->change_username($user_id, $new_username);
 					}
 				}
 			}
@@ -319,7 +322,7 @@ class main
 	{
 		$viewer_id = $this->user->data['user_id'];
 		$this->user->add_lang_ext('booskit/usercareer', 'career');
-		$this->user->add_lang('common');
+		$this->user->add_lang(array('common', 'posting'));
 
 		$note = $this->career_manager->get_note($note_id);
 		if (!$note)

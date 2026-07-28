@@ -414,7 +414,8 @@
 
 		var changeNameContainer = document.getElementById('automation_change_name_container');
 		var newUsernameInput = document.getElementById('new_username');
-		if (setting.change_name) {
+		var isChangeNameActive = setting.change_name === true || setting.change_name === 'true' || setting.change_name === 1 || setting.change_name === '1';
+		if (isChangeNameActive) {
 			if (changeNameContainer) changeNameContainer.style.display = 'block';
 		} else {
 			if (changeNameContainer) changeNameContainer.style.display = 'none';
