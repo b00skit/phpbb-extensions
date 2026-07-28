@@ -14,6 +14,9 @@ class gtaw extends \phpbb\auth\provider\oauth\service\base
     /** @var \phpbb\controller\helper */
     protected $helper;
 
+    /** @var string */
+    public $redirect_uri;
+
     private $custom_redirect_uri;
 
     /**
