@@ -343,6 +343,7 @@ class disciplinary_manager
 			'evidence_bbcode_uid' => $evidence_bbcode_uid,
 			'evidence_bbcode_bitfield' => $evidence_bbcode_bitfield,
 			'evidence_bbcode_options' => $evidence_bbcode_options,
+			'archive_reason' => '',
 		];
 
 		$sql = 'INSERT INTO ' . $this->table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);

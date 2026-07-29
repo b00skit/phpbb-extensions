@@ -26,7 +26,7 @@ class v103_add_record_archive extends \phpbb\db\migration\migration
 			'add_columns' => [
 				$this->table_prefix . 'booskit_ic_records' => [
 					'is_archived'         => ['TINT:1', 0],
-					'archive_reason'      => ['TEXT_UNI', ''],
+					'archive_reason'      => ['TEXT_UNI', null],
 					'archived_by_user_id' => ['UINT', 0],
 					'archive_date'        => ['TIMESTAMP', 0],
 				],

@@ -304,6 +304,7 @@ class ic_manager
 			'evidence_bbcode_uid' => $evidence_bbcode_uid,
 			'evidence_bbcode_bitfield' => $evidence_bbcode_bitfield,
 			'evidence_bbcode_options' => $evidence_bbcode_options,
+			'archive_reason' => '',
 		];
 
 		$sql = 'INSERT INTO ' . $this->table_records . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);

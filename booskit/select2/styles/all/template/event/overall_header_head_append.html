@@ -1,5 +1,5 @@
-<link rel="stylesheet" href="{BOARD_URL}ext/booskit/select2/styles/all/theme/select2.min.css?assets_version={T_ASSETS_VERSION}" type="text/css" />
-<link rel="stylesheet" href="{BOARD_URL}ext/booskit/select2/styles/all/theme/select2_custom.css?assets_version={T_ASSETS_VERSION}" type="text/css" />
+{% INCLUDECSS '@booskit_select2/select2.min.css' %}
+{% INCLUDECSS '@booskit_select2/select2_custom.css' %}
 <script type="text/javascript">
     window.SELECT2_RANKS_DATA = {{ SELECT2_RANKS_JSON|default('{}')|raw }};
     window.SELECT2_RANKS_BASE_URL = '{{ SELECT2_RANKS_BASE_URL|escape("js") }}';
