@@ -233,6 +233,24 @@ class callback
             $result = $this->user->session_create($user_id, false, true, true);
 
             if ($result === true) {
+                 // Tag session for 2FA OAuth evaluation if 2FA extension is active
+                 if (!empty($this->config['booskit_2fa_enabled'])) {
+                     $twofactor_sessions = $this->table_prefix . 'booskit_2fa_sessions';
+                     $sql_ary = [
+                         'session_id'     => $this->user->session_id,
+                         'user_id'        => (int) $user_id,
+                         'is_verified'    => 0,
+                         'verified_at'    => 0,
+                         'ip_hash'        => md5($this->user->ip),
+                         'pending_secret' => '',
+                         'auth_via_oauth' => 1,
+                     ];
+                     $this->db->sql_return_on_error(true);
+                     $sql = 'INSERT INTO ' . $twofactor_sessions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+                     $this->db->sql_query($sql);
+                     $this->db->sql_return_on_error(false);
+                 }
+
                  // Login successful
                  global $phpEx;
                  $redirect = $this->request->variable('redirect', "index.$phpEx");

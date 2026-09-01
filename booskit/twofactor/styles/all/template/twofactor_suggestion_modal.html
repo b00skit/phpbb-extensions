@@ -1,0 +1,45 @@
+<!-- IF S_SHOW_2FA_SUGGESTION -->
+<!-- IF BOOSKIT_2FA_COLOR -->
+<style>:root { --booskit-2fa-primary: {BOOSKIT_2FA_COLOR}; }</style>
+<!-- ENDIF -->
+<div id="booskit_2fa_suggestion" class="booskit-2fa-suggestion-banner">
+	<div class="booskit-2fa-suggestion-title">
+		<!-- IF BOOSKIT_2FA_LOGO_URL -->
+		<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo" style="max-width:24px; max-height:24px; object-fit:contain; vertical-align:middle;" />
+		<!-- ELSE -->
+		<i class="fa fa-shield" aria-hidden="true"></i>
+		<!-- ENDIF -->
+		{L_BOOSKIT_2FA_SUGGESTION_TITLE}
+	</div>
+	<div class="booskit-2fa-suggestion-text">
+		{L_BOOSKIT_2FA_SUGGESTION_TEXT}
+	</div>
+	<div class="booskit-2fa-suggestion-actions">
+		<a href="{U_2FA_SETUP}" class="booskit-2fa-btn-primary" style="padding:6px 12px; font-size:12px; width:auto;">
+			{L_BOOSKIT_2FA_SUGGESTION_SETUP_NOW}
+		</a>
+		<a href="{U_2FA_DISMISS}" class="booskit-2fa-btn-secondary" style="padding:6px 10px; font-size:12px;" onclick="booskitDismissSuggestion(event, '{U_2FA_DISMISS}');">
+			{L_BOOSKIT_2FA_SUGGESTION_REMIND}
+		</a>
+	</div>
+</div>
+
+<script>
+function booskitDismissSuggestion(e, dismissUrl) {
+	if (window.fetch) {
+		e.preventDefault();
+		fetch(dismissUrl, {
+			method: 'POST',
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		}).then(function() {
+			var banner = document.getElementById('booskit_2fa_suggestion');
+			if (banner) {
+				banner.style.display = 'none';
+			}
+		}).catch(function() {
+			window.location.href = dismissUrl;
+		});
+	}
+}
+</script>
+<!-- ENDIF -->

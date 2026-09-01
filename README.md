@@ -177,3 +177,24 @@ An aggregated dashboard that provides a centralized interface for managing vario
 ### Features
 *   **Unified Dashboard:** A single location to view and manage data from multiple extensions (Awards, Careers, Disciplinary, etc.).
 *   **Streamlined Workflow:** Reduces the need to navigate between multiple profile tabs or ACP pages.
+
+---
+
+## 14. Two-Factor Authentication (`booskit/twofactor`)
+
+A comprehensive, production-grade Two-Factor Authentication (2FA) extension for phpBB using Time-based One-Time Passwords (RFC 6238 TOTP) and emergency backup keys.
+
+### Features
+*   **Sign-in Flow Interception:** Requires 2FA verification when logging in, logging in via OAuth (e.g. GTA:W OAuth), and accessing restricted areas (UCP, MCP, ACP).
+*   **Group Policy Customization:**
+    *   **Suggestion Prompt:** Configure groups that receive a 30-day skippable setup prompt banner.
+    *   **Enforced Setup:** Configure groups strictly required to setup 2FA before being permitted to perform actions.
+    *   **Granular Access Requirements:** Separate group rules for standard Login, UCP, MCP, ACP, and GTA:W OAuth login.
+    *   **Conditional OAuth Settings:** Automatically detects whether `booskit/gtawoauth` is active.
+*   **Standalone TOTP & QR Engine:** Pure PHP RFC 6238 implementation with inline vector SVG QR code generation (zero external APIs/dependencies).
+*   **Emergency Backup Keys:** Generates single-use backup keys stored hashed with `password_hash()`, supporting quick clipboard copy, download (.txt), and printing.
+*   **ACP User Administration:**
+    *   View user 2FA status, last successful 2FA login timestamp, IP address, and method (TOTP vs Backup code).
+    *   Admin capability to remotely disable 2FA for individual users.
+    *   Admin capability to reset backup keys, prompting the user with their new backup keys upon next login.
+*   **UCP Self-Management:** Users can self-enroll, view status and remaining backup keys, regenerate backup keys, or disconnect 2FA.

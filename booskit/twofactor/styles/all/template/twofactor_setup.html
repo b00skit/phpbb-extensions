@@ -1,0 +1,159 @@
+<!-- INCLUDE overall_header.html -->
+
+<!-- IF BOOSKIT_2FA_COLOR -->
+<style>:root { --booskit-2fa-primary: {BOOSKIT_2FA_COLOR}; }</style>
+<!-- ENDIF -->
+
+<div class="booskit-2fa-container" style="max-width:620px;">
+	<div class="booskit-2fa-card">
+		<!-- IF S_STEP eq 'backup_keys' -->
+			<div class="booskit-2fa-header">
+				<!-- IF BOOSKIT_2FA_LOGO_URL -->
+				<div class="booskit-2fa-logo-wrapper">
+					<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo" class="booskit-2fa-logo-img" />
+				</div>
+				<!-- ELSE -->
+				<div class="booskit-2fa-icon" style="color:#16a34a;">
+					<i class="fa fa-check-circle" aria-hidden="true"></i>
+				</div>
+				<!-- ENDIF -->
+				<h2>{L_BOOSKIT_2FA_BACKUP_KEYS_HEADER}</h2>
+				<p>{L_BOOSKIT_2FA_BACKUP_KEYS_WARNING}</p>
+			</div>
+
+			<div class="booskit-2fa-backup-grid">
+				<!-- BEGIN backup_keys -->
+				<div class="booskit-2fa-backup-item">{backup_keys.KEY}</div>
+				<!-- END backup_keys -->
+			</div>
+
+			<div class="booskit-2fa-actions-row">
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitCopyBackupKeys();">
+					<i class="fa fa-clipboard" aria-hidden="true"></i> <span id="booskit_copy_keys_btn">{L_BOOSKIT_2FA_COPY_ALL_KEYS}</span>
+				</button>
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitDownloadBackupKeys();">
+					<i class="fa fa-download" aria-hidden="true"></i> {L_BOOSKIT_2FA_DOWNLOAD_KEYS}
+				</button>
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="window.print();">
+					<i class="fa fa-print" aria-hidden="true"></i> {L_BOOSKIT_2FA_PRINT_KEYS}
+				</button>
+			</div>
+
+			<div style="margin-top:25px;">
+				<a href="{U_INDEX}" class="booskit-2fa-btn-primary">
+					{L_BOOSKIT_2FA_CONTINUE_TO_BOARD} <i class="fa fa-arrow-right" aria-hidden="true"></i>
+				</a>
+			</div>
+
+			<textarea id="booskit_backup_keys_raw" style="display:none;">{BACKUP_KEYS_TEXT}</textarea>
+
+			<script>
+			function booskitCopyBackupKeys() {
+				var text = document.getElementById('booskit_backup_keys_raw').value;
+				navigator.clipboard.writeText(text).then(function() {
+					var btn = document.getElementById('booskit_copy_keys_btn');
+					var orig = btn.textContent;
+					btn.textContent = '{LA_BOOSKIT_2FA_COPIED}';
+					setTimeout(function() { btn.textContent = orig; }, 2500);
+				});
+			}
+
+			function booskitDownloadBackupKeys() {
+				var text = document.getElementById('booskit_backup_keys_raw').value;
+				var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+				var a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = '2fa-backup-keys.txt';
+				a.click();
+			}
+			</script>
+
+		<!-- ELSE -->
+
+			<div class="booskit-2fa-header">
+				<!-- IF BOOSKIT_2FA_LOGO_URL -->
+				<div class="booskit-2fa-logo-wrapper">
+					<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo" class="booskit-2fa-logo-img" />
+				</div>
+				<!-- ELSE -->
+				<div class="booskit-2fa-icon">
+					<i class="fa fa-shield" aria-hidden="true"></i>
+				</div>
+				<!-- ENDIF -->
+				<h2>{L_BOOSKIT_2FA_SETUP_HEADER}</h2>
+				<!-- IF S_ENFORCED -->
+				<div class="booskit-2fa-error" style="background:#eff6ff; border-color:#93c5fd; color:#1e40af; margin-top:10px;">
+					<i class="fa fa-info-circle" aria-hidden="true"></i> {L_BOOSKIT_2FA_SETUP_ENFORCED_NOTICE}
+				</div>
+				<!-- ENDIF -->
+			</div>
+
+			<!-- IF ERROR -->
+			<div class="booskit-2fa-error">
+				<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {ERROR}
+			</div>
+			<!-- ENDIF -->
+
+			<!-- Step 1: Scan QR Code -->
+			<div class="booskit-2fa-step-box">
+				<h3><i class="fa fa-qrcode" aria-hidden="true"></i> {L_BOOSKIT_2FA_STEP_1}</h3>
+				<p style="font-size:13px; color:#475569; margin:0 0 10px 0;">{L_BOOSKIT_2FA_STEP_1_EXPLAIN}</p>
+
+				<div class="booskit-2fa-qr-container">
+					<img src="{QR_DATA_URI}" alt="2FA QR Code" class="booskit-2fa-qr-img" width="180" height="180" />
+				</div>
+
+				<div class="booskit-2fa-secret-box">
+					<p style="font-size:12px; color:#64748b; margin:0 0 4px 0;">{L_BOOSKIT_2FA_MANUAL_ENTRY}</p>
+					<div class="booskit-2fa-secret-code" id="booskit_secret_text">{SECRET_KEY_FORMATTED}</div>
+					<div>
+						<button type="button" class="booskit-2fa-btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="booskitCopySecret();">
+							<i class="fa fa-clone" aria-hidden="true"></i> <span id="booskit_copy_secret_btn">{L_BOOSKIT_2FA_COPY_KEY}</span>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 2: Confirm Code -->
+			<div class="booskit-2fa-step-box">
+				<h3><i class="fa fa-check" aria-hidden="true"></i> {L_BOOSKIT_2FA_STEP_2}</h3>
+				<p style="font-size:13px; color:#475569; margin:0 0 12px 0;">{L_BOOSKIT_2FA_STEP_2_EXPLAIN}</p>
+
+				<form action="{U_ACTION}" method="post">
+					<div class="booskit-2fa-input-group">
+						<input type="text" name="code" class="booskit-2fa-input-code" placeholder="000000" maxlength="6" autofocus autocomplete="one-time-code" inputmode="numeric" required />
+					</div>
+
+					<div>
+						<input type="submit" name="submit_verify" value="{L_BOOSKIT_2FA_ACTIVATE_BUTTON}" class="booskit-2fa-btn-primary" />
+					</div>
+
+					{S_FORM_TOKEN}
+				</form>
+			</div>
+
+			<!-- IF S_ENFORCED -->
+			<div style="text-align:center; margin-top:20px; border-top:1px solid #e5e7eb; padding-top:15px;">
+				<a href="{U_LOGOUT}" style="font-size:13px; color:#6b7280; text-decoration:none;">
+					<i class="fa fa-sign-out" aria-hidden="true"></i> {L_LOGOUT}
+				</a>
+			</div>
+			<!-- ENDIF -->
+
+			<script>
+			function booskitCopySecret() {
+				var secret = '{SECRET_KEY}';
+				navigator.clipboard.writeText(secret).then(function() {
+					var btn = document.getElementById('booskit_copy_secret_btn');
+					var orig = btn.textContent;
+					btn.textContent = '{LA_BOOSKIT_2FA_COPIED}';
+					setTimeout(function() { btn.textContent = orig; }, 2500);
+				});
+			}
+			</script>
+
+		<!-- ENDIF -->
+	</div>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

@@ -1,0 +1,104 @@
+services:
+    booskit.twofactor.totp:
+        class: booskit\twofactor\service\totp
+
+    booskit.twofactor.qr_code:
+        class: booskit\twofactor\service\qr_code
+
+    booskit.twofactor.backup_codes:
+        class: booskit\twofactor\service\backup_code_manager
+        arguments:
+            - '@dbal.conn'
+            - '%core.table_prefix%'
+
+    booskit.twofactor.manager:
+        class: booskit\twofactor\service\twofactor_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '@request'
+            - '@log'
+            - '@booskit.twofactor.totp'
+            - '@booskit.twofactor.backup_codes'
+            - '%core.table_prefix%'
+
+    booskit.twofactor.listener:
+        class: booskit\twofactor\event\listener
+        arguments:
+            - '@config'
+            - '@template'
+            - '@user'
+            - '@request'
+            - '@controller.helper'
+            - '@booskit.twofactor.manager'
+            - '@booskit.twofactor.backup_codes'
+        tags:
+            - { name: event.listener }
+
+    booskit.twofactor.controller.verify:
+        class: booskit\twofactor\controller\verify
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.twofactor.manager'
+            - '@booskit.twofactor.totp'
+            - '@booskit.twofactor.backup_codes'
+
+    booskit.twofactor.controller.setup:
+        class: booskit\twofactor\controller\setup
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.twofactor.manager'
+            - '@booskit.twofactor.totp'
+            - '@booskit.twofactor.qr_code'
+            - '@booskit.twofactor.backup_codes'
+
+    booskit.twofactor.controller.backup_keys:
+        class: booskit\twofactor\controller\backup_keys
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.twofactor.manager'
+            - '@booskit.twofactor.backup_codes'
+
+    booskit.twofactor.controller.suggestion:
+        class: booskit\twofactor\controller\suggestion
+        arguments:
+            - '@request'
+            - '@user'
+            - '@controller.helper'
+            - '@booskit.twofactor.manager'
+
+    booskit.twofactor.controller.acp.settings:
+        class: booskit\twofactor\controller\acp\settings
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+            - '@booskit.twofactor.manager'
+
+    booskit.twofactor.controller.ucp.manage:
+        class: booskit\twofactor\controller\ucp\manage
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@passwords.manager'
+            - '@booskit.twofactor.manager'
+            - '@booskit.twofactor.totp'
+            - '@booskit.twofactor.qr_code'
+            - '@booskit.twofactor.backup_codes'

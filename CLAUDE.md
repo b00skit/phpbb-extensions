@@ -68,3 +68,4 @@ booskit/{name}/
 | `sendas` | Send PM as a character alias. |
 | `gtawtracker` | Displays GTAW character data on forum profiles (requires `gtawoauth`). |
 | `usercommandcenter` | Unified dashboard aggregating data from other extensions. |
+| `twofactor` | Two-Factor Authentication (TOTP + Backup Keys) with group policies, OAuth support, and ACP user management. |

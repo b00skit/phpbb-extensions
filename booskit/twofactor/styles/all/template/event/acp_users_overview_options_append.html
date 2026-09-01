@@ -1,0 +1,45 @@
+<fieldset>
+	<legend>{L_BOOSKIT_2FA_ADMIN_USER_HEADING}</legend>
+	<dl>
+		<dt><label>{L_BOOSKIT_2FA_STATUS}:</label></dt>
+		<dd>
+			<!-- IF S_BOOSKIT_2FA_USER_ENABLED -->
+				<strong style="color:#16a34a;"><i class="fa fa-check-circle"></i> {L_BOOSKIT_2FA_ENABLED}</strong>
+			<!-- ELSE -->
+				<span style="color:#6b7280;">{L_BOOSKIT_2FA_DISABLED}</span>
+			<!-- ENDIF -->
+			<!-- IF S_BOOSKIT_2FA_USER_ENFORCED -->
+				<span style="margin-left:8px; font-weight:600; color:#2563eb;">({L_BOOSKIT_2FA_ENFORCED})</span>
+			<!-- ENDIF -->
+		</dd>
+	</dl>
+
+	<!-- IF S_BOOSKIT_2FA_USER_ENABLED -->
+	<dl>
+		<dt><label>{L_BOOSKIT_2FA_LAST_LOGIN}</label></dt>
+		<dd>{BOOSKIT_2FA_LAST_LOGIN} <!-- IF BOOSKIT_2FA_LAST_METHOD and BOOSKIT_2FA_LAST_METHOD neq '-' -->({BOOSKIT_2FA_LAST_METHOD})<!-- ENDIF --></dd>
+	</dl>
+	<dl>
+		<dt><label>{L_BOOSKIT_2FA_LAST_IP}</label></dt>
+		<dd>{BOOSKIT_2FA_LAST_IP}</dd>
+	</dl>
+	<dl>
+		<dt><label>{L_BOOSKIT_2FA_ENTER_BACKUP}:</label></dt>
+		<dd><strong>{BOOSKIT_2FA_REMAINING_BACKUP}</strong> {L_BOOSKIT_2FA_REMAINING_BACKUP_SHORT}</dd>
+	</dl>
+	<dl>
+		<dt><label>{L_BOOSKIT_2FA_REMEMBERED_DEVICES}:</label></dt>
+		<dd><strong>{BOOSKIT_2FA_TRUSTED_COUNT}</strong> {L_BOOSKIT_2FA_TRUSTED_IPS_ACTIVE}</dd>
+	</dl>
+	<dl>
+		<dt><label>{L_ACTIONS}:</label></dt>
+		<dd>
+			<input type="submit" name="booskit_2fa_action_reset_backup" value="{L_BOOSKIT_2FA_ADMIN_RESET_BACKUP_BUTTON}" class="button2" style="margin-bottom:4px;" />
+			&nbsp;
+			<input type="submit" name="booskit_2fa_action_reset_remember" value="{L_BOOSKIT_2FA_ADMIN_RESET_REMEMBER_BUTTON}" class="button2" style="margin-bottom:4px;" />
+			&nbsp;
+			<input type="submit" name="booskit_2fa_action_disable" value="{L_BOOSKIT_2FA_ADMIN_DISABLE_BUTTON}" class="button2" style="color:#dc2626; margin-bottom:4px;" />
+		</dd>
+	</dl>
+	<!-- ENDIF -->
+</fieldset>

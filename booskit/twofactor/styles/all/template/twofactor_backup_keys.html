@@ -1,0 +1,72 @@
+<!-- INCLUDE overall_header.html -->
+
+<!-- IF BOOSKIT_2FA_COLOR -->
+<style>:root { --booskit-2fa-primary: {BOOSKIT_2FA_COLOR}; }</style>
+<!-- ENDIF -->
+
+<div class="booskit-2fa-container" style="max-width:620px;">
+	<div class="booskit-2fa-card">
+		<div class="booskit-2fa-header">
+			<!-- IF BOOSKIT_2FA_LOGO_URL -->
+			<div class="booskit-2fa-logo-wrapper">
+				<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo" class="booskit-2fa-logo-img" />
+			</div>
+			<!-- ELSE -->
+			<div class="booskit-2fa-icon" style="color:#eab308;">
+				<i class="fa fa-key" aria-hidden="true"></i>
+			</div>
+			<!-- ENDIF -->
+			<h2>{L_BOOSKIT_2FA_BACKUP_KEYS_HEADER}</h2>
+			<p>{L_BOOSKIT_2FA_KEYS_RESET_BY_ADMIN}</p>
+			<p style="font-size:12px; color:#64748b; margin-top:6px;">{L_BOOSKIT_2FA_BACKUP_KEYS_WARNING}</p>
+		</div>
+
+		<div class="booskit-2fa-backup-grid">
+			<!-- BEGIN backup_keys -->
+			<div class="booskit-2fa-backup-item">{backup_keys.KEY}</div>
+			<!-- END backup_keys -->
+		</div>
+
+		<div class="booskit-2fa-actions-row">
+			<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitCopyBackupKeys();">
+				<i class="fa fa-clipboard" aria-hidden="true"></i> <span id="booskit_copy_keys_btn">{L_BOOSKIT_2FA_COPY_ALL_KEYS}</span>
+			</button>
+			<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitDownloadBackupKeys();">
+				<i class="fa fa-download" aria-hidden="true"></i> {L_BOOSKIT_2FA_DOWNLOAD_KEYS}
+			</button>
+			<button type="button" class="booskit-2fa-btn-secondary" onclick="window.print();">
+				<i class="fa fa-print" aria-hidden="true"></i> {L_BOOSKIT_2FA_PRINT_KEYS}
+			</button>
+		</div>
+
+		<form action="{U_ACTION}" method="post" style="margin-top:25px;">
+			<input type="submit" name="acknowledge" value="{L_BOOSKIT_2FA_CONTINUE_TO_BOARD}" class="booskit-2fa-btn-primary" />
+			{S_FORM_TOKEN}
+		</form>
+
+		<textarea id="booskit_backup_keys_raw" style="display:none;">{BACKUP_KEYS_TEXT}</textarea>
+
+		<script>
+		function booskitCopyBackupKeys() {
+			var text = document.getElementById('booskit_backup_keys_raw').value;
+			navigator.clipboard.writeText(text).then(function() {
+				var btn = document.getElementById('booskit_copy_keys_btn');
+				var orig = btn.textContent;
+				btn.textContent = '{LA_BOOSKIT_2FA_COPIED}';
+				setTimeout(function() { btn.textContent = orig; }, 2500);
+			});
+		}
+
+		function booskitDownloadBackupKeys() {
+			var text = document.getElementById('booskit_backup_keys_raw').value;
+			var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+			var a = document.createElement('a');
+			a.href = URL.createObjectURL(blob);
+			a.download = '2fa-backup-keys.txt';
+			a.click();
+		}
+		</script>
+	</div>
+</div>
+
+<!-- INCLUDE overall_footer.html -->

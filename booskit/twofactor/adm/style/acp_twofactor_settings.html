@@ -1,0 +1,155 @@
+<!-- INCLUDE overall_header.html -->
+
+<h1>{L_ACP_BOOSKIT_TWOFACTOR_TITLE}</h1>
+<p>{L_ACP_BOOSKIT_TWOFACTOR_EXPLAIN}</p>
+
+<form id="acp_booskit_twofactor" method="post" action="{U_ACTION}">
+	<fieldset>
+		<legend>{L_GENERAL_SETTINGS}</legend>
+		<dl>
+			<dt><label for="booskit_2fa_enabled">{L_ACP_2FA_ENABLE}:</label><br /><span>{L_ACP_2FA_ENABLE_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" name="booskit_2fa_enabled" value="1" <!-- IF S_2FA_ENABLED -->checked="checked"<!-- ENDIF --> class="radio" /> {L_YES}</label>
+				<label><input type="radio" name="booskit_2fa_enabled" value="0" <!-- IF not S_2FA_ENABLED -->checked="checked"<!-- ENDIF --> class="radio" /> {L_NO}</label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_2fa_issuer">{L_ACP_2FA_ISSUER}:</label><br /><span>{L_ACP_2FA_ISSUER_EXPLAIN}</span></dt>
+			<dd><input type="text" id="booskit_2fa_issuer" name="booskit_2fa_issuer" value="{ISSUER_NAME}" size="40" maxlength="100" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_2fa_color">{L_ACP_2FA_COLOR}:</label><br /><span>{L_ACP_2FA_COLOR_EXPLAIN}</span></dt>
+			<dd>
+				<input type="color" id="booskit_2fa_color_picker" value="{BOOSKIT_2FA_COLOR}" style="vertical-align:middle; width:36px; height:28px; padding:0; border:1px solid #ccc; cursor:pointer;" onchange="document.getElementById('booskit_2fa_color').value = this.value;" />
+				<input type="text" id="booskit_2fa_color" name="booskit_2fa_color" value="{BOOSKIT_2FA_COLOR}" size="10" maxlength="7" style="vertical-align:middle; margin-left:6px;" onchange="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) document.getElementById('booskit_2fa_color_picker').value = this.value;" />
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_2fa_logo_url">{L_ACP_2FA_LOGO_URL}:</label><br /><span>{L_ACP_2FA_LOGO_URL_EXPLAIN}</span></dt>
+			<dd>
+				<input type="url" id="booskit_2fa_logo_url" name="booskit_2fa_logo_url" value="{BOOSKIT_2FA_LOGO_URL}" size="50" maxlength="255" placeholder="https://example.com/logo.png" />
+				<!-- IF BOOSKIT_2FA_LOGO_URL -->
+				<div style="margin-top:8px;">
+					<span style="font-size:11px; color:#666;">Preview:</span><br />
+					<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo Preview" style="max-width:140px; max-height:60px; object-fit:contain; border:1px solid #ddd; padding:4px; background:#fafafa; border-radius:4px;" />
+				</div>
+				<!-- ENDIF -->
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_2fa_shared_session">{L_ACP_2FA_SHARED_SESSION}:</label><br /><span>{L_ACP_2FA_SHARED_SESSION_EXPLAIN}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_2fa_shared_session" value="1" <!-- IF S_SHARED_SESSION -->checked="checked"<!-- ENDIF --> /> {L_YES}</label>
+				<label><input type="radio" class="radio" name="booskit_2fa_shared_session" value="0" <!-- IF not S_SHARED_SESSION -->checked="checked"<!-- ENDIF --> /> {L_NO}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+	<fieldset>
+		<legend>{L_ACP_BOOSKIT_TWOFACTOR_SETTINGS}</legend>
+		<p style="font-size:12px; color:#555; margin-bottom:15px;">
+			Configure group-level security policies below. You can assign specific groups for suggestion prompts, enforced onboarding, standard login, and restricted area access (UCP, MCP, ACP).
+		</p>
+
+		<!-- Suggestion Groups -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_SUGGEST}:</label><br /><span>{L_ACP_2FA_GROUPS_SUGGEST_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_suggest[]" value="{group_options.ID}" <!-- IF group_options.S_SUGGEST -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- Enforced Groups -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_ENFORCE}:</label><br /><span>{L_ACP_2FA_GROUPS_ENFORCE_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_enforce[]" value="{group_options.ID}" <!-- IF group_options.S_ENFORCE -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- Remember Device Groups (30 Days) -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_REMEMBER}:</label><br /><span>{L_ACP_2FA_GROUPS_REMEMBER_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_remember[]" value="{group_options.ID}" <!-- IF group_options.S_REMEMBER -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- UCP Groups -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_UCP}:</label><br /><span>{L_ACP_2FA_GROUPS_UCP_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_ucp[]" value="{group_options.ID}" <!-- IF group_options.S_UCP -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- MCP Groups -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_MCP}:</label><br /><span>{L_ACP_2FA_GROUPS_MCP_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_mcp[]" value="{group_options.ID}" <!-- IF group_options.S_MCP -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- ACP Groups -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_ACP}:</label><br /><span>{L_ACP_2FA_GROUPS_ACP_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_acp[]" value="{group_options.ID}" <!-- IF group_options.S_ACP -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+
+		<!-- GTA:W OAuth 2FA Groups (Shown conditionally if GTA:W OAuth is enabled) -->
+		<!-- IF S_GTAW_OAUTH_ACTIVE -->
+		<dl>
+			<dt><label>{L_ACP_2FA_GROUPS_OAUTH}:</label><br /><span>{L_ACP_2FA_GROUPS_OAUTH_EXPLAIN}</span></dt>
+			<dd style="max-height:160px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;">
+				<!-- BEGIN group_options -->
+				<label style="display:block; margin-bottom:4px;">
+					<input type="checkbox" name="booskit_2fa_groups_oauth[]" value="{group_options.ID}" <!-- IF group_options.S_OAUTH -->checked="checked"<!-- ENDIF --> />
+					{group_options.NAME}
+				</label>
+				<!-- END group_options -->
+			</dd>
+		</dl>
+		<!-- ENDIF -->
+	</fieldset>
+
+	<fieldset class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{L_SUBMIT}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{L_RESET}" />
+		{S_FORM_TOKEN}
+	</fieldset>
+</form>
+
+<!-- INCLUDE overall_footer.html -->

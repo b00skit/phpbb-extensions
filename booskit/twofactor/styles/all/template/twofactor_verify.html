@@ -1,0 +1,105 @@
+<!-- INCLUDE overall_header.html -->
+
+<!-- IF BOOSKIT_2FA_COLOR -->
+<style>:root { --booskit-2fa-primary: {BOOSKIT_2FA_COLOR}; }</style>
+<!-- ENDIF -->
+
+<div class="booskit-2fa-container">
+	<div class="booskit-2fa-card">
+		<div class="booskit-2fa-header">
+			<!-- IF BOOSKIT_2FA_LOGO_URL -->
+			<div class="booskit-2fa-logo-wrapper">
+				<img src="{BOOSKIT_2FA_LOGO_URL}" alt="Logo" class="booskit-2fa-logo-img" />
+			</div>
+			<!-- ELSE -->
+			<div class="booskit-2fa-icon">
+				<i class="fa fa-shield" aria-hidden="true"></i>
+			</div>
+			<!-- ENDIF -->
+			<h2>{L_BOOSKIT_2FA_VERIFY_HEADER}</h2>
+			<p>{L_BOOSKIT_2FA_VERIFY_EXPLAIN}</p>
+		</div>
+
+		<div class="booskit-2fa-user-badge">
+			{L_BOOSKIT_2FA_LOGGED_IN_AS} <strong>{USERNAME}</strong>
+		</div>
+
+		<!-- IF ERROR -->
+		<div class="booskit-2fa-error">
+			<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {ERROR}
+		</div>
+		<!-- ENDIF -->
+
+		<form id="booskit_2fa_form" action="{U_ACTION}" method="post">
+			<input type="hidden" name="auth_mode" id="booskit_auth_mode" value="totp" />
+			<input type="hidden" name="redirect" value="{REDIRECT}" />
+			<input type="hidden" name="module" value="{MODULE}" />
+
+			<!-- TOTP input block -->
+			<div id="booskit_totp_section" class="booskit-2fa-input-group">
+				<label for="totp_code" style="display:block; font-weight:600; margin-bottom:8px;">{L_BOOSKIT_2FA_ENTER_CODE}</label>
+				<input type="text" name="totp_code" id="totp_code" class="booskit-2fa-input-code" placeholder="000000" maxlength="6" autofocus autocomplete="one-time-code" inputmode="numeric" />
+			</div>
+
+			<!-- Backup key input block (hidden by default) -->
+			<div id="booskit_backup_section" class="booskit-2fa-input-group" style="display:none;">
+				<label for="backup_code" style="display:block; font-weight:600; margin-bottom:8px;">{L_BOOSKIT_2FA_ENTER_BACKUP}</label>
+				<p style="font-size:12px; color:#64748b; margin-top:0; margin-bottom:8px;">{L_BOOSKIT_2FA_BACKUP_EXPLAIN}</p>
+				<input type="text" name="backup_code" id="backup_code" class="booskit-2fa-input-backup" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off" />
+			</div>
+
+			<!-- IF S_CAN_REMEMBER_DEVICE -->
+			<div style="margin-top:14px; text-align:left; display:flex; align-items:center; justify-content:center; gap:8px;">
+				<input type="checkbox" name="remember_device" id="remember_device" value="1" style="cursor:pointer; width:16px; height:16px;" />
+				<label for="remember_device" style="cursor:pointer; font-size:13px; color:#475569; user-select:none; margin:0;">{L_BOOSKIT_2FA_REMEMBER_DEVICE}</label>
+			</div>
+			<!-- ENDIF -->
+
+			<div style="margin-top:16px;">
+				<input type="submit" name="submit" value="{L_BOOSKIT_2FA_VERIFY_BUTTON}" class="booskit-2fa-btn-primary" />
+			</div>
+
+			<!-- Toggle link between TOTP and Backup key -->
+			<div>
+				<a href="javascript:void(0);" id="booskit_toggle_mode_link" class="booskit-2fa-toggle-link" onclick="booskitToggle2faMode();">
+					<i class="fa fa-key" aria-hidden="true"></i> <span id="booskit_toggle_mode_text">{L_BOOSKIT_2FA_USE_BACKUP}</span>
+				</a>
+			</div>
+
+			<div style="text-align:center; margin-top:25px; border-top:1px solid #e5e7eb; padding-top:15px;">
+				<a href="{U_LOGOUT}" style="font-size:13px; color:#6b7280; text-decoration:none;">
+					<i class="fa fa-sign-out" aria-hidden="true"></i> {L_LOGOUT} [{USERNAME}]
+				</a>
+			</div>
+
+			{S_FORM_TOKEN}
+		</form>
+	</div>
+</div>
+
+<script>
+function booskitToggle2faMode() {
+	var authModeInput = document.getElementById('booskit_auth_mode');
+	var totpSec = document.getElementById('booskit_totp_section');
+	var backupSec = document.getElementById('booskit_backup_section');
+	var toggleText = document.getElementById('booskit_toggle_mode_text');
+	var totpInput = document.getElementById('totp_code');
+	var backupInput = document.getElementById('backup_code');
+
+	if (authModeInput.value === 'totp') {
+		authModeInput.value = 'backup';
+		totpSec.style.display = 'none';
+		backupSec.style.display = 'block';
+		toggleText.textContent = '{LA_BOOSKIT_2FA_USE_TOTP}';
+		backupInput.focus();
+	} else {
+		authModeInput.value = 'totp';
+		backupSec.style.display = 'none';
+		totpSec.style.display = 'block';
+		toggleText.textContent = '{LA_BOOSKIT_2FA_USE_BACKUP}';
+		totpInput.focus();
+	}
+}
+</script>
+
+<!-- INCLUDE overall_footer.html -->

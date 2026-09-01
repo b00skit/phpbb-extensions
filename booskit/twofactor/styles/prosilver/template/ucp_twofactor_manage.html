@@ -1,0 +1,218 @@
+<!-- INCLUDE ucp_header.html -->
+
+<!-- IF BOOSKIT_2FA_COLOR -->
+<style>:root { --booskit-2fa-primary: {BOOSKIT_2FA_COLOR}; }</style>
+<!-- ENDIF -->
+
+<h2>{L_UCP_BOOSKIT_TWOFACTOR_TITLE}</h2>
+
+<div class="panel">
+	<div class="inner">
+		<p>{L_BOOSKIT_2FA_SUBTITLE}</p>
+
+		<!-- IF ERROR -->
+		<div class="booskit-2fa-error">
+			<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> {ERROR}
+		</div>
+		<!-- ENDIF -->
+
+		<!-- IF SUCCESS -->
+		<div class="booskit-2fa-success">
+			<i class="fa fa-check-circle" aria-hidden="true"></i> {SUCCESS}
+		</div>
+		<!-- ENDIF -->
+
+		<!-- IF SHOW_BACKUP_MODAL -->
+		<div class="booskit-2fa-step-box" style="border-color:#86efac; background:#f0fdf4; margin-top:20px;">
+			<h3 style="color:#166534;"><i class="fa fa-key" aria-hidden="true"></i> {L_BOOSKIT_2FA_BACKUP_KEYS_HEADER}</h3>
+			<p style="font-size:13px; color:#374151;">{L_BOOSKIT_2FA_BACKUP_KEYS_WARNING}</p>
+
+			<div class="booskit-2fa-backup-grid">
+				<!-- BEGIN backup_keys -->
+				<div class="booskit-2fa-backup-item">{backup_keys.KEY}</div>
+				<!-- END backup_keys -->
+			</div>
+
+			<div class="booskit-2fa-actions-row">
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitUcpCopyKeys();">
+					<i class="fa fa-clipboard" aria-hidden="true"></i> <span id="booskit_ucp_copy_btn">{L_BOOSKIT_2FA_COPY_ALL_KEYS}</span>
+				</button>
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="booskitUcpDownloadKeys();">
+					<i class="fa fa-download" aria-hidden="true"></i> {L_BOOSKIT_2FA_DOWNLOAD_KEYS}
+				</button>
+				<button type="button" class="booskit-2fa-btn-secondary" onclick="window.print();">
+					<i class="fa fa-print" aria-hidden="true"></i> {L_BOOSKIT_2FA_PRINT_KEYS}
+				</button>
+			</div>
+
+			<textarea id="booskit_ucp_backup_raw" style="display:none;">{BACKUP_KEYS_TEXT}</textarea>
+
+			<script>
+			function booskitUcpCopyKeys() {
+				var text = document.getElementById('booskit_ucp_backup_raw').value;
+				navigator.clipboard.writeText(text).then(function() {
+					var btn = document.getElementById('booskit_ucp_copy_btn');
+					var orig = btn.textContent;
+					btn.textContent = '{LA_BOOSKIT_2FA_COPIED}';
+					setTimeout(function() { btn.textContent = orig; }, 2500);
+				});
+			}
+			function booskitUcpDownloadKeys() {
+				var text = document.getElementById('booskit_ucp_backup_raw').value;
+				var blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+				var a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = '2fa-backup-keys.txt';
+				a.click();
+			}
+			</script>
+		</div>
+		<!-- ENDIF -->
+
+		<!-- IF S_2FA_ENABLED -->
+			<!-- Enabled Status Dashboard -->
+			<fieldset>
+				<dl>
+					<dt><label>{L_BOOSKIT_2FA_STATUS}:</label></dt>
+					<dd>
+						<span class="booskit-2fa-badge-active"><i class="fa fa-check" aria-hidden="true"></i> {L_BOOSKIT_2FA_STATUS_ACTIVE}</span>
+						<!-- IF S_ENFORCED -->
+						<span class="booskit-2fa-badge-disabled" style="background:#eff6ff; color:#1e40af; border-color:#bfdbfe; margin-left:5px;">
+							<i class="fa fa-lock" aria-hidden="true"></i> {L_BOOSKIT_2FA_ENFORCED}
+						</span>
+						<!-- ENDIF -->
+					</dd>
+				</dl>
+				<dl>
+					<dt><label>{L_BOOSKIT_2FA_ENABLED_ON}</label></dt>
+					<dd>{ENABLED_DATE}</dd>
+				</dl>
+				<dl>
+					<dt><label>{L_BOOSKIT_2FA_LAST_LOGIN}</label></dt>
+					<dd>{LAST_LOGIN_DATE} <!-- IF LAST_LOGIN_METHOD -->({LAST_LOGIN_METHOD})<!-- ENDIF --></dd>
+				</dl>
+				<dl>
+					<dt><label>{L_BOOSKIT_2FA_ENTER_BACKUP}:</label></dt>
+					<dd>
+						<strong>{REMAINING_BACKUP_COUNT}</strong> {L_BOOSKIT_2FA_REMAINING_BACKUP_LABEL}
+					</dd>
+				</dl>
+			</fieldset>
+
+			<!-- Action Sections -->
+			<hr />
+
+			<!-- Regenerate Backup Keys -->
+			<div style="margin:20px 0;">
+				<h3 style="font-size:15px; font-weight:600;"><i class="fa fa-refresh" aria-hidden="true"></i> {L_BOOSKIT_2FA_REGEN_BACKUP}</h3>
+				<p style="font-size:13px; color:#64748b;">{L_BOOSKIT_2FA_REGEN_BACKUP_EXPLAIN}</p>
+
+				<form action="{U_ACTION}" method="post" id="form_regen_backup">
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:15px; max-width:480px; margin-top:10px;">
+						<label for="regen_password" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">{L_BOOSKIT_2FA_CONFIRM_PASSWORD}</label>
+						<p style="font-size:12px; color:#64748b; margin-top:0; margin-bottom:8px;">{L_BOOSKIT_2FA_CONFIRM_EXPLAIN}</p>
+						<input type="password" name="confirm_password" id="regen_password" class="inputbox autowidth" placeholder="Password or 6-digit 2FA code" autocomplete="off" />
+						<div style="margin-top:10px;">
+							<input type="submit" name="submit_regenerate_backup" value="{L_BOOSKIT_2FA_REGEN_BACKUP}" class="button2" />
+						</div>
+					</div>
+					{S_FORM_TOKEN}
+				</form>
+			</div>
+
+			<!-- Remembered Devices -->
+			<!-- IF S_CAN_REMEMBER_DEVICE -->
+			<hr />
+			<div style="margin:20px 0;">
+				<h3 style="font-size:15px; font-weight:600;"><i class="fa fa-laptop" aria-hidden="true"></i> {L_BOOSKIT_2FA_REMEMBERED_DEVICES}</h3>
+				<p style="font-size:13px; color:#64748b;">
+					Active remembered devices: <strong>{TRUSTED_DEVICES_COUNT}</strong>
+				</p>
+				<!-- IF TRUSTED_DEVICES_COUNT > 0 -->
+				<form action="{U_ACTION}" method="post" id="form_revoke_devices">
+					<input type="submit" name="submit_revoke_devices" value="{L_BOOSKIT_2FA_REVOKE_DEVICES}" class="button2" onclick="return confirm('Are you sure you want to revoke all remembered devices? You will be prompted for 2FA next time you authenticate.');" />
+					{S_FORM_TOKEN}
+				</form>
+				<!-- ENDIF -->
+			</div>
+			<!-- ENDIF -->
+
+			<!-- Disable 2FA (if not enforced) -->
+			<!-- IF not S_ENFORCED -->
+			<hr />
+			<div style="margin:20px 0;">
+				<h3 style="font-size:15px; font-weight:600; color:#dc2626;"><i class="fa fa-trash-o" aria-hidden="true"></i> {L_BOOSKIT_2FA_DISABLE_2FA}</h3>
+				<p style="font-size:13px; color:#64748b;">{L_BOOSKIT_2FA_DISABLE_EXPLAIN}</p>
+
+				<form action="{U_ACTION}" method="post" id="form_disable_2fa">
+					<div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:15px; max-width:480px; margin-top:10px;">
+						<label for="disable_password" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px; color:#991b1b;">{L_BOOSKIT_2FA_CONFIRM_PASSWORD}</label>
+						<p style="font-size:12px; color:#7f1d1d; margin-top:0; margin-bottom:8px;">{L_BOOSKIT_2FA_CONFIRM_EXPLAIN}</p>
+						<input type="password" name="confirm_password" id="disable_password" class="inputbox autowidth" placeholder="Password or 6-digit 2FA code" autocomplete="off" />
+						<div style="margin-top:10px;">
+							<input type="submit" name="submit_disable" value="{L_BOOSKIT_2FA_DISABLE_2FA}" class="button1" style="background:#dc2626; border-color:#b91c1c; color:#fff;" />
+						</div>
+					</div>
+					{S_FORM_TOKEN}
+				</form>
+			</div>
+			<!-- ENDIF -->
+
+		<!-- ELSE -->
+
+			<!-- Setup Wizard in UCP -->
+			<div style="max-width:540px; margin-top:15px;">
+				<div class="booskit-2fa-step-box">
+					<h3><i class="fa fa-qrcode" aria-hidden="true"></i> {L_BOOSKIT_2FA_STEP_1}</h3>
+					<p style="font-size:13px; color:#475569; margin:0 0 10px 0;">{L_BOOSKIT_2FA_STEP_1_EXPLAIN}</p>
+
+					<div class="booskit-2fa-qr-container">
+						<img src="{QR_DATA_URI}" alt="2FA QR Code" class="booskit-2fa-qr-img" width="180" height="180" />
+					</div>
+
+					<div class="booskit-2fa-secret-box">
+						<p style="font-size:12px; color:#64748b; margin:0 0 4px 0;">{L_BOOSKIT_2FA_MANUAL_ENTRY}</p>
+						<div class="booskit-2fa-secret-code">{SECRET_KEY_FORMATTED}</div>
+						<div>
+							<button type="button" class="booskit-2fa-btn-secondary" style="font-size:12px; padding:4px 10px;" onclick="booskitUcpCopySecret();">
+								<i class="fa fa-clone" aria-hidden="true"></i> <span id="booskit_ucp_copy_secret_btn">{L_BOOSKIT_2FA_COPY_KEY}</span>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="booskit-2fa-step-box">
+					<h3><i class="fa fa-check" aria-hidden="true"></i> {L_BOOSKIT_2FA_STEP_2}</h3>
+					<p style="font-size:13px; color:#475569; margin:0 0 12px 0;">{L_BOOSKIT_2FA_STEP_2_EXPLAIN}</p>
+
+					<form action="{U_ACTION}" method="post">
+						<div class="booskit-2fa-input-group">
+							<input type="text" name="code" class="booskit-2fa-input-code" placeholder="000000" maxlength="6" autofocus autocomplete="one-time-code" inputmode="numeric" required />
+						</div>
+
+						<div style="margin-top:15px;">
+							<input type="submit" name="submit_setup" value="{L_BOOSKIT_2FA_ACTIVATE_BUTTON}" class="booskit-2fa-btn-primary" />
+						</div>
+
+						{S_FORM_TOKEN}
+					</form>
+				</div>
+			</div>
+
+			<script>
+			function booskitUcpCopySecret() {
+				var secret = '{SECRET_KEY}';
+				navigator.clipboard.writeText(secret).then(function() {
+					var btn = document.getElementById('booskit_ucp_copy_secret_btn');
+					var orig = btn.textContent;
+					btn.textContent = '{LA_BOOSKIT_2FA_COPIED}';
+					setTimeout(function() { btn.textContent = orig; }, 2500);
+				});
+			}
+			</script>
+
+		<!-- ENDIF -->
+	</div>
+</div>
+
+<!-- INCLUDE ucp_footer.html -->

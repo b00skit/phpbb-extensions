@@ -1,0 +1,15 @@
+booskit_twofactor_verify:
+    path: /2fa/verify
+    defaults: { _controller: 'booskit.twofactor.controller.verify:handle' }
+
+booskit_twofactor_setup:
+    path: /2fa/setup
+    defaults: { _controller: 'booskit.twofactor.controller.setup:handle' }
+
+booskit_twofactor_backup_keys:
+    path: /2fa/backup-keys
+    defaults: { _controller: 'booskit.twofactor.controller.backup_keys:handle' }
+
+booskit_twofactor_dismiss_suggestion:
+    path: /2fa/dismiss-suggestion
+    defaults: { _controller: 'booskit.twofactor.controller.suggestion:dismiss' }
