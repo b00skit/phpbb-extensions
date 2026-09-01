@@ -12,17 +12,60 @@ namespace phpbb\config {
 }
 
 namespace phpbb\request {
-    interface request_interface {}
+    interface request_interface {
+        const POST = 0;
+        const GET = 1;
+        const COOKIE = 2;
+    }
     class request implements request_interface {
+        public $cookies = [];
+        public $vars = [];
+
         public function is_set_post($name) { return false; }
-        public function variable($name, $default, $multibyte = false, $cookie = false) { return $default; }
+        public function is_set($name, $super_global = \phpbb\request\request_interface::POST) {
+            if ($super_global === \phpbb\request\request_interface::COOKIE) {
+                return isset($this->cookies[$name]);
+            }
+            return isset($this->vars[$name]);
+        }
+        public function variable($name, $default, $multibyte = false, $super_global = false) {
+            if ($super_global === \phpbb\request\request_interface::COOKIE) {
+                return isset($this->cookies[$name]) ? $this->cookies[$name] : $default;
+            }
+            return isset($this->vars[$name]) ? $this->vars[$name] : $default;
+        }
+        public function server($name, $default = '') {
+            return isset($this->vars[$name]) ? $this->vars[$name] : $default;
+        }
     }
 }
 
 namespace phpbb {
     class user {
-        public $data = ['user_id' => 2, 'group_id' => 2, 'session_id' => 'sess123'];
+        public $data = ['user_id' => 2, 'group_id' => 2, 'session_id' => 'sess123', 'username' => 'TestUser'];
         public $ip = '127.0.0.1';
+        public $cookies = [];
+
+        public function set_cookie($name, $cookiedata, $cookietime) {
+            $this->cookies[$name] = [
+                'data' => $cookiedata,
+                'expires' => $cookietime,
+            ];
+            $_COOKIE['phpbb3_' . $name] = $cookiedata;
+        }
+    }
+}
+
+namespace phpbb\template {
+    class template {
+        public function assign_vars(array $vars) {}
+    }
+}
+
+namespace phpbb\controller {
+    class helper {
+        public function route($route, array $params = []) { return $route; }
+        public function render($template, $title = '') { return null; }
     }
 }
 
@@ -58,15 +101,28 @@ if (!defined('ANONYMOUS')) {
     define('ANONYMOUS', 1);
 }
 
+if (!function_exists('generate_board_url')) {
+    function generate_board_url() {
+        return 'http://example.com/phpbb';
+    }
+}
+
+if (!function_exists('append_sid')) {
+    function append_sid($url, $params = false, $is_amp = false, $session_id = false) {
+        if ($params) {
+            $url .= (strpos($url, '?') !== false ? '&' : '?') . (is_array($params) ? http_build_query($params) : $params);
+        }
+        return $url;
+    }
+}
+
 class mock_db implements \phpbb\db\driver\driver_interface {
     public $records = [];
     public $user_groups = [];
     public $pending_logins = [];
+    public $trusted_devices = [];
 
     public function sql_query($sql) {
-        if (strpos($sql, 'INSERT INTO phpbb_booskit_2fa_pending_logins') !== false) {
-            // Parse insert if needed or handled in sql_build_array
-        }
         if (strpos($sql, 'DELETE FROM phpbb_booskit_2fa_pending_logins') !== false) {
             if (preg_match("/login_token = '([a-f0-9]+)'/", $sql, $m)) {
                 unset($this->pending_logins[$m[1]]);
@@ -86,6 +142,17 @@ class mock_db implements \phpbb\db\driver\driver_interface {
                 }
             }
         }
+
+        if (strpos($sql, 'DELETE FROM phpbb_booskit_2fa_trusted_devices') !== false) {
+            if (preg_match('/user_id = (\d+)/', $sql, $m)) {
+                $uid = (int)$m[1];
+                foreach ($this->trusted_devices as $dev_id => $row) {
+                    if ($row['user_id'] == $uid) {
+                        unset($this->trusted_devices[$dev_id]);
+                    }
+                }
+            }
+        }
         return $sql;
     }
 
@@ -96,6 +163,14 @@ class mock_db implements \phpbb\db\driver\driver_interface {
             return isset($this->records[$uid]) ? $this->records[$uid] : false;
         }
         if (strpos($result, 'booskit_2fa_trusted_devices') !== false) {
+            if (preg_match("/device_token_hash = '([a-f0-9]+)'/", $result, $m)) {
+                $hash = $m[1];
+                foreach ($this->trusted_devices as $row) {
+                    if ($row['device_token_hash'] === $hash && $row['expires_at'] > time()) {
+                        return $row;
+                    }
+                }
+            }
             return false;
         }
         if (strpos($result, 'booskit_2fa_pending_logins') !== false) {
@@ -116,8 +191,15 @@ class mock_db implements \phpbb\db\driver\driver_interface {
     public function sql_freeresult($result) {}
     public function sql_escape($str) { return addslashes($str); }
     public function sql_build_array($mode, $array) {
-        if ($mode === 'INSERT' && isset($array['login_token'])) {
-            $this->pending_logins[$array['login_token']] = $array;
+        if ($mode === 'INSERT') {
+            if (isset($array['login_token'])) {
+                $this->pending_logins[$array['login_token']] = $array;
+            }
+            if (isset($array['device_token_hash'])) {
+                $dev_id = count($this->trusted_devices) + 1;
+                $array['device_id'] = $dev_id;
+                $this->trusted_devices[$dev_id] = $array;
+            }
         }
         return '';
     }
@@ -130,10 +212,12 @@ class mock_db implements \phpbb\db\driver\driver_interface {
 }
 
 require_once __DIR__ . '/../booskit/twofactor/service/twofactor_manager.php';
+require_once __DIR__ . '/../booskit/twofactor/controller/verify.php';
 
 use booskit\twofactor\service\twofactor_manager;
 use booskit\twofactor\service\totp;
 use booskit\twofactor\service\backup_code_manager;
+use booskit\twofactor\controller\verify;
 
 echo "=================================================\n";
 echo " Running Unit Test Suite for booskit/twofactor   \n";
@@ -154,6 +238,7 @@ function assert_test($condition, $description) {
 }
 
 $config = new \phpbb\config\config([
+    'cookie_name' => 'phpbb3',
     'booskit_2fa_enabled' => 1,
     'booskit_2fa_groups_oauth' => '',
     'booskit_2fa_groups_enforce' => '5',
@@ -168,6 +253,8 @@ $request = new \phpbb\request\request();
 $log = new \phpbb\log\log();
 $totp = new totp();
 $backup_codes = new backup_code_manager();
+$template = new \phpbb\template\template();
+$helper = new \phpbb\controller\helper();
 
 $manager = new twofactor_manager($config, $db, $user, $request, $log, $totp, $backup_codes, 'phpbb_');
 
@@ -217,25 +304,74 @@ assert_test($manager5->is_2fa_required_for_login(5, true) === true, 'User in OAu
 $token = $manager5->create_pending_login(5, true, 1, 'viewtopic.php?f=2&t=1', true, false);
 assert_test(!empty($token) && strlen($token) === 64, 'Creates 64-character pre-session pending login token');
 
-// 6. Retrieve pending login data
-$pending_data = $manager5->get_pending_login($token);
+// 6. Retrieve pending login data with matching IP
+$pending_data = $manager5->get_pending_login($token, '127.0.0.1');
 assert_test(
     $pending_data !== null &&
     $pending_data['user_id'] === 5 &&
     $pending_data['autologin'] === 1 &&
     $pending_data['auth_via_oauth'] === 1 &&
     $pending_data['redirect_url'] === 'viewtopic.php?f=2&t=1',
-    'Retrieves stored pending login metadata correctly before session creation'
+    'Retrieves stored pending login metadata correctly when IP matches creator IP'
 );
 
-// 7. Delete pending login token upon verification
+// 7. Reject pending login token when client IP does NOT match creator IP (Flaw 6)
+$pending_wrong_ip = $manager5->get_pending_login($token, '192.168.1.100');
+assert_test($pending_wrong_ip === null, '[Security Fix - Flaw 6] Rejects pending login token on client IP mismatch');
+
+// 8. Delete pending login token upon verification
 $manager5->delete_pending_login($token);
 assert_test($manager5->get_pending_login($token) === null, 'Deletes and invalidates pending login token after verification');
 
-// 8. Expired pending login token is rejected
+// 9. Expired pending login token is rejected
 $token_exp = $manager5->create_pending_login(5, false, 1, 'index.php', false, false);
 $db->pending_logins[$token_exp]['expires_at'] = time() - 10; // set expired
 assert_test($manager5->get_pending_login($token_exp) === null, 'Rejects expired pending login tokens');
+
+// 10. Remember Device Secure Cookie Token (Flaw 1)
+assert_test($manager->is_device_remembered(2) === false, '[Security Fix - Flaw 1] Device is NOT remembered without token cookie');
+
+$manager->remember_device(2);
+assert_test(isset($user->cookies['2fa_remember']), 'Remember device sets client cookie');
+$raw_cookie_token = $user->cookies['2fa_remember']['data'];
+assert_test(strlen($raw_cookie_token) === 64, 'Remember device cookie token is a 64-character cryptographically random string');
+
+// Inject cookie into mock request
+$request->cookies['phpbb3_2fa_remember'] = $raw_cookie_token;
+assert_test($manager->is_device_remembered(2) === true, 'Device IS recognized as remembered when presenting valid token cookie');
+
+// Wrong cookie token fails
+$request->cookies['phpbb3_2fa_remember'] = str_repeat('a', 64);
+assert_test($manager->is_device_remembered(2) === false, 'Invalid cookie token does not authenticate as remembered device');
+
+// Revoke trusted devices clears DB and expires cookie
+$manager->revoke_trusted_devices(2);
+assert_test($user->cookies['2fa_remember']['data'] === '', 'Revoking trusted devices deletes client cookie');
+$request->cookies['phpbb3_2fa_remember'] = $raw_cookie_token;
+assert_test($manager->is_device_remembered(2) === false, 'Revoking trusted devices invalidates remembered status in database');
+
+// 11. Open Redirect Prevention (Flaw 2)
+$verify_ctrl = new verify($config, $request, $template, $user, $helper, $manager, $totp, $backup_codes, $db, 'phpbb_');
+
+// Test relative safe redirect
+$safe_rel = $verify_ctrl->get_safe_redirect_url('viewtopic.php?f=2&t=5');
+assert_test($safe_rel === 'http://example.com/phpbb/viewtopic.php?f=2&t=5', 'Permits valid internal relative redirect paths');
+
+// Test same-domain absolute safe redirect
+$safe_abs = $verify_ctrl->get_safe_redirect_url('http://example.com/phpbb/viewforum.php?f=2');
+assert_test($safe_abs === 'http://example.com/phpbb/viewforum.php?f=2', 'Permits valid internal absolute redirects on the same domain');
+
+// Test open redirect attempt to external http/https domain
+$malicious_redirect = $verify_ctrl->get_safe_redirect_url('https://evil.com/phishing');
+assert_test($malicious_redirect === 'http://example.com/phpbb/index.php', '[Security Fix - Flaw 2] Blocks open redirect attempt to external domain (https://evil.com)');
+
+// Test protocol-relative open redirect attempt (//evil.com)
+$protocol_relative = $verify_ctrl->get_safe_redirect_url('//evil.com/phishing');
+assert_test($protocol_relative === 'http://example.com/phpbb/index.php', '[Security Fix - Flaw 2] Blocks protocol-relative open redirect (//evil.com)');
+
+// Test backslash protocol-relative redirect attempt (\\evil.com)
+$backslash_relative = $verify_ctrl->get_safe_redirect_url('\\\\evil.com/phishing');
+assert_test($backslash_relative === 'http://example.com/phpbb/index.php', '[Security Fix - Flaw 2] Blocks backslash open redirect (\\\\evil.com)');
 
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";

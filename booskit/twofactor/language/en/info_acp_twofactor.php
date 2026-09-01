@@ -49,6 +49,9 @@ $lang = array_merge($lang, [
     'ACP_2FA_GROUPS_ACP'                => 'Require 2FA for ACP Access',
     'ACP_2FA_GROUPS_ACP_EXPLAIN'        => 'Select groups that require 2FA verification before accessing Administration Control Panel (ACP).',
 
+    'ACP_2FA_IGNORE_REMEMBER'           => 'Ignore remembered trusted devices',
+    'ACP_2FA_IGNORE_REMEMBER_EXPLAIN'   => 'Always require 2FA regardless of whether the device was remembered. The remember device option will also not be shown.',
+
     'ACP_2FA_GROUPS_OAUTH'              => 'GTA:W OAuth 2FA Groups',
     'ACP_2FA_GROUPS_OAUTH_EXPLAIN'      => 'Select groups that require 2FA verification when logging in via GTA:W OAuth.',
     'ACP_2FA_OAUTH_NOT_INSTALLED'       => 'GTA:W OAuth extension is not currently active.',

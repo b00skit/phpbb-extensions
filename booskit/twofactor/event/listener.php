@@ -301,17 +301,11 @@ class listener implements EventSubscriberInterface
             $this->manager->sync_admin_session_verification($session_id, $user_id, true);
         }
 
-        // If device is remembered for 30 days, auto-verify all modules for this session
+        // If device is remembered for 30 days, auto-verify standard login for this session
         if ($is_2fa_enabled && $this->manager->is_device_remembered($user_id)) {
             if (!$this->manager->is_session_verified($session_id, $user_id, 'login')) {
-                $this->manager->mark_session_verified($session_id, $user_id, 'trusted_device', 'all');
+                $this->manager->mark_session_verified($session_id, $user_id, 'trusted_device', 'login');
             }
-            if ($this->manager->is_reset_backup_pending($user_id)) {
-                $backup_url = $this->helper->route('booskit_twofactor_backup_keys');
-                redirect($backup_url);
-                return;
-            }
-            return;
         }
 
         // For users who have NOT enabled 2FA yet:

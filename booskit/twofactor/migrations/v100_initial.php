@@ -36,6 +36,9 @@ class v100_initial extends \phpbb\db\migration\migration
             array('config.add', array('booskit_2fa_groups_acp', '')),
             array('config.add', array('booskit_2fa_groups_oauth', '')),
             array('config.add', array('booskit_2fa_shared_session', 0)),
+            array('config.add', array('booskit_2fa_ucp_ignore_remember', 0)),
+            array('config.add', array('booskit_2fa_mcp_ignore_remember', 0)),
+            array('config.add', array('booskit_2fa_acp_ignore_remember', 0)),
 
             // ACP Module
             array('module.add', array(
@@ -151,6 +154,9 @@ class v100_initial extends \phpbb\db\migration\migration
             array('config.remove', array('booskit_2fa_groups_acp')),
             array('config.remove', array('booskit_2fa_groups_oauth')),
             array('config.remove', array('booskit_2fa_shared_session')),
+            array('config.remove', array('booskit_2fa_ucp_ignore_remember')),
+            array('config.remove', array('booskit_2fa_mcp_ignore_remember')),
+            array('config.remove', array('booskit_2fa_acp_ignore_remember')),
 
             // Remove UCP Module
             array('module.remove', array(

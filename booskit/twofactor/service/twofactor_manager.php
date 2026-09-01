@@ -318,7 +318,32 @@ class twofactor_manager
     }
 
     /**
-     * Check if the user's current IP is trusted/remembered for 30 days
+     * Get the remember device cookie token from request
+     *
+     * @return string
+     */
+    public function get_remember_device_cookie()
+    {
+        $cookie_prefix = !empty($this->config['cookie_name']) ? $this->config['cookie_name'] : 'phpbb3';
+        $candidates = [
+            $cookie_prefix . '_2fa_remember',
+            '2fa_remember',
+            'phpbb3_2fa_remember',
+        ];
+
+        foreach ($candidates as $name) {
+            $token = $this->request->variable($name, '', false, \phpbb\request\request_interface::COOKIE);
+            $token = trim($token);
+            if (strlen($token) === 64 && ctype_xdigit($token)) {
+                return $token;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Check if the user's current device is trusted/remembered for 30 days via secure cookie token
      *
      * @param int $user_id
      * @return bool
@@ -330,13 +355,17 @@ class twofactor_manager
             return false;
         }
 
-        $ip = $this->user->ip;
-        $ip_hash = md5($ip);
+        $token = $this->get_remember_device_cookie();
+        if (empty($token)) {
+            return false;
+        }
+
+        $token_hash = hash('sha256', $token);
         $time = time();
 
         $sql = 'SELECT device_id FROM ' . $this->trusted_devices_table . '
                 WHERE user_id = ' . $user_id . '
-                AND (ip_hash = \'' . $this->db->sql_escape($ip_hash) . '\' OR ip_address = \'' . $this->db->sql_escape($ip) . '\')
+                AND device_token_hash = \'' . $this->db->sql_escape($token_hash) . '\'
                 AND expires_at > ' . $time;
         $result = $this->db->sql_query_limit($sql, 1);
         $row = $this->db->sql_fetchrow($result);
@@ -346,7 +375,7 @@ class twofactor_manager
     }
 
     /**
-     * Trust/Remember user's current IP for 30 days
+     * Trust/Remember user's current device for 30 days by issuing a persistent secure token cookie
      *
      * @param int $user_id
      * @return bool
@@ -363,40 +392,71 @@ class twofactor_manager
         $time = time();
         $expires_at = $time + (30 * 86400);
 
-        // Check if IP is already registered for this user
-        $sql = 'SELECT device_id FROM ' . $this->trusted_devices_table . '
-                WHERE user_id = ' . $user_id . '
-                AND (ip_hash = \'' . $this->db->sql_escape($ip_hash) . '\' OR ip_address = \'' . $this->db->sql_escape($ip) . '\')';
-        $result = $this->db->sql_query_limit($sql, 1);
-        $existing = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        if ($existing) {
-            $sql = 'UPDATE ' . $this->trusted_devices_table . '
-                    SET expires_at = ' . $expires_at . ',
-                        created_at = ' . $time . ',
-                        ip_address = \'' . $this->db->sql_escape($ip) . '\',
-                        ip_hash = \'' . $this->db->sql_escape($ip_hash) . '\'
-                    WHERE device_id = ' . (int)$existing['device_id'];
-            $this->db->sql_query($sql);
-        } else {
-            $sql_ary = [
-                'user_id'           => $user_id,
-                'ip_address'        => $ip,
-                'ip_hash'           => $ip_hash,
-                'created_at'        => $time,
-                'expires_at'        => $expires_at,
-                'device_token_hash' => '',
-            ];
-            $sql = 'INSERT INTO ' . $this->trusted_devices_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-            $this->db->sql_query($sql);
+        try {
+            $raw_token = bin2hex(random_bytes(32));
+        } catch (\Exception $e) {
+            $raw_token = md5(uniqid(mt_rand(), true) . microtime() . $user_id) . md5($ip . $time);
         }
+
+        $token_hash = hash('sha256', $raw_token);
+
+        // 1. Set via phpBB user set_cookie if available
+        if (method_exists($this->user, 'set_cookie')) {
+            $this->user->set_cookie('2fa_remember', $raw_token, $expires_at);
+        }
+
+        // 2. Set via PHP native setcookie() with broad path and proper flags
+        $cookie_name = (!empty($this->config['cookie_name']) ? $this->config['cookie_name'] : 'phpbb3') . '_2fa_remember';
+        $cookie_path = !empty($this->config['cookie_path']) ? $this->config['cookie_path'] : '/';
+        $cookie_domain = (!empty($this->config['cookie_domain']) && $this->config['cookie_domain'] !== 'localhost') ? $this->config['cookie_domain'] : '';
+
+        // Determine if connection is actually HTTPS via phpbb request class
+        $https = $this->request->server('HTTPS', '');
+        $server_port = (int)$this->request->server('SERVER_PORT', 0);
+        $forwarded_proto = strtolower($this->request->server('HTTP_X_FORWARDED_PROTO', ''));
+
+        $is_https = (!empty($https) && $https !== 'off')
+            || ($server_port === 443)
+            || ($forwarded_proto === 'https');
+
+        if (PHP_VERSION_ID >= 70300) {
+            @setcookie($cookie_name, $raw_token, [
+                'expires'  => $expires_at,
+                'path'     => $cookie_path,
+                'domain'   => $cookie_domain,
+                'secure'   => $is_https,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            @setcookie('2fa_remember', $raw_token, [
+                'expires'  => $expires_at,
+                'path'     => $cookie_path,
+                'domain'   => $cookie_domain,
+                'secure'   => $is_https,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        } else {
+            @setcookie($cookie_name, $raw_token, $expires_at, $cookie_path, $cookie_domain, $is_https, true);
+            @setcookie('2fa_remember', $raw_token, $expires_at, $cookie_path, $cookie_domain, $is_https, true);
+        }
+
+        $sql_ary = [
+            'user_id'           => $user_id,
+            'ip_address'        => $ip,
+            'ip_hash'           => $ip_hash,
+            'created_at'        => $time,
+            'expires_at'        => $expires_at,
+            'device_token_hash' => $token_hash,
+        ];
+        $sql = 'INSERT INTO ' . $this->trusted_devices_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+        $this->db->sql_query($sql);
 
         return true;
     }
 
     /**
-     * Revoke all trusted IPs/devices for a user
+     * Revoke all trusted devices for a user and clear client cookie
      *
      * @param int $user_id
      */
@@ -405,6 +465,36 @@ class twofactor_manager
         $user_id = (int)$user_id;
         $sql = 'DELETE FROM ' . $this->trusted_devices_table . ' WHERE user_id = ' . $user_id;
         $this->db->sql_query($sql);
+
+        if (method_exists($this->user, 'set_cookie')) {
+            $this->user->set_cookie('2fa_remember', '', time() - 3600);
+        }
+
+        $cookie_name = (!empty($this->config['cookie_name']) ? $this->config['cookie_name'] : 'phpbb3') . '_2fa_remember';
+        $cookie_path = !empty($this->config['cookie_path']) ? $this->config['cookie_path'] : '/';
+        $cookie_domain = (!empty($this->config['cookie_domain']) && $this->config['cookie_domain'] !== 'localhost') ? $this->config['cookie_domain'] : '';
+
+        if (PHP_VERSION_ID >= 70300) {
+            @setcookie($cookie_name, '', [
+                'expires'  => time() - 3600,
+                'path'     => $cookie_path,
+                'domain'   => $cookie_domain,
+                'secure'   => false,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            @setcookie('2fa_remember', '', [
+                'expires'  => time() - 3600,
+                'path'     => $cookie_path,
+                'domain'   => $cookie_domain,
+                'secure'   => false,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        } else {
+            @setcookie($cookie_name, '', time() - 3600, $cookie_path, $cookie_domain, false, true);
+            @setcookie('2fa_remember', '', time() - 3600, $cookie_path, $cookie_domain, false, true);
+        }
     }
 
     /**
@@ -462,6 +552,26 @@ class twofactor_manager
     }
 
     /**
+     * Check if a module is configured to ignore remembered trusted devices
+     *
+     * @param string $module 'ucp', 'mcp', 'acp', 'login'
+     * @return bool
+     */
+    public function is_ignore_remember_for_module($module)
+    {
+        switch ($module) {
+            case 'ucp':
+                return !empty($this->config['booskit_2fa_ucp_ignore_remember']);
+            case 'mcp':
+                return !empty($this->config['booskit_2fa_mcp_ignore_remember']);
+            case 'acp':
+                return !empty($this->config['booskit_2fa_acp_ignore_remember']);
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Check if 2FA prompt is required for accessing UCP
      *
      * @param int $user_id
@@ -477,7 +587,7 @@ class twofactor_manager
             return false;
         }
 
-        if ($this->is_device_remembered($user_id)) {
+        if (!$this->is_ignore_remember_for_module('ucp') && $this->is_device_remembered($user_id)) {
             return false;
         }
 
@@ -505,7 +615,7 @@ class twofactor_manager
             return false;
         }
 
-        if ($this->is_device_remembered($user_id)) {
+        if (!$this->is_ignore_remember_for_module('mcp') && $this->is_device_remembered($user_id)) {
             return false;
         }
 
@@ -533,7 +643,7 @@ class twofactor_manager
             return false;
         }
 
-        if ($this->is_device_remembered($user_id)) {
+        if (!$this->is_ignore_remember_for_module('acp') && $this->is_device_remembered($user_id)) {
             return false;
         }
 
@@ -589,8 +699,8 @@ class twofactor_manager
             return true;
         }
 
-        // If Shared Session Authentication is enabled, ACP verification or any panel verification shares access to UCP & MCP
-        if ($this->is_shared_session_enabled() && in_array($module, ['ucp', 'mcp'])) {
+        // If Shared Session Authentication is enabled, ACP verification or any panel verification shares access across all panels (UCP, MCP, ACP)
+        if ($this->is_shared_session_enabled() && in_array($module, ['ucp', 'mcp', 'acp'])) {
             if (!empty($row['verified_acp']) || !empty($row['verified_ucp']) || !empty($row['verified_mcp'])) {
                 return true;
             }
@@ -655,6 +765,7 @@ class twofactor_manager
         if ($is_shared && ($verified_ucp || $verified_mcp || $verified_acp)) {
             $verified_ucp = 1;
             $verified_mcp = 1;
+            $verified_acp = 1;
         }
 
         // Always ensure login 2FA is verified for the admin session so no re-prompt on board index
@@ -819,14 +930,11 @@ class twofactor_manager
         $this->db->sql_freeresult($result);
 
         $is_shared = $this->is_shared_session_enabled();
-        $is_shared_panel = in_array($module, ['ucp', 'mcp']) && $is_shared;
-        $is_acp_shared = ($module === 'acp') && $is_shared;
+        $is_shared_panel = in_array($module, ['ucp', 'mcp', 'acp']) && $is_shared;
 
         $set_clause = "is_verified = 1, verified_at = {$time}, user_id = {$user_id}, ip_hash = '" . $this->db->sql_escape(md5($ip)) . "'";
-        if ($module === 'all' || $is_acp_shared) {
+        if ($module === 'all' || $is_shared_panel) {
             $set_clause .= ", verified_ucp = 1, verified_mcp = 1, verified_acp = 1";
-        } elseif ($is_shared_panel) {
-            $set_clause .= ", verified_ucp = 1, verified_mcp = 1";
         } elseif ($module === 'ucp') {
             $set_clause .= ", verified_ucp = 1";
         } elseif ($module === 'mcp') {
@@ -845,13 +953,21 @@ class twofactor_manager
                 'session_id'   => $session_id,
                 'user_id'      => $user_id,
                 'is_verified'  => 1,
-                'verified_ucp' => ($module === 'all' || $is_shared_panel || $is_acp_shared || $module === 'ucp') ? 1 : 0,
-                'verified_mcp' => ($module === 'all' || $is_shared_panel || $is_acp_shared || $module === 'mcp') ? 1 : 0,
-                'verified_acp' => ($module === 'all' || $is_acp_shared || $module === 'acp') ? 1 : 0,
+                'verified_ucp' => ($module === 'all' || $is_shared_panel || $module === 'ucp') ? 1 : 0,
+                'verified_mcp' => ($module === 'all' || $is_shared_panel || $module === 'mcp') ? 1 : 0,
+                'verified_acp' => ($module === 'all' || $is_shared_panel || $module === 'acp') ? 1 : 0,
                 'verified_at'  => $time,
                 'ip_hash'      => md5($ip),
             ];
             $sql = 'INSERT INTO ' . $this->sessions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+            $this->db->sql_query($sql);
+        }
+
+        // If shared session is enabled and this was a panel verification (or 'all'), propagate panel verification across all active verified sessions for this user
+        if ($is_shared && ($is_shared_panel || $module === 'all')) {
+            $sql = 'UPDATE ' . $this->sessions_table . "
+                    SET verified_ucp = 1, verified_mcp = 1, verified_acp = 1
+                    WHERE user_id = {$user_id} AND is_verified = 1";
             $this->db->sql_query($sql);
         }
 
@@ -1355,12 +1471,13 @@ class twofactor_manager
     }
 
     /**
-     * Retrieve active pending login data by token
+     * Retrieve active pending login data by token and optionally validate client IP
      *
      * @param string $token
+     * @param string $ip Optional client IP to match against creator IP
      * @return array|null
      */
-    public function get_pending_login($token)
+    public function get_pending_login($token, $ip = '')
     {
         $token = trim((string)$token);
         if (empty($token) || strlen($token) !== 64 || !ctype_xdigit($token)) {
@@ -1375,7 +1492,16 @@ class twofactor_manager
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
 
-        return $row ?: null;
+        if (!$row) {
+            return null;
+        }
+
+        // If IP is provided, ensure creator IP matches current client IP
+        if (!empty($ip) && !empty($row['ip_address']) && $row['ip_address'] !== (string)$ip) {
+            return null;
+        }
+
+        return $row;
     }
 
     /**

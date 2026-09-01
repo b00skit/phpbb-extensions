@@ -82,9 +82,9 @@ class verify
                 login_box();
             }
 
-            $pending = $this->manager->get_pending_login($token);
+            $pending = $this->manager->get_pending_login($token, $this->user->ip);
             if (!$pending) {
-                // Token invalid or expired
+                // Token invalid, expired, or IP mismatch
                 meta_refresh(3, append_sid(generate_board_url() . '/ucp.php', 'mode=login'));
                 trigger_error($this->user->lang['BOOSKIT_2FA_SESSION_EXPIRED'] . '<br /><br />' . sprintf($this->user->lang['RETURN_INDEX'], '<a href="' . append_sid(generate_board_url() . '/index.php') . '">', '</a>'));
             }
@@ -129,19 +129,19 @@ class verify
                     }
 
                     if ($verified) {
-                        // 1. Remember device if opted-in and permitted
-                        if ($remember_device && $this->manager->is_remember_device_permitted($user_id)) {
-                            $this->manager->remember_device($user_id);
-                            $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_DEVICE_REMEMBERED', $user_id, $username, [$this->user->ip]);
-                        }
-
-                        // 2. NOW establish phpBB user session
+                        // 1. Establish phpBB user session
                         $this->user->session_create(
                             $user_id,
                             (bool)$pending['admin'],
                             (bool)$pending['autologin'],
                             (bool)$pending['viewonline']
                         );
+
+                        // 2. Remember device if opted-in and permitted (sets cookies after session initialization)
+                        if ($remember_device && $this->manager->is_remember_device_permitted($user_id)) {
+                            $this->manager->remember_device($user_id);
+                            $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_DEVICE_REMEMBERED', $user_id, $username, [$this->user->ip]);
+                        }
 
                         // 3. Reset failed login attempts in users table if DB is available
                         if ($this->db) {
@@ -214,7 +214,8 @@ class verify
         }
 
         // Check if session is already verified for this module (or device remembered)
-        if ($this->manager->is_device_remembered($user_id) || $this->manager->is_session_verified($this->user->data['session_id'], $user_id, $module)) {
+        $is_device_trusted = $this->manager->is_device_remembered($user_id) && !$this->manager->is_ignore_remember_for_module($module);
+        if ($is_device_trusted || $this->manager->is_session_verified($this->user->data['session_id'], $user_id, $module)) {
             if ($this->manager->is_reset_backup_pending($user_id)) {
                 return new RedirectResponse($this->helper->route('booskit_twofactor_backup_keys'));
             }
@@ -224,6 +225,7 @@ class verify
 
         $error = '';
         $redirect = $this->clean_redirect_url($this->request->variable('redirect', ''));
+        $can_remember_device = $this->manager->is_remember_device_permitted($user_id) && !$this->manager->is_ignore_remember_for_module($module);
 
         if ($this->request->is_set_post('submit')) {
             if (!check_form_key('booskit_2fa_verify')) {
@@ -246,7 +248,7 @@ class verify
                         $this->manager->mark_session_verified($this->user->data['session_id'], $user_id, 'backup_code', $module);
                         $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_AUTH_SUCCESS', $user_id, $username, [$module_name, $method_name]);
 
-                        if ($remember_device && $this->manager->is_remember_device_permitted($user_id)) {
+                        if ($remember_device && $can_remember_device) {
                             $this->manager->remember_device($user_id);
                             $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_DEVICE_REMEMBERED', $user_id, $username, [$this->user->ip]);
                         }
@@ -268,7 +270,7 @@ class verify
                         $this->manager->mark_session_verified($this->user->data['session_id'], $user_id, 'totp', $module);
                         $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_AUTH_SUCCESS', $user_id, $username, [$module_name, $method_name]);
 
-                        if ($remember_device && $this->manager->is_remember_device_permitted($user_id)) {
+                        if ($remember_device && $can_remember_device) {
                             $this->manager->remember_device($user_id);
                             $this->manager->log_2fa_action('LOG_BOOSKIT_2FA_DEVICE_REMEMBERED', $user_id, $username, [$this->user->ip]);
                         }
@@ -298,7 +300,7 @@ class verify
             'U_LOGOUT'              => append_sid(generate_board_url() . '/ucp.php', 'mode=logout&amp;sid=' . $this->user->session_id),
             'USERNAME'              => $this->user->data['username'],
             'REMAINING_BACKUP'      => $this->backup_codes->get_remaining_count($user_id),
-            'S_CAN_REMEMBER_DEVICE' => $this->manager->is_remember_device_permitted($user_id),
+            'S_CAN_REMEMBER_DEVICE' => $can_remember_device,
             'BOOSKIT_2FA_COLOR'     => $this->manager->get_theme_color(),
             'BOOSKIT_2FA_LOGO_URL'  => $this->manager->get_logo_url(),
         ]);
@@ -306,45 +308,68 @@ class verify
         return $this->helper->render('twofactor_verify.html', $this->user->lang['BOOSKIT_2FA_VERIFY_TITLE']);
     }
 
-    protected function get_safe_redirect_url($redirect = '')
+    public function get_safe_redirect_url($redirect = '')
     {
         if (empty($redirect)) {
             $redirect = $this->request->variable('redirect', '');
         }
+
+        $board_url = rtrim(generate_board_url(), '/');
+        $parsed_board = parse_url($board_url);
+        $board_host = isset($parsed_board['host']) ? strtolower($parsed_board['host']) : '';
+        $board_scheme = isset($parsed_board['scheme']) ? $parsed_board['scheme'] : 'http';
+        $board_port = isset($parsed_board['port']) ? ':' . $parsed_board['port'] : '';
+        $board_origin = $board_scheme . '://' . $board_host . $board_port;
+        $board_path = isset($parsed_board['path']) ? rtrim($parsed_board['path'], '/') : '';
+
         if (!empty($redirect)) {
             $redirect_clean = $this->clean_redirect_url($redirect);
-            // Avoid looping to verify/setup route
-            if (strpos($redirect_clean, '2fa/verify') === false && strpos($redirect_clean, '2fa/setup') === false) {
+
+            // Avoid looping to verify/setup/backup-keys routes
+            if (
+                strpos($redirect_clean, '2fa/verify') === false &&
+                strpos($redirect_clean, '2fa/setup') === false &&
+                strpos($redirect_clean, '2fa/backup-keys') === false
+            ) {
+                // If it's an absolute URL
                 if (strpos($redirect_clean, 'http://') === 0 || strpos($redirect_clean, 'https://') === 0) {
-                    $url = append_sid($redirect_clean, false, false);
+                    $parsed_target = parse_url($redirect_clean);
+                    $target_host = isset($parsed_target['host']) ? strtolower($parsed_target['host']) : '';
+
+                    // Validate that the target host strictly matches the board host
+                    if (!empty($target_host) && $target_host === $board_host) {
+                        $session_id = !empty($this->user->session_id) ? $this->user->session_id : (!empty($this->user->data['session_id']) ? $this->user->data['session_id'] : false);
+                        $url = append_sid($redirect_clean, false, false, $session_id);
+                        return str_replace('&amp;', '&', $url);
+                    }
+                } else {
+                    // Protocol-relative URLs (e.g. //evil.com or \\evil.com) must NOT be permitted
+                    if (strpos($redirect_clean, '//') === 0 || strpos($redirect_clean, '\\\\') === 0) {
+                        $url = append_sid($board_url . '/index.php', false, false);
+                        return str_replace('&amp;', '&', $url);
+                    }
+
+                    $redirect_clean = '/' . ltrim($redirect_clean, '/');
+
+                    if (!empty($board_path) && strpos($redirect_clean, $board_path . '/') === 0) {
+                        $target = $board_origin . $redirect_clean;
+                    } else {
+                        $target = $board_url . $redirect_clean;
+                    }
+
+                    $session_id = !empty($this->user->session_id) ? $this->user->session_id : (!empty($this->user->data['session_id']) ? $this->user->data['session_id'] : false);
+                    $url = append_sid($target, false, false, $session_id);
                     return str_replace('&amp;', '&', $url);
                 }
-
-                $board_url = rtrim(generate_board_url(), '/');
-                $parsed_board = parse_url($board_url);
-                $scheme = isset($parsed_board['scheme']) ? $parsed_board['scheme'] : 'http';
-                $host = isset($parsed_board['host']) ? $parsed_board['host'] : 'localhost';
-                $port = isset($parsed_board['port']) ? ':' . $parsed_board['port'] : '';
-                $board_origin = $scheme . '://' . $host . $port;
-                $board_path = isset($parsed_board['path']) ? rtrim($parsed_board['path'], '/') : '';
-
-                $redirect_clean = '/' . ltrim($redirect_clean, '/');
-
-                if (!empty($board_path) && strpos($redirect_clean, $board_path . '/') === 0) {
-                    $target = $board_origin . $redirect_clean;
-                } else {
-                    $target = $board_url . $redirect_clean;
-                }
-
-                $url = append_sid($target, false, false);
-                return str_replace('&amp;', '&', $url);
             }
         }
-        $url = append_sid(generate_board_url() . '/index.php', false, false);
+
+        $session_id = !empty($this->user->session_id) ? $this->user->session_id : (!empty($this->user->data['session_id']) ? $this->user->data['session_id'] : false);
+        $url = append_sid($board_url . '/index.php', false, false, $session_id);
         return str_replace('&amp;', '&', $url);
     }
 
-    protected function clean_redirect_url($url)
+    public function clean_redirect_url($url)
     {
         if (empty($url)) {
             return '/index.php';
@@ -352,9 +377,24 @@ class verify
 
         $url = htmlspecialchars_decode($url, ENT_QUOTES);
         $url = preg_replace('/amp(%3B|;)/i', '', $url);
-        $url = str_replace(["\r", "\n"], '', $url);
+        $url = str_replace(["\r", "\n", "\0"], '', $url);
+        $url = trim($url);
+
+        // Disallow protocol-relative URLs
+        if (strpos($url, '//') === 0 || strpos($url, '\\\\') === 0) {
+            return '/index.php';
+        }
 
         $parts = parse_url($url);
+        if ($parts === false) {
+            return '/index.php';
+        }
+
+        // If scheme is present, ensure it is http or https
+        if (isset($parts['scheme']) && !in_array(strtolower($parts['scheme']), ['http', 'https'])) {
+            return '/index.php';
+        }
+
         $path = isset($parts['path']) ? $parts['path'] : '';
         $query = isset($parts['query']) ? $parts['query'] : '';
         $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
@@ -376,6 +416,14 @@ class verify
         }
 
         $rebuilt = http_build_query($clean_params, '', '&');
-        return $path . (!empty($rebuilt) ? '?' . $rebuilt : '') . $fragment;
+        $query_str = !empty($rebuilt) ? '?' . $rebuilt : '';
+
+        if (isset($parts['host'])) {
+            $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : 'https://';
+            $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+            return $scheme . $parts['host'] . $port . $path . $query_str . $fragment;
+        }
+
+        return $path . $query_str . $fragment;
     }
 }

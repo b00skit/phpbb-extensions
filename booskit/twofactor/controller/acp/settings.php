@@ -68,6 +68,10 @@ class settings
             $groups_acp      = $this->request->variable('booskit_2fa_groups_acp', [0]);
             $groups_oauth    = $this->request->variable('booskit_2fa_groups_oauth', [0]);
 
+            $ucp_ignore_remember = $this->request->variable('booskit_2fa_ucp_ignore_remember', 0);
+            $mcp_ignore_remember = $this->request->variable('booskit_2fa_mcp_ignore_remember', 0);
+            $acp_ignore_remember = $this->request->variable('booskit_2fa_acp_ignore_remember', 0);
+
             $this->config->set('booskit_2fa_enabled', $enabled);
             $this->config->set('booskit_2fa_issuer', $issuer);
             $this->config->set('booskit_2fa_color', $color);
@@ -80,6 +84,9 @@ class settings
             $this->config->set('booskit_2fa_groups_mcp', implode(',', array_filter($groups_mcp)));
             $this->config->set('booskit_2fa_groups_acp', implode(',', array_filter($groups_acp)));
             $this->config->set('booskit_2fa_groups_oauth', implode(',', array_filter($groups_oauth)));
+            $this->config->set('booskit_2fa_ucp_ignore_remember', $ucp_ignore_remember);
+            $this->config->set('booskit_2fa_mcp_ignore_remember', $mcp_ignore_remember);
+            $this->config->set('booskit_2fa_acp_ignore_remember', $acp_ignore_remember);
 
             $this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'LOG_BOOSKIT_2FA_CONFIG_UPDATED');
             trigger_error($this->user->lang['CONFIG_UPDATED'] . adm_back_link($u_action));
@@ -115,13 +122,16 @@ class settings
         $is_gtawoauth_active = $this->manager->is_gtawoauth_enabled();
 
         $this->template->assign_vars([
-            'S_2FA_ENABLED'       => !empty($this->config['booskit_2fa_enabled']),
-            'ISSUER_NAME'         => isset($this->config['booskit_2fa_issuer']) ? $this->config['booskit_2fa_issuer'] : '',
-            'BOOSKIT_2FA_COLOR'   => isset($this->config['booskit_2fa_color']) ? $this->config['booskit_2fa_color'] : '#2563eb',
-            'BOOSKIT_2FA_LOGO_URL'=> isset($this->config['booskit_2fa_logo_url']) ? $this->config['booskit_2fa_logo_url'] : '',
-            'S_SHARED_SESSION'    => !empty($this->config['booskit_2fa_shared_session']),
-            'S_GTAW_OAUTH_ACTIVE' => $is_gtawoauth_active,
-            'U_ACTION'            => $u_action,
+            'S_2FA_ENABLED'           => !empty($this->config['booskit_2fa_enabled']),
+            'ISSUER_NAME'             => isset($this->config['booskit_2fa_issuer']) ? $this->config['booskit_2fa_issuer'] : '',
+            'BOOSKIT_2FA_COLOR'       => isset($this->config['booskit_2fa_color']) ? $this->config['booskit_2fa_color'] : '#2563eb',
+            'BOOSKIT_2FA_LOGO_URL'    => isset($this->config['booskit_2fa_logo_url']) ? $this->config['booskit_2fa_logo_url'] : '',
+            'S_SHARED_SESSION'        => !empty($this->config['booskit_2fa_shared_session']),
+            'S_UCP_IGNORE_REMEMBER'   => !empty($this->config['booskit_2fa_ucp_ignore_remember']),
+            'S_MCP_IGNORE_REMEMBER'   => !empty($this->config['booskit_2fa_mcp_ignore_remember']),
+            'S_ACP_IGNORE_REMEMBER'   => !empty($this->config['booskit_2fa_acp_ignore_remember']),
+            'S_GTAW_OAUTH_ACTIVE'     => $is_gtawoauth_active,
+            'U_ACTION'                => $u_action,
         ]);
     }
 }
