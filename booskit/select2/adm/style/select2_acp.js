@@ -73,7 +73,7 @@
             var $groupSelects = $('select[name="g"], select[name="group_id"], select[name="add_group"], select[name="g_id"]');
             $groupSelects.not('.select2-hidden-accessible').each(function() {
                 $(this).select2({
-                    width: '100%',
+                    width: 'resolve',
                     placeholder: 'Select a group...'
                 });
             });
@@ -82,7 +82,7 @@
             var $userRankSelects = $('select[name="user_rank"], select[name="rank"]');
             $userRankSelects.not('select[name="rank_image"]').not('.select2-hidden-accessible').each(function() {
                 $(this).select2({
-                    width: '100%',
+                    width: 'resolve',
                     templateResult: formatUserRankOption,
                     templateSelection: formatUserRankOption,
                     escapeMarkup: function(m) { return m; }
@@ -94,7 +94,7 @@
             $manageRankImageSelects.not('.select2-hidden-accessible').each(function() {
                 var $select = $(this);
                 $select.select2({
-                    width: '100%',
+                    width: 'resolve',
                     templateResult: formatManageRankImageOption,
                     templateSelection: formatManageRankImageOption,
                     escapeMarkup: function(m) { return m; }

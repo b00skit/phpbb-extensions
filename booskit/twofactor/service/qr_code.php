@@ -19,19 +19,49 @@ class qr_code
     protected static $gf_log = [];
     protected static $tables_initialized = false;
 
-    // Capacity & Error Correction table for Version 1..10, Error Correction Level 'M' (15%)
-    // [version => ['ec_blocks' => [[num_blocks, total_words, ec_words], ...], 'align' => [...]]]
+    // Capacity & Error Correction table for Versions 1..40, Error Correction Level 'M' (15%)
+    // [version => ['blocks' => [[num_blocks, total_words, data_words, ec_words], ...], 'align' => [...]]]
     protected static $version_table = [
-        1 => ['total_ec' => 10, 'blocks' => [[1, 26, 16, 10]], 'align' => []],
-        2 => ['total_ec' => 16, 'blocks' => [[1, 44, 28, 16]], 'align' => [6, 18]],
-        3 => ['total_ec' => 26, 'blocks' => [[1, 70, 44, 26]], 'align' => [6, 22]],
-        4 => ['total_ec' => 36, 'blocks' => [[2, 50, 32, 18]], 'align' => [6, 26]],
-        5 => ['total_ec' => 48, 'blocks' => [[2, 67, 43, 24]], 'align' => [6, 30]],
-        6 => ['total_ec' => 64, 'blocks' => [[4, 43, 27, 16]], 'align' => [6, 34]],
-        7 => ['total_ec' => 72, 'blocks' => [[4, 49, 31, 18]], 'align' => [6, 22, 38]],
-        8 => ['total_ec' => 88, 'blocks' => [[2, 60, 38, 22], [2, 61, 39, 22]], 'align' => [6, 24, 42]],
-        9 => ['total_ec' => 110, 'blocks' => [[3, 58, 36, 22], [2, 59, 37, 22]], 'align' => [6, 26, 46]],
-        10 => ['total_ec' => 130, 'blocks' => [[4, 69, 43, 26], [1, 70, 44, 26]], 'align' => [6, 28, 50]],
+        1 => ['blocks' => [[1, 26, 16, 10]], 'align' => []],
+        2 => ['blocks' => [[1, 44, 28, 16]], 'align' => [6, 18]],
+        3 => ['blocks' => [[1, 70, 44, 26]], 'align' => [6, 22]],
+        4 => ['blocks' => [[2, 50, 32, 18]], 'align' => [6, 26]],
+        5 => ['blocks' => [[2, 67, 43, 24]], 'align' => [6, 30]],
+        6 => ['blocks' => [[4, 43, 27, 16]], 'align' => [6, 34]],
+        7 => ['blocks' => [[4, 49, 31, 18]], 'align' => [6, 22, 38]],
+        8 => ['blocks' => [[2, 60, 38, 22], [2, 61, 39, 22]], 'align' => [6, 24, 42]],
+        9 => ['blocks' => [[3, 58, 36, 22], [2, 59, 37, 22]], 'align' => [6, 26, 46]],
+        10 => ['blocks' => [[4, 69, 43, 26], [1, 70, 44, 26]], 'align' => [6, 28, 50]],
+        11 => ['blocks' => [[1, 80, 50, 30], [4, 81, 51, 30]], 'align' => [6, 30, 54]],
+        12 => ['blocks' => [[6, 58, 36, 22], [2, 59, 37, 22]], 'align' => [6, 32, 58]],
+        13 => ['blocks' => [[8, 59, 37, 22], [1, 60, 38, 22]], 'align' => [6, 34, 62]],
+        14 => ['blocks' => [[4, 64, 40, 24], [5, 65, 41, 24]], 'align' => [6, 26, 46, 66]],
+        15 => ['blocks' => [[5, 65, 41, 24], [5, 66, 42, 24]], 'align' => [6, 26, 48, 70]],
+        16 => ['blocks' => [[7, 73, 45, 28], [3, 74, 46, 28]], 'align' => [6, 26, 50, 74]],
+        17 => ['blocks' => [[10, 74, 46, 28], [1, 75, 47, 28]], 'align' => [6, 30, 54, 78]],
+        18 => ['blocks' => [[9, 69, 43, 26], [4, 70, 44, 26]], 'align' => [6, 30, 56, 82]],
+        19 => ['blocks' => [[3, 70, 44, 26], [11, 71, 45, 26]], 'align' => [6, 30, 58, 86]],
+        20 => ['blocks' => [[3, 67, 41, 26], [13, 68, 42, 26]], 'align' => [6, 34, 62, 90]],
+        21 => ['blocks' => [[17, 68, 42, 26]], 'align' => [6, 28, 50, 72, 94]],
+        22 => ['blocks' => [[17, 74, 46, 28]], 'align' => [6, 26, 50, 74, 98]],
+        23 => ['blocks' => [[4, 75, 47, 28], [14, 76, 48, 28]], 'align' => [6, 30, 54, 78, 102]],
+        24 => ['blocks' => [[6, 73, 45, 28], [14, 74, 46, 28]], 'align' => [6, 28, 54, 80, 106]],
+        25 => ['blocks' => [[8, 75, 47, 28], [13, 76, 48, 28]], 'align' => [6, 32, 58, 84, 110]],
+        26 => ['blocks' => [[19, 74, 46, 28], [4, 75, 47, 28]], 'align' => [6, 30, 58, 86, 114]],
+        27 => ['blocks' => [[22, 73, 45, 28], [3, 74, 46, 28]], 'align' => [6, 34, 62, 90, 118]],
+        28 => ['blocks' => [[3, 73, 45, 28], [23, 74, 46, 28]], 'align' => [6, 26, 50, 74, 98, 122]],
+        29 => ['blocks' => [[21, 73, 45, 28], [7, 74, 46, 28]], 'align' => [6, 30, 54, 78, 102, 126]],
+        30 => ['blocks' => [[19, 75, 47, 28], [10, 76, 48, 28]], 'align' => [6, 26, 52, 78, 104, 130]],
+        31 => ['blocks' => [[2, 74, 46, 28], [29, 75, 47, 28]], 'align' => [6, 30, 56, 82, 108, 134]],
+        32 => ['blocks' => [[10, 74, 46, 28], [23, 75, 47, 28]], 'align' => [6, 34, 60, 86, 112, 138]],
+        33 => ['blocks' => [[14, 74, 46, 28], [21, 75, 47, 28]], 'align' => [6, 30, 58, 86, 114, 142]],
+        34 => ['blocks' => [[14, 74, 46, 28], [23, 75, 47, 28]], 'align' => [6, 34, 62, 90, 118, 146]],
+        35 => ['blocks' => [[12, 75, 47, 28], [26, 76, 48, 28]], 'align' => [6, 30, 54, 78, 102, 126, 150]],
+        36 => ['blocks' => [[6, 75, 47, 28], [34, 76, 48, 28]], 'align' => [6, 24, 50, 76, 102, 128, 154]],
+        37 => ['blocks' => [[29, 74, 46, 28], [14, 75, 47, 28]], 'align' => [6, 28, 54, 80, 106, 132, 158]],
+        38 => ['blocks' => [[13, 74, 46, 28], [32, 75, 47, 28]], 'align' => [6, 32, 58, 84, 110, 136, 162]],
+        39 => ['blocks' => [[40, 75, 47, 28], [7, 76, 48, 28]], 'align' => [6, 26, 54, 82, 110, 138, 166]],
+        40 => ['blocks' => [[18, 75, 47, 28], [31, 76, 48, 28]], 'align' => [6, 30, 58, 86, 114, 142, 170]],
     ];
 
     public function __construct()
@@ -69,7 +99,7 @@ class qr_code
      *
      * @param string $text
      * @param int $size Width and height in px
-     * @param int $margin Quiet zone in modules
+     * @param int $margin Quiet zone in modules (default: 4 per ISO/IEC 18004)
      * @return string SVG XML
      */
     public function generate_svg($text, $size = 220, $margin = 4)
@@ -95,7 +125,7 @@ class qr_code
 
         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $total_size . ' ' . $total_size . '" width="' . (int)$size . '" height="' . (int)$size . '" shape-rendering="crispEdges">' .
                '<rect width="100%" height="100%" fill="#ffffff" />' .
-               '<path fill="#111827" d="' . trim($path_data) . '" />' .
+               '<path fill="#000000" d="' . trim($path_data) . '" />' .
                '</svg>';
 
         return $svg;
@@ -116,8 +146,11 @@ class qr_code
 
     /**
      * Encode text into 2D QR matrix array
+     *
+     * @param string $text
+     * @return array|null 2D binary matrix
      */
-    protected function encode_matrix($text)
+    public function encode_matrix($text)
     {
         $data_bytes = array_values(unpack('C*', $text));
         $data_len = count($data_bytes);
@@ -129,7 +162,7 @@ class qr_code
             foreach ($info['blocks'] as $b) {
                 $cap_data_words += $b[0] * $b[2];
             }
-            // Byte mode overhead: 4 bits mode + (8 or 16 bits count)
+            // Byte mode overhead: 4 bits mode + (8 or 16 bits count indicator)
             $count_bits = ($ver <= 9) ? 8 : 16;
             $max_bytes = floor(($cap_data_words * 8 - 4 - $count_bits) / 8);
             if ($data_len <= $max_bytes) {
@@ -139,7 +172,7 @@ class qr_code
         }
 
         if ($version === null) {
-            $version = 10;
+            $version = 40;
         }
 
         $ver_info = self::$version_table[$version];
@@ -148,28 +181,24 @@ class qr_code
             $total_data_capacity += $b[0] * $b[2];
         }
 
-        // Build data bitstream
-        $bits = '';
-        // 1. Mode indicator: Byte mode (0100)
-        $bits .= '0100';
-        // 2. Character count
+        // 1. Build data bitstream
+        $bits = '0100'; // Byte mode indicator
         $count_bits = ($version <= 9) ? 8 : 16;
         $bits .= str_pad(decbin($data_len), $count_bits, '0', STR_PAD_LEFT);
-        // 3. Data bytes
         foreach ($data_bytes as $byte) {
             $bits .= str_pad(decbin($byte), 8, '0', STR_PAD_LEFT);
         }
 
-        // 4. Terminator (up to 4 zeroes)
+        // 2. Terminator (up to 4 zeroes)
         $max_data_bits = $total_data_capacity * 8;
         $bits .= substr('0000', 0, max(0, min(4, $max_data_bits - strlen($bits))));
 
-        // 5. Pad to multiple of 8
+        // 3. Pad to multiple of 8 bits
         if (strlen($bits) % 8 !== 0) {
             $bits .= str_repeat('0', 8 - (strlen($bits) % 8));
         }
 
-        // 6. Pad bytes (0xEC, 0x11)
+        // 4. Pad bytes (0xEC, 0x11)
         $pad_bytes = ['11101100', '00010001'];
         $pad_idx = 0;
         while (strlen($bits) < $max_data_bits) {
@@ -177,14 +206,14 @@ class qr_code
             $pad_idx++;
         }
 
-        // Convert bit stream to codewords
+        // 5. Convert bit stream to codewords
         $data_words = [];
         $chunks = str_split($bits, 8);
         foreach ($chunks as $chunk) {
             $data_words[] = bindec($chunk);
         }
 
-        // Divide data into blocks and calculate Reed-Solomon EC for each block
+        // 6. Divide data into blocks and calculate Reed-Solomon EC for each block
         $blocks_data = [];
         $blocks_ec = [];
         $data_offset = 0;
@@ -205,7 +234,7 @@ class qr_code
             }
         }
 
-        // Interleave data codewords
+        // 7. Interleave data codewords
         $final_codewords = [];
         $max_data_len = 0;
         foreach ($blocks_data as $bd) {
@@ -219,7 +248,7 @@ class qr_code
             }
         }
 
-        // Interleave EC codewords
+        // 8. Interleave EC codewords
         $max_ec_len = count($blocks_ec[0]);
         for ($i = 0; $i < $max_ec_len; $i++) {
             foreach ($blocks_ec as $bec) {
@@ -229,33 +258,38 @@ class qr_code
             }
         }
 
-        // Build matrix
+        // 9. Build matrix grid
         $size = 17 + 4 * $version;
         $matrix = array_fill(0, $size, array_fill(0, $size, null));
         $reserved = array_fill(0, $size, array_fill(0, $size, false));
 
-        // Place function patterns
+        // Function patterns: Finder
         $this->place_finder_pattern($matrix, $reserved, 0, 0);
         $this->place_finder_pattern($matrix, $reserved, 0, $size - 7);
         $this->place_finder_pattern($matrix, $reserved, $size - 7, 0);
 
-        $this->place_timing_patterns($matrix, $reserved, $size);
-
+        // Function patterns: Alignment
         if (!empty($ver_info['align'])) {
             $this->place_alignment_patterns($matrix, $reserved, $ver_info['align']);
         }
 
-        // Dark module
-        $matrix[4 * $version + 9][8] = 1;
-        $reserved[4 * $version + 9][8] = true;
+        // Function patterns: Timing
+        $this->place_timing_patterns($matrix, $reserved, $size);
 
-        // Reserve format info areas
+        // Reserve format info and version info areas
         $this->reserve_format_areas($reserved, $size);
+        if ($version >= 7) {
+            $this->reserve_version_areas($reserved, $size);
+        }
+
+        // Dark module (row = size - 8, col = 8)
+        $matrix[$size - 8][8] = 1;
+        $reserved[$size - 8][8] = true;
 
         // Place data bits into matrix
         $this->place_data_bits($matrix, $reserved, $final_codewords, $size);
 
-        // Apply best mask (Level M = 00, choose mask 0..7 with lowest penalty)
+        // Evaluate masks 0..7 and choose mask with lowest penalty score
         $best_mask = 0;
         $best_score = PHP_INT_MAX;
         $best_matrix = null;
@@ -263,7 +297,10 @@ class qr_code
         for ($mask = 0; $mask < 8; $mask++) {
             $candidate_matrix = $matrix;
             $this->apply_mask($candidate_matrix, $reserved, $mask, $size);
-            $this->place_format_info($candidate_matrix, $mask, $size); // Level M
+            $this->place_format_info($candidate_matrix, $mask, $size);
+            if ($version >= 7) {
+                $this->place_version_info($candidate_matrix, $version, $size);
+            }
             $score = $this->calc_penalty_score($candidate_matrix, $size);
             if ($score < $best_score) {
                 $best_score = $score;
@@ -277,18 +314,19 @@ class qr_code
 
     protected function calc_rs_ecc($data, $ec_count)
     {
-        // Generate generator polynomial
+        // Generate Reed-Solomon generator polynomial (highest degree first)
         $gen = [1];
         for ($i = 0; $i < $ec_count; $i++) {
             $root = self::$gf_exp[$i];
             $new_gen = array_fill(0, count($gen) + 1, 0);
             for ($j = 0; $j < count($gen); $j++) {
-                $new_gen[$j] ^= $this->gf_mul($gen[$j], $root);
-                $new_gen[$j + 1] ^= $gen[$j];
+                $new_gen[$j] ^= $gen[$j];
+                $new_gen[$j + 1] ^= $this->gf_mul($gen[$j], $root);
             }
             $gen = $new_gen;
         }
 
+        // Polynomial division
         $res = array_merge($data, array_fill(0, $ec_count, 0));
         $data_len = count($data);
 
@@ -322,28 +360,15 @@ class qr_code
                     continue;
                 }
                 $reserved[$mr][$mc] = true;
-                if ($r === -1 || $r === 7 || $c === -1 || $c === 7) {
-                    $matrix[$mr][$mc] = 0;
-                } elseif ($r === 0 || $r === 6 || $c === 0 || $c === 6 || ($r >= 2 && $r <= 4 && $c >= 2 && $c <= 4)) {
+                if ($r >= 0 && $r <= 6 && ($c === 0 || $c === 6)) {
+                    $matrix[$mr][$mc] = 1;
+                } elseif ($c >= 0 && $c <= 6 && ($r === 0 || $r === 6)) {
+                    $matrix[$mr][$mc] = 1;
+                } elseif ($r >= 2 && $r <= 4 && $c >= 2 && $c <= 4) {
                     $matrix[$mr][$mc] = 1;
                 } else {
                     $matrix[$mr][$mc] = 0;
                 }
-            }
-        }
-    }
-
-    protected function place_timing_patterns(&$matrix, &$reserved, $size)
-    {
-        for ($i = 8; $i < $size - 8; $i++) {
-            $val = ($i % 2 === 0) ? 1 : 0;
-            if (!$reserved[6][$i]) {
-                $matrix[6][$i] = $val;
-                $reserved[6][$i] = true;
-            }
-            if (!$reserved[$i][6]) {
-                $matrix[$i][6] = $val;
-                $reserved[$i][6] = true;
             }
         }
     }
@@ -355,8 +380,8 @@ class qr_code
             for ($j = 0; $j < $count; $j++) {
                 $r = $positions[$i];
                 $c = $positions[$j];
-                // Skip if overlapping finder patterns
-                if ($reserved[$r][$c]) {
+                // Skip if already occupied by finder pattern
+                if ($matrix[$r][$c] !== null) {
                     continue;
                 }
                 for ($dr = -2; $dr <= 2; $dr++) {
@@ -375,6 +400,20 @@ class qr_code
         }
     }
 
+    protected function place_timing_patterns(&$matrix, &$reserved, $size)
+    {
+        for ($i = 8; $i < $size - 8; $i++) {
+            if ($matrix[6][$i] === null) {
+                $matrix[6][$i] = ($i % 2 === 0) ? 1 : 0;
+                $reserved[6][$i] = true;
+            }
+            if ($matrix[$i][6] === null) {
+                $matrix[$i][6] = ($i % 2 === 0) ? 1 : 0;
+                $reserved[$i][6] = true;
+            }
+        }
+    }
+
     protected function reserve_format_areas(&$reserved, $size)
     {
         for ($i = 0; $i <= 8; $i++) {
@@ -384,6 +423,20 @@ class qr_code
         for ($i = $size - 8; $i < $size; $i++) {
             $reserved[8][$i] = true;
             $reserved[$i][8] = true;
+        }
+    }
+
+    protected function reserve_version_areas(&$reserved, $size)
+    {
+        for ($r = 0; $r < 6; $r++) {
+            for ($c = $size - 11; $c < $size - 8; $c++) {
+                $reserved[$r][$c] = true;
+            }
+        }
+        for ($r = $size - 11; $r < $size - 8; $r++) {
+            for ($c = 0; $c < 6; $c++) {
+                $reserved[$r][$c] = true;
+            }
         }
     }
 
@@ -401,7 +454,7 @@ class qr_code
 
         while ($col > 0) {
             if ($col === 6) {
-                $col--; // Skip vertical timing pattern
+                $col--; // Skip vertical timing pattern column
             }
             $rows = $up ? range($size - 1, 0) : range(0, $size - 1);
             foreach ($rows as $r) {
@@ -444,14 +497,12 @@ class qr_code
 
     protected function place_format_info(&$matrix, $mask, $size)
     {
-        // Error Correction Level M = 00 in QR spec (Level L = 01, Level M = 00, Level Q = 11, Level H = 10)
-        // Format data: 5 bits (2 bits EC + 3 bits mask)
-        $ec_bits = 0b00; // Level M
+        // Error Correction Level M = 00 in QR spec
+        $ec_bits = 0b00;
         $data = ($ec_bits << 3) | $mask;
 
         // 10 error correction bits with generator poly 0x537 (BCH 15,5)
         $d = $data << 10;
-        $poly = 0x537 << 4;
         for ($i = 4; $i >= 0; $i--) {
             if ($d & (1 << ($i + 10))) {
                 $d ^= (0x537 << $i);
@@ -459,23 +510,50 @@ class qr_code
         }
         $format_info = (($data << 10) | $d) ^ 0x5412; // Mask with 0x5412
 
-        $bits = str_pad(decbin($format_info), 15, '0', STR_PAD_LEFT);
-
-        // Place around top-left
-        $coords_tl = [
-            [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 7], [8, 8],
-            [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]
-        ];
         for ($i = 0; $i < 15; $i++) {
-            $matrix[$coords_tl[$i][0]][$coords_tl[$i][1]] = (int)$bits[$i];
-        }
+            $bit = ($format_info >> $i) & 1;
 
-        // Place around bottom-left / top-right
-        for ($i = 0; $i < 7; $i++) {
-            $matrix[$size - 1 - $i][8] = (int)$bits[$i];
+            // Vertical (around top-left & bottom-left)
+            if ($i < 6) {
+                $matrix[$i][8] = $bit;
+            } elseif ($i < 8) {
+                $matrix[$i + 1][8] = $bit;
+            } else {
+                $matrix[$size - 15 + $i][8] = $bit;
+            }
+
+            // Horizontal (around bottom-left & top-right & top-left)
+            if ($i < 8) {
+                $matrix[8][$size - $i - 1] = $bit;
+            } elseif ($i < 9) {
+                $matrix[8][15 - $i] = $bit;
+            } else {
+                $matrix[8][14 - $i] = $bit;
+            }
         }
-        for ($i = 7; $i < 15; $i++) {
-            $matrix[8][$size - 15 + $i] = (int)$bits[$i];
+    }
+
+    protected function place_version_info(&$matrix, $version, $size)
+    {
+        // 12 error correction bits with generator poly 0x1F25 (BCH 18,6)
+        $d = $version << 12;
+        for ($i = 5; $i >= 0; $i--) {
+            if ($d & (1 << ($i + 12))) {
+                $d ^= (0x1F25 << $i);
+            }
+        }
+        $version_info = ($version << 12) | $d;
+
+        for ($i = 0; $i < 18; $i++) {
+            $bit = ($version_info >> $i) & 1;
+            $row_idx = (int)floor($i / 3);
+            $col_idx = ($i % 3) + $size - 11;
+
+            // Top-right
+            $matrix[$row_idx][$col_idx] = $bit;
+
+            // Bottom-left
+            $matrix[$col_idx][$row_idx] = $bit;
         }
     }
 
@@ -524,6 +602,61 @@ class qr_code
                 $val = $matrix[$r][$c];
                 if ($val === $matrix[$r][$c + 1] && $val === $matrix[$r + 1][$c] && $val === $matrix[$r + 1][$c + 1]) {
                     $penalty += 3;
+                }
+            }
+        }
+
+        // Rule 3: 1:1:3:1:1 patterns (finder-like patterns)
+        for ($r = 0; $r < $size; $r++) {
+            for ($c = 0; $c < $size - 6; $c++) {
+                if ($matrix[$r][$c] === 1 &&
+                    $matrix[$r][$c + 1] === 0 &&
+                    $matrix[$r][$c + 2] === 1 &&
+                    $matrix[$r][$c + 3] === 1 &&
+                    $matrix[$r][$c + 4] === 1 &&
+                    $matrix[$r][$c + 5] === 0 &&
+                    $matrix[$r][$c + 6] === 1) {
+                    if ($c >= 4 &&
+                        $matrix[$r][$c - 1] === 0 &&
+                        $matrix[$r][$c - 2] === 0 &&
+                        $matrix[$r][$c - 3] === 0 &&
+                        $matrix[$r][$c - 4] === 0) {
+                        $penalty += 40;
+                    }
+                    if ($c + 10 < $size &&
+                        $matrix[$r][$c + 7] === 0 &&
+                        $matrix[$r][$c + 8] === 0 &&
+                        $matrix[$r][$c + 9] === 0 &&
+                        $matrix[$r][$c + 10] === 0) {
+                        $penalty += 40;
+                    }
+                }
+            }
+        }
+
+        for ($c = 0; $c < $size; $c++) {
+            for ($r = 0; $r < $size - 6; $r++) {
+                if ($matrix[$r][$c] === 1 &&
+                    $matrix[$r + 1][$c] === 0 &&
+                    $matrix[$r + 2][$c] === 1 &&
+                    $matrix[$r + 3][$c] === 1 &&
+                    $matrix[$r + 4][$c] === 1 &&
+                    $matrix[$r + 5][$c] === 0 &&
+                    $matrix[$r + 6][$c] === 1) {
+                    if ($r >= 4 &&
+                        $matrix[$r - 1][$c] === 0 &&
+                        $matrix[$r - 2][$c] === 0 &&
+                        $matrix[$r - 3][$c] === 0 &&
+                        $matrix[$r - 4][$c] === 0) {
+                        $penalty += 40;
+                    }
+                    if ($r + 10 < $size &&
+                        $matrix[$r + 7][$c] === 0 &&
+                        $matrix[$r + 8][$c] === 0 &&
+                        $matrix[$r + 9][$c] === 0 &&
+                        $matrix[$r + 10][$c] === 0) {
+                        $penalty += 40;
+                    }
                 }
             }
         }

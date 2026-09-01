@@ -54,10 +54,23 @@
                 var id = ($select.attr('id') || '').toLowerCase();
                 var isRankSelect = (name.indexOf('rank') !== -1 || id.indexOf('rank') !== -1);
 
+                var isMultiple = $select.prop('multiple');
+                var isFormSelect = isMultiple ||
+                    name.indexOf('forum') !== -1 ||
+                    name.indexOf('dest') !== -1 ||
+                    name.indexOf('to_') !== -1 ||
+                    id.indexOf('to_') !== -1 ||
+                    ($select.hasClass('inputbox') && !$select.hasClass('autowidth')) ||
+                    $select.closest('.column1, .column2, dl.fields1 dd, dl.fields2 dd, form#confirm, form#mcp, .pmlist').length > 0;
+
                 var options = {
-                    width: '100%',
+                    width: isMultiple ? 'style' : (isFormSelect ? '100%' : 'resolve'),
                     allowClear: false
                 };
+
+                if (isMultiple) {
+                    options.containerCssClass = 'select2-container--multi';
+                }
 
                 if (isRankSelect && (Object.keys(ranksData).length > 0 || $select.find('option[data-rank-image]').length > 0)) {
                     options.templateResult = formatRankOption;
