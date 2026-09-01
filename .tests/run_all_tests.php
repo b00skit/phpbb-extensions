@@ -18,7 +18,8 @@ foreach ($test_files as $file) {
     $filename = basename($file);
     echo "▶ Executing $filename ...\n";
     
-    $cmd = 'php ' . escapeshellarg($file);
+    $php_bin = defined('PHP_BINARY') && PHP_BINARY ? PHP_BINARY : 'php';
+    $cmd = escapeshellarg($php_bin) . ' ' . escapeshellarg($file);
     $output = [];
     $exit_code = 0;
     

@@ -446,9 +446,11 @@ class twofactor_manager
 
         if ($is_oauth) {
             $oauth_groups = isset($this->config['booskit_2fa_groups_oauth']) ? $this->config['booskit_2fa_groups_oauth'] : '';
-            if (!empty($oauth_groups)) {
-                return $this->matches_groups($user_id, $oauth_groups);
+            if (empty($oauth_groups)) {
+                return false;
             }
+
+            return $this->matches_groups($user_id, $oauth_groups);
         }
 
         // For standard login: all users with 2FA enabled are prompted unless remembered
@@ -583,14 +585,124 @@ class twofactor_manager
             return true;
         }
 
-        // If Shared Session Authentication is enabled, UCP & MCP share verification (does not apply to ACP)
+        // If Shared Session Authentication is enabled, ACP verification or any panel verification shares access to UCP & MCP
         if ($this->is_shared_session_enabled() && in_array($module, ['ucp', 'mcp'])) {
-            if (!empty($row['verified_ucp']) || !empty($row['verified_mcp'])) {
+            if (!empty($row['verified_acp']) || !empty($row['verified_ucp']) || !empty($row['verified_mcp'])) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Get the latest verified 2FA session record for a user
+     *
+     * @param int $user_id
+     * @return array|null
+     */
+    public function get_latest_verified_session($user_id)
+    {
+        $user_id = (int)$user_id;
+        if ($user_id <= 0) {
+            return null;
+        }
+
+        $sql = 'SELECT * FROM ' . $this->sessions_table . '
+                WHERE user_id = ' . $user_id . ' AND is_verified = 1
+                ORDER BY verified_at DESC';
+        $result = $this->db->sql_query_limit($sql, 1);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        return $row ?: null;
+    }
+
+    /**
+     * Copy / inherit 2FA verification from an existing session to a newly created session (e.g. ACP session)
+     *
+     * @param string $new_session_id
+     * @param int $user_id
+     * @param bool $is_admin
+     * @return bool
+     */
+    public function sync_admin_session_verification($new_session_id, $user_id, $is_admin = true)
+    {
+        $user_id = (int)$user_id;
+        $new_session_id = (string)$new_session_id;
+
+        if (empty($new_session_id) || $user_id <= 0) {
+            return false;
+        }
+
+        $is_acp_required = $this->is_2fa_required_for_acp($user_id);
+        $prev = $this->get_latest_verified_session($user_id);
+        $is_shared = $this->is_shared_session_enabled();
+
+        $time = time();
+        $ip = $this->user->ip;
+
+        // If user already had a verified session on the board, login verification carries over
+        $is_login_verified = $prev ? !empty($prev['is_verified']) : true;
+        $verified_ucp = $prev ? (int)!empty($prev['verified_ucp']) : 0;
+        $verified_mcp = $prev ? (int)!empty($prev['verified_mcp']) : 0;
+        $verified_acp = $prev ? (int)!empty($prev['verified_acp']) : 0;
+
+        if ($is_shared && ($verified_ucp || $verified_mcp || $verified_acp)) {
+            $verified_ucp = 1;
+            $verified_mcp = 1;
+        }
+
+        // Always ensure login 2FA is verified for the admin session so no re-prompt on board index
+        $is_login_verified = 1;
+
+        // Check if new session already exists in 2fa_sessions table
+        $sql = 'SELECT session_id, is_verified, verified_acp FROM ' . $this->sessions_table . "
+                WHERE session_id = '" . $this->db->sql_escape($new_session_id) . "'";
+        $result = $this->db->sql_query($sql);
+        $exists = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if ($exists) {
+            $update_ary = [];
+            if ($is_login_verified && empty($exists['is_verified'])) {
+                $update_ary['is_verified'] = 1;
+                $update_ary['verified_at'] = $time;
+            }
+            if ($verified_acp && empty($exists['verified_acp'])) {
+                $update_ary['verified_acp'] = 1;
+            }
+            if ($verified_ucp) {
+                $update_ary['verified_ucp'] = 1;
+            }
+            if ($verified_mcp) {
+                $update_ary['verified_mcp'] = 1;
+            }
+
+            if (!empty($update_ary)) {
+                $sql = 'UPDATE ' . $this->sessions_table . '
+                        SET ' . $this->db->sql_build_array('UPDATE', $update_ary) . "
+                        WHERE session_id = '" . $this->db->sql_escape($new_session_id) . "'";
+                $this->db->sql_query($sql);
+            }
+        } else {
+            $sql_ary = [
+                'session_id'     => $new_session_id,
+                'user_id'        => $user_id,
+                'is_verified'    => $is_login_verified ? 1 : 0,
+                'verified_ucp'   => $verified_ucp,
+                'verified_mcp'   => $verified_mcp,
+                'verified_acp'   => $verified_acp ? 1 : 0,
+                'verified_at'    => $is_login_verified ? $time : 0,
+                'ip_hash'        => md5($ip),
+                'pending_secret' => '',
+                'auth_via_oauth' => 0,
+            ];
+            $sql = 'INSERT INTO ' . $this->sessions_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+            $this->db->sql_query($sql);
+        }
+
+        return true;
     }
 
     /**
@@ -702,10 +814,12 @@ class twofactor_manager
         $exists = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
 
-        $is_shared_panel = in_array($module, ['ucp', 'mcp']) && $this->is_shared_session_enabled();
+        $is_shared = $this->is_shared_session_enabled();
+        $is_shared_panel = in_array($module, ['ucp', 'mcp']) && $is_shared;
+        $is_acp_shared = ($module === 'acp') && $is_shared;
 
         $set_clause = "is_verified = 1, verified_at = {$time}, user_id = {$user_id}, ip_hash = '" . $this->db->sql_escape(md5($ip)) . "'";
-        if ($module === 'all') {
+        if ($module === 'all' || $is_acp_shared) {
             $set_clause .= ", verified_ucp = 1, verified_mcp = 1, verified_acp = 1";
         } elseif ($is_shared_panel) {
             $set_clause .= ", verified_ucp = 1, verified_mcp = 1";
@@ -727,9 +841,9 @@ class twofactor_manager
                 'session_id'   => $session_id,
                 'user_id'      => $user_id,
                 'is_verified'  => 1,
-                'verified_ucp' => ($module === 'all' || $is_shared_panel || $module === 'ucp') ? 1 : 0,
-                'verified_mcp' => ($module === 'all' || $is_shared_panel || $module === 'mcp') ? 1 : 0,
-                'verified_acp' => ($module === 'all' || $module === 'acp') ? 1 : 0,
+                'verified_ucp' => ($module === 'all' || $is_shared_panel || $is_acp_shared || $module === 'ucp') ? 1 : 0,
+                'verified_mcp' => ($module === 'all' || $is_shared_panel || $is_acp_shared || $module === 'mcp') ? 1 : 0,
+                'verified_acp' => ($module === 'all' || $is_acp_shared || $module === 'acp') ? 1 : 0,
                 'verified_at'  => $time,
                 'ip_hash'      => md5($ip),
             ];

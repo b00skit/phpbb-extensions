@@ -29,7 +29,7 @@ $lang = array_merge($lang, [
     'ACP_2FA_LOGO_URL'                  => 'Custom Logo URL',
     'ACP_2FA_LOGO_URL_EXPLAIN'          => 'Optional URL/link to a custom logo image. When provided, replaces the default shield icon in 2FA prompts and setup wizards.',
     'ACP_2FA_SHARED_SESSION'            => 'Shared Session Authentication',
-    'ACP_2FA_SHARED_SESSION_EXPLAIN'    => 'When enabled, completing 2FA verification for any restricted control panel (UCP & MCP - this will not apply to ACP) will automatically grant 2FA authorization across all other control panels for that session. Standard initial login does <strong>not</strong> grant shared panel access.',
+    'ACP_2FA_SHARED_SESSION_EXPLAIN'    => 'When enabled, completing 2FA verification for ACP or any restricted control panel (UCP & MCP) will automatically grant 2FA authorization across all other control panels for that session. Standard initial login does <strong>not</strong> grant shared panel access.',
 
     'ACP_2FA_GROUPS_SUGGEST'            => 'Suggestion Prompt Groups',
     'ACP_2FA_GROUPS_SUGGEST_EXPLAIN'    => 'Members of these groups who haven’t enabled 2FA will receive a friendly suggestion banner/prompt that they can skip for 30 days.',

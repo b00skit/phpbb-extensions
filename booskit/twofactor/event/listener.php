@@ -57,21 +57,51 @@ class listener implements EventSubscriberInterface
             'core.user_setup'                 => 'load_language_on_setup',
             'core.page_header'                => 'handle_page_header',
             'core.adm_page_header'            => 'handle_page_header',
+            'core.session_create_after'       => 'handle_session_create',
             'core.session_kill_after'         => 'handle_session_kill',
             'core.acp_users_display_overview' => 'acp_users_display_overview',
             'core.acp_users_overview_before'  => 'acp_users_overview_before',
         ];
     }
 
+    public function handle_session_create($event)
+    {
+        if (!$this->manager->is_globally_enabled()) {
+            return;
+        }
+
+        $session_data = isset($event['session_data']) ? $event['session_data'] : [];
+        if (empty($session_data)) {
+            return;
+        }
+
+        $user_id = isset($session_data['session_user_id']) ? (int)$session_data['session_user_id'] : 0;
+        $session_id = isset($session_data['session_id']) ? (string)$session_data['session_id'] : '';
+        $is_admin = !empty($session_data['session_admin']);
+
+        if ($user_id <= ANONYMOUS || empty($session_id)) {
+            return;
+        }
+
+        if (!$this->manager->is_user_2fa_enabled($user_id)) {
+            return;
+        }
+
+        // If it's an admin session creation, synchronize/inherit 2FA authentication
+        if ($is_admin) {
+            $this->manager->sync_admin_session_verification($session_id, $user_id, true);
+        }
+    }
+
     public function handle_session_kill($event)
     {
-        $user_id = isset($event['user_id']) ? (int)$event['user_id'] : (int)$this->user->data['user_id'];
         $session_id = isset($event['session_id']) ? (string)$event['session_id'] : (string)$this->user->data['session_id'];
+        $user_id = isset($event['user_id']) ? (int)$event['user_id'] : (int)$this->user->data['user_id'];
 
-        if ($user_id > 0) {
-            $this->manager->clear_user_sessions($user_id);
-        } elseif (!empty($session_id)) {
+        if (!empty($session_id)) {
             $this->manager->clear_session($session_id);
+        } elseif ($user_id > 0) {
+            $this->manager->clear_user_sessions($user_id);
         }
     }
 
@@ -157,6 +187,11 @@ class listener implements EventSubscriberInterface
 
         $is_2fa_enabled = $this->manager->is_user_2fa_enabled($user_id);
         $session_id = $this->user->data['session_id'];
+
+        // If current session is an admin session, ensure it is synchronized with 2FA policy
+        if ($is_2fa_enabled && !empty($this->user->data['session_admin'])) {
+            $this->manager->sync_admin_session_verification($session_id, $user_id, true);
+        }
 
         // If device is remembered for 30 days, auto-verify all modules for this session
         if ($is_2fa_enabled && $this->manager->is_device_remembered($user_id)) {

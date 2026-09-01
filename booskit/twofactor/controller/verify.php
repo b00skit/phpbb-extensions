@@ -187,9 +187,24 @@ class verify
                     $url = append_sid($redirect_clean, false, false);
                     return str_replace('&amp;', '&', $url);
                 }
+
                 $board_url = rtrim(generate_board_url(), '/');
+                $parsed_board = parse_url($board_url);
+                $scheme = isset($parsed_board['scheme']) ? $parsed_board['scheme'] : 'http';
+                $host = isset($parsed_board['host']) ? $parsed_board['host'] : 'localhost';
+                $port = isset($parsed_board['port']) ? ':' . $parsed_board['port'] : '';
+                $board_origin = $scheme . '://' . $host . $port;
+                $board_path = isset($parsed_board['path']) ? rtrim($parsed_board['path'], '/') : '';
+
                 $redirect_clean = '/' . ltrim($redirect_clean, '/');
-                $url = append_sid($board_url . $redirect_clean, false, false);
+
+                if (!empty($board_path) && strpos($redirect_clean, $board_path . '/') === 0) {
+                    $target = $board_origin . $redirect_clean;
+                } else {
+                    $target = $board_url . $redirect_clean;
+                }
+
+                $url = append_sid($target, false, false);
                 return str_replace('&amp;', '&', $url);
             }
         }

@@ -236,19 +236,35 @@ class callback
                  // Tag session for 2FA OAuth evaluation if 2FA extension is active
                  if (!empty($this->config['booskit_2fa_enabled'])) {
                      $twofactor_sessions = $this->table_prefix . 'booskit_2fa_sessions';
-                     $sql_ary = [
-                         'session_id'     => $this->user->session_id,
-                         'user_id'        => (int) $user_id,
-                         'is_verified'    => 0,
-                         'verified_at'    => 0,
-                         'ip_hash'        => md5($this->user->ip),
-                         'pending_secret' => '',
-                         'auth_via_oauth' => 1,
-                     ];
-                     $this->db->sql_return_on_error(true);
-                     $sql = 'INSERT INTO ' . $twofactor_sessions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-                     $this->db->sql_query($sql);
-                     $this->db->sql_return_on_error(false);
+                     $escaped_sid = $this->db->sql_escape($this->user->session_id);
+                     $sql = 'SELECT session_id FROM ' . $twofactor_sessions . " WHERE session_id = '{$escaped_sid}'";
+                     $result = $this->db->sql_query($sql);
+                     $exists = $this->db->sql_fetchrow($result);
+                     $this->db->sql_freeresult($result);
+
+                     if ($exists) {
+                         $sql = 'UPDATE ' . $twofactor_sessions . "
+                                 SET auth_via_oauth = 1, user_id = " . (int)$user_id . "
+                                 WHERE session_id = '{$escaped_sid}'";
+                         $this->db->sql_query($sql);
+                     } else {
+                         $sql_ary = [
+                             'session_id'     => $this->user->session_id,
+                             'user_id'        => (int) $user_id,
+                             'is_verified'    => 0,
+                             'verified_ucp'   => 0,
+                             'verified_mcp'   => 0,
+                             'verified_acp'   => 0,
+                             'verified_at'    => 0,
+                             'ip_hash'        => md5($this->user->ip),
+                             'pending_secret' => '',
+                             'auth_via_oauth' => 1,
+                         ];
+                         $this->db->sql_return_on_error(true);
+                         $sql = 'INSERT INTO ' . $twofactor_sessions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+                         $this->db->sql_query($sql);
+                         $this->db->sql_return_on_error(false);
+                     }
                  }
 
                  // Login successful

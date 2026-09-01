@@ -1,0 +1,180 @@
+<?php
+/**
+ * Test Suite for booskit/twofactor phpBB Extension
+ */
+
+namespace phpbb\config {
+    class config extends \ArrayObject {
+        public function __construct(array $array = []) { parent::__construct($array, \ArrayObject::ARRAY_AS_PROPS); }
+        #[\ReturnTypeWillChange]
+        public function offsetGet($key) { return isset($this[$key]) ? parent::offsetGet($key) : null; }
+    }
+}
+
+namespace phpbb\request {
+    interface request_interface {}
+    class request implements request_interface {
+        public function is_set_post($name) { return false; }
+        public function variable($name, $default, $multibyte = false, $cookie = false) { return $default; }
+    }
+}
+
+namespace phpbb {
+    class user {
+        public $data = ['user_id' => 2, 'group_id' => 2, 'session_id' => 'sess123'];
+        public $ip = '127.0.0.1';
+    }
+}
+
+namespace phpbb\log {
+    class log {
+        public function add() {}
+    }
+}
+
+namespace phpbb\db\driver {
+    interface driver_interface {
+        public function sql_query($sql);
+        public function sql_fetchrow($result);
+        public function sql_freeresult($result);
+        public function sql_escape($str);
+        public function sql_build_array($mode, $array);
+        public function sql_query_limit($sql, $total, $offset = 0);
+        public function sql_fetchfield($field, $rownum = false, $query_id = false);
+    }
+}
+
+namespace booskit\twofactor\service {
+    class totp {}
+    class backup_code_manager {}
+}
+
+namespace {
+
+if (!defined('IN_PHPBB')) {
+    define('IN_PHPBB', true);
+}
+if (!defined('ANONYMOUS')) {
+    define('ANONYMOUS', 1);
+}
+
+class mock_db implements \phpbb\db\driver\driver_interface {
+    public $records = [];
+    public $user_groups = [];
+
+    public function sql_query($sql) {
+        return $sql;
+    }
+    public function sql_fetchrow($result) {
+        if (strpos($result, 'booskit_2fa_users') !== false) {
+            preg_match('/user_id = (\d+)/', $result, $m);
+            $uid = isset($m[1]) ? (int)$m[1] : 0;
+            return isset($this->records[$uid]) ? $this->records[$uid] : false;
+        }
+        if (strpos($result, 'booskit_2fa_trusted_devices') !== false) {
+            return false;
+        }
+        return false;
+    }
+    public function sql_freeresult($result) {}
+    public function sql_escape($str) { return addslashes($str); }
+    public function sql_build_array($mode, $array) { return ''; }
+    public function sql_query_limit($sql, $total, $offset = 0) {
+        return $this->sql_query($sql);
+    }
+    public function sql_fetchfield($field, $rownum = false, $query_id = false) {
+        return false;
+    }
+}
+
+require_once __DIR__ . '/../booskit/twofactor/service/twofactor_manager.php';
+
+use booskit\twofactor\service\twofactor_manager;
+use booskit\twofactor\service\totp;
+use booskit\twofactor\service\backup_code_manager;
+
+echo "=================================================\n";
+echo " Running Unit Test Suite for booskit/twofactor   \n";
+echo "=================================================\n\n";
+
+$passed = 0;
+$failed = 0;
+
+function assert_test($condition, $description) {
+    global $passed, $failed;
+    if ($condition) {
+        echo " [PASS] $description\n";
+        $passed++;
+    } else {
+        echo " [FAIL] $description\n";
+        $failed++;
+    }
+}
+
+$config = new \phpbb\config\config([
+    'booskit_2fa_enabled' => 1,
+    'booskit_2fa_groups_oauth' => '',
+    'booskit_2fa_groups_enforce' => '5',
+    'booskit_2fa_groups_ucp' => '4,5',
+    'booskit_2fa_groups_mcp' => '4,5',
+    'booskit_2fa_groups_acp' => '5',
+]);
+
+$db = new mock_db();
+$user = new \phpbb\user();
+$request = new \phpbb\request\request();
+$log = new \phpbb\log\log();
+$totp = new totp();
+$backup_codes = new backup_code_manager();
+
+$manager = new twofactor_manager($config, $db, $user, $request, $log, $totp, $backup_codes, 'phpbb_');
+
+// User 2: 2FA enabled, belongs to group 2 (Registered Users)
+$db->records[2] = [
+    'user_id' => 2,
+    'is_enabled' => 1,
+];
+
+// User 3: 2FA not enabled
+$db->records[3] = [
+    'user_id' => 3,
+    'is_enabled' => 0,
+];
+
+// User 5: 2FA enabled, belongs to group 5 (Administrators)
+$db->records[5] = [
+    'user_id' => 5,
+    'is_enabled' => 1,
+];
+
+// 1. When OAuth groups setting is empty, OAuth login skips 2FA
+$is_req_oauth_empty = $manager->is_2fa_required_for_login(2, true);
+assert_test($is_req_oauth_empty === false, 'OAuth login skips 2FA when no OAuth groups are configured in ACP');
+
+// 2. Standard login requires 2FA even if OAuth groups setting is empty
+$is_req_standard = $manager->is_2fa_required_for_login(2, false);
+assert_test($is_req_standard === true, 'Standard login requires 2FA for users with 2FA enabled');
+
+// 3. User without 2FA enabled does not require 2FA on OAuth or standard login
+assert_test($manager->is_2fa_required_for_login(3, true) === false, 'User without 2FA does not require 2FA on OAuth');
+assert_test($manager->is_2fa_required_for_login(3, false) === false, 'User without 2FA does not require 2FA on standard login');
+
+// 4. When OAuth groups setting has group 5:
+$config['booskit_2fa_groups_oauth'] = '5';
+
+// User 2 (group 2) logging in via OAuth should NOT require 2FA
+assert_test($manager->is_2fa_required_for_login(2, true) === false, 'User not in OAuth groups list skips 2FA when logging in via OAuth');
+
+// User 5 (group 5) logging in via OAuth SHOULD require 2FA
+// Setup user 5 groups
+$user->data['user_id'] = 5;
+$user->data['group_id'] = 5;
+$manager5 = new twofactor_manager($config, $db, $user, $request, $log, $totp, $backup_codes, 'phpbb_');
+assert_test($manager5->is_2fa_required_for_login(5, true) === true, 'User in OAuth groups list gets 2FA prompt when logging in via OAuth');
+
+echo "\n-------------------------------------------------\n";
+echo " Test Results: $passed Passed, $failed Failed.\n";
+echo "-------------------------------------------------\n";
+
+exit($failed === 0 ? 0 : 1);
+}
