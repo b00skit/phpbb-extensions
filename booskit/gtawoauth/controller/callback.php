@@ -229,59 +229,50 @@ class callback
             $sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_oauth_tokens ' . $this->db->sql_build_array('INSERT', $sql_ary);
             $this->db->sql_query($sql);
 
-            // Create session
+            // Check 2FA requirement before establishing a session
+            $twofactor_manager = null;
+            global $phpbb_container;
+            if ($phpbb_container && $phpbb_container->has('booskit.twofactor.manager')) {
+                $twofactor_manager = $phpbb_container->get('booskit.twofactor.manager');
+            }
+
+            $requires_2fa = false;
+            if ($twofactor_manager && $twofactor_manager->is_globally_enabled()) {
+                $requires_2fa = $twofactor_manager->is_2fa_required_for_login($user_id, true);
+            }
+
+            global $phpEx;
+            $redirect = $this->request->variable('redirect', "index.$phpEx");
+
+            if ($requires_2fa) {
+                // 2FA required for this OAuth login: do NOT establish session yet!
+                $token = $twofactor_manager->create_pending_login($user_id, false, true, $redirect, true, false);
+                $verify_url = $this->helper->route('booskit_twofactor_verify', ['token' => $token]);
+                redirect($verify_url);
+            }
+
+            // Create session (2FA not required or device is remembered)
             $result = $this->user->session_create($user_id, false, true, true);
 
             if ($result === true) {
-                 // Tag session for 2FA OAuth evaluation if 2FA extension is active
-                 if (!empty($this->config['booskit_2fa_enabled'])) {
-                     $twofactor_sessions = $this->table_prefix . 'booskit_2fa_sessions';
-                     $escaped_sid = $this->db->sql_escape($this->user->session_id);
-                     $sql = 'SELECT session_id FROM ' . $twofactor_sessions . " WHERE session_id = '{$escaped_sid}'";
-                     $result = $this->db->sql_query($sql);
-                     $exists = $this->db->sql_fetchrow($result);
-                     $this->db->sql_freeresult($result);
+                if ($twofactor_manager && $twofactor_manager->is_globally_enabled()) {
+                    $twofactor_manager->mark_session_verified($this->user->session_id, $user_id, 'trusted_device', 'login');
+                    $twofactor_manager->mark_session_oauth($this->user->session_id, $user_id);
+                }
 
-                     if ($exists) {
-                         $sql = 'UPDATE ' . $twofactor_sessions . "
-                                 SET auth_via_oauth = 1, user_id = " . (int)$user_id . "
-                                 WHERE session_id = '{$escaped_sid}'";
-                         $this->db->sql_query($sql);
-                     } else {
-                         $sql_ary = [
-                             'session_id'     => $this->user->session_id,
-                             'user_id'        => (int) $user_id,
-                             'is_verified'    => 0,
-                             'verified_ucp'   => 0,
-                             'verified_mcp'   => 0,
-                             'verified_acp'   => 0,
-                             'verified_at'    => 0,
-                             'ip_hash'        => md5($this->user->ip),
-                             'pending_secret' => '',
-                             'auth_via_oauth' => 1,
-                         ];
-                         $this->db->sql_return_on_error(true);
-                         $sql = 'INSERT INTO ' . $twofactor_sessions . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-                         $this->db->sql_query($sql);
-                         $this->db->sql_return_on_error(false);
-                     }
-                 }
+                // Login successful
+                $url = redirect($redirect, true);
 
-                 // Login successful
-                 global $phpEx;
-                 $redirect = $this->request->variable('redirect', "index.$phpEx");
-                 $url = redirect($redirect, true);
+                if (!$url) {
+                    $url = generate_board_url() . "/index.$phpEx";
+                }
 
-                 if (!$url) {
-                     $url = generate_board_url() . "/index.$phpEx";
-                 }
+                // Force SID in URL to handle cross-site cookie restrictions
+                $url = append_sid($url, false, true, $this->user->session_id);
 
-                 // Force SID in URL to handle cross-site cookie restrictions
-                 $url = append_sid($url, false, true, $this->user->session_id);
-
-                 redirect($url);
+                redirect($url);
             } else {
-                 trigger_error('LOGIN_ERROR_UNKNOWN', E_USER_WARNING);
+                trigger_error('LOGIN_ERROR_UNKNOWN', E_USER_WARNING);
             }
         } else {
             // No linked account found.

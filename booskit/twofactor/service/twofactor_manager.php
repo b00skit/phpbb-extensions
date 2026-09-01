@@ -43,6 +43,9 @@ class twofactor_manager
     /** @var string */
     protected $trusted_devices_table;
 
+    /** @var string */
+    protected $pending_logins_table;
+
     /** @var array Cache for user groups */
     protected $user_groups_cache = [];
 
@@ -71,6 +74,7 @@ class twofactor_manager
         $this->users_table = $table_prefix . 'booskit_2fa_users';
         $this->sessions_table = $table_prefix . 'booskit_2fa_sessions';
         $this->trusted_devices_table = $table_prefix . 'booskit_2fa_trusted_devices';
+        $this->pending_logins_table = $table_prefix . 'booskit_2fa_pending_logins';
     }
 
     /**
@@ -1300,4 +1304,117 @@ class twofactor_manager
             ], $log_data));
         }
     }
+
+    /**
+     * Create a pending login token for pre-session 2FA verification
+     *
+     * @param int $user_id
+     * @param bool $autologin
+     * @param int $viewonline
+     * @param string $redirect
+     * @param bool $is_oauth
+     * @param bool $admin
+     * @return string 64-character hex token
+     */
+    public function create_pending_login($user_id, $autologin = false, $viewonline = 1, $redirect = '', $is_oauth = false, $admin = false)
+    {
+        $user_id = (int)$user_id;
+        $time = time();
+        $expires_at = $time + 600; // 10 minutes expiry
+        $ip = $this->user->ip;
+
+        try {
+            $token = bin2hex(random_bytes(32));
+        } catch (\Exception $e) {
+            $token = md5(uniqid(mt_rand(), true) . microtime() . $user_id) . md5($ip . $time);
+        }
+
+        // Clean up expired tokens periodically
+        $this->cleanup_expired_pending_logins();
+
+        // Also clean up any existing pending logins for this user to avoid stale tokens
+        $this->delete_user_pending_logins($user_id);
+
+        $sql_ary = [
+            'login_token'    => $token,
+            'user_id'        => $user_id,
+            'autologin'      => $autologin ? 1 : 0,
+            'viewonline'     => $viewonline ? 1 : 0,
+            'admin'          => $admin ? 1 : 0,
+            'redirect_url'   => (string)$redirect,
+            'auth_via_oauth' => $is_oauth ? 1 : 0,
+            'created_at'     => $time,
+            'expires_at'     => $expires_at,
+            'ip_address'     => (string)$ip,
+        ];
+
+        $sql = 'INSERT INTO ' . $this->pending_logins_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+        $this->db->sql_query($sql);
+
+        return $token;
+    }
+
+    /**
+     * Retrieve active pending login data by token
+     *
+     * @param string $token
+     * @return array|null
+     */
+    public function get_pending_login($token)
+    {
+        $token = trim((string)$token);
+        if (empty($token) || strlen($token) !== 64 || !ctype_xdigit($token)) {
+            return null;
+        }
+
+        $time = time();
+        $sql = 'SELECT * FROM ' . $this->pending_logins_table . "
+                WHERE login_token = '" . $this->db->sql_escape($token) . "'
+                AND expires_at > {$time}";
+        $result = $this->db->sql_query_limit($sql, 1);
+        $row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        return $row ?: null;
+    }
+
+    /**
+     * Invalidate and delete a specific pending login token
+     *
+     * @param string $token
+     */
+    public function delete_pending_login($token)
+    {
+        $token = trim((string)$token);
+        if (!empty($token)) {
+            $sql = 'DELETE FROM ' . $this->pending_logins_table . "
+                    WHERE login_token = '" . $this->db->sql_escape($token) . "'";
+            $this->db->sql_query($sql);
+        }
+    }
+
+    /**
+     * Delete all pending logins for a specific user ID
+     *
+     * @param int $user_id
+     */
+    public function delete_user_pending_logins($user_id)
+    {
+        $user_id = (int)$user_id;
+        if ($user_id > 0) {
+            $sql = 'DELETE FROM ' . $this->pending_logins_table . ' WHERE user_id = ' . $user_id;
+            $this->db->sql_query($sql);
+        }
+    }
+
+    /**
+     * Delete expired pending login tokens from DB
+     */
+    public function cleanup_expired_pending_logins()
+    {
+        $time = time();
+        $sql = 'DELETE FROM ' . $this->pending_logins_table . ' WHERE expires_at < ' . $time;
+        $this->db->sql_query($sql);
+    }
 }
+

@@ -33,6 +33,10 @@ services:
             - '@controller.helper'
             - '@booskit.twofactor.manager'
             - '@booskit.twofactor.backup_codes'
+            - '@passwords.manager'
+            - '@dbal.conn'
+            - '@auth'
+            - '%core.table_prefix%'
         tags:
             - { name: event.listener }
 
@@ -47,6 +51,8 @@ services:
             - '@booskit.twofactor.manager'
             - '@booskit.twofactor.totp'
             - '@booskit.twofactor.backup_codes'
+            - '@dbal.conn'
+            - '%core.table_prefix%'
 
     booskit.twofactor.controller.setup:
         class: booskit\twofactor\controller\setup

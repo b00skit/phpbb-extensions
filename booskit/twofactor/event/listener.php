@@ -33,6 +33,18 @@ class listener implements EventSubscriberInterface
     /** @var \booskit\twofactor\service\backup_code_manager */
     protected $backup_codes;
 
+    /** @var \phpbb\passwords\manager */
+    protected $passwords_manager;
+
+    /** @var \phpbb\db\driver\driver_interface */
+    protected $db;
+
+    /** @var \phpbb\auth\auth */
+    protected $auth;
+
+    /** @var string */
+    protected $table_prefix;
+
     public function __construct(
         \phpbb\config\config $config,
         \phpbb\template\template $template,
@@ -40,7 +52,11 @@ class listener implements EventSubscriberInterface
         \phpbb\request\request $request,
         \phpbb\controller\helper $helper,
         \booskit\twofactor\service\twofactor_manager $manager,
-        \booskit\twofactor\service\backup_code_manager $backup_codes
+        \booskit\twofactor\service\backup_code_manager $backup_codes,
+        \phpbb\passwords\manager $passwords_manager,
+        \phpbb\db\driver\driver_interface $db,
+        \phpbb\auth\auth $auth,
+        $table_prefix
     ) {
         $this->config = $config;
         $this->template = $template;
@@ -49,6 +65,10 @@ class listener implements EventSubscriberInterface
         $this->helper = $helper;
         $this->manager = $manager;
         $this->backup_codes = $backup_codes;
+        $this->passwords_manager = $passwords_manager;
+        $this->db = $db;
+        $this->auth = $auth;
+        $this->table_prefix = $table_prefix;
     }
 
     public static function getSubscribedEvents()
@@ -57,11 +77,99 @@ class listener implements EventSubscriberInterface
             'core.user_setup'                 => 'load_language_on_setup',
             'core.page_header'                => 'handle_page_header',
             'core.adm_page_header'            => 'handle_page_header',
+            'core.login_box_before'           => 'handle_login_box_before',
             'core.session_create_after'       => 'handle_session_create',
             'core.session_kill_after'         => 'handle_session_kill',
             'core.acp_users_display_overview' => 'acp_users_display_overview',
             'core.acp_users_overview_before'  => 'acp_users_overview_before',
         ];
+    }
+
+    public function handle_login_box_before($event)
+    {
+        if (!$this->manager->is_globally_enabled()) {
+            return;
+        }
+
+        // ACP admin re-authentication is handled separately in ACP flow
+        if (!empty($event['admin'])) {
+            return;
+        }
+
+        // If user already has an active session, no need to intercept login
+        if ((int)$this->user->data['user_id'] !== ANONYMOUS) {
+            return;
+        }
+
+        // Check if login form was submitted
+        if (!$this->request->is_set_post('login') && !$this->request->is_set_post('username')) {
+            return;
+        }
+
+        $username = $this->request->variable('username', '', true);
+        $password = $this->request->untrimmed_variable('password', '', false, \phpbb\request\request_interface::POST);
+        if (empty($password)) {
+            $password = $this->request->variable('password', '', true);
+        }
+
+        if ($username === '' || $password === '') {
+            return;
+        }
+
+        $clean_username = function_exists('utf8_clean_string') ? utf8_clean_string($username) : strtolower($username);
+        $sql = 'SELECT user_id, username, user_password, user_type, user_login_attempts
+                FROM ' . $this->table_prefix . "users
+                WHERE username_clean = '" . $this->db->sql_escape($clean_username) . "'";
+        $result = $this->db->sql_query($sql);
+        $user_row = $this->db->sql_fetchrow($result);
+        $this->db->sql_freeresult($result);
+
+        if (!$user_row) {
+            return;
+        }
+
+        // Ignore inactive or bot users
+        $user_type = (int)$user_row['user_type'];
+        if ((defined('USER_INACTIVE') && $user_type == USER_INACTIVE) || (defined('USER_IGNORE') && $user_type == USER_IGNORE)) {
+            return;
+        }
+
+        $user_id = (int)$user_row['user_id'];
+
+        // Check if user requires 2FA on standard login
+        if (!$this->manager->is_2fa_required_for_login($user_id, false)) {
+            return;
+        }
+
+        // Check password validity
+        $max_attempts = isset($this->config['max_login_attempts']) ? (int)$this->config['max_login_attempts'] : 0;
+        $user_attempts = (int)$user_row['user_login_attempts'];
+
+        $password_valid = false;
+        if ($max_attempts > 0 && $user_attempts >= $max_attempts) {
+            // Check via standard auth provider (includes captcha verification)
+            $login_result = $this->auth->login($username, $password, false, false, false);
+            if (isset($login_result['status']) && $login_result['status'] === LOGIN_SUCCESS) {
+                $password_valid = true;
+            }
+        } else {
+            if ($this->passwords_manager->check($password, $user_row['user_password'])) {
+                $password_valid = true;
+            }
+        }
+
+        if (!$password_valid) {
+            return; // Invalid password: let phpBB handle error display and attempt logging
+        }
+
+        // Credentials valid and 2FA required! Intercept BEFORE session is created.
+        $autologin = $this->request->is_set_post('autologin');
+        $viewonline = $this->request->is_set_post('viewonline') ? 1 : ($this->request->is_set_post('login') ? 0 : 1);
+        $redirect = !empty($event['redirect']) ? $event['redirect'] : $this->request->variable('redirect', 'index.php');
+
+        $token = $this->manager->create_pending_login($user_id, $autologin, $viewonline, $redirect, false, false);
+        $verify_url = $this->helper->route('booskit_twofactor_verify', ['token' => $token]);
+        redirect($verify_url);
     }
 
     public function handle_session_create($event)
