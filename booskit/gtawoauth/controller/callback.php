@@ -256,7 +256,9 @@ class callback
 
             if ($result === true) {
                 if ($twofactor_manager && $twofactor_manager->is_globally_enabled()) {
-                    $twofactor_manager->mark_session_verified($this->user->session_id, $user_id, 'trusted_device', 'login');
+                    if ($twofactor_manager->is_user_2fa_enabled($user_id)) {
+                        $twofactor_manager->mark_session_verified($this->user->session_id, $user_id, 'trusted_device', 'login');
+                    }
                     $twofactor_manager->mark_session_oauth($this->user->session_id, $user_id);
                 }
 

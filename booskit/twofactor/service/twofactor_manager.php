@@ -971,31 +971,17 @@ class twofactor_manager
             $this->db->sql_query($sql);
         }
 
-        // Update user's last login information
+        // Update user's last login information if 2FA is enabled for this user
         $record = $this->get_user_record($user_id);
-        if ($record) {
+        if ($record && !empty($record['is_enabled'])) {
             $sql = 'UPDATE ' . $this->users_table . "
                     SET last_login_at = {$time},
                         last_login_ip = '" . $this->db->sql_escape($ip) . "',
                         last_login_method = '" . $this->db->sql_escape($method) . "'
                     WHERE user_id = {$user_id}";
             $this->db->sql_query($sql);
-        } else {
-            $sql_ary = [
-                'user_id'              => $user_id,
-                'secret'               => '',
-                'is_enabled'           => 1,
-                'enabled_at'           => $time,
-                'last_login_at'        => $time,
-                'last_login_ip'        => $ip,
-                'last_login_method'    => $method,
-                'reset_backup_pending' => 0,
-            ];
-            $sql = 'INSERT INTO ' . $this->users_table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
-            $this->db->sql_query($sql);
+            unset($this->user_record_cache[$user_id]);
         }
-
-        unset($this->user_record_cache[$user_id]);
     }
 
     /**

@@ -200,6 +200,9 @@ class mock_db implements \phpbb\db\driver\driver_interface {
                 $array['device_id'] = $dev_id;
                 $this->trusted_devices[$dev_id] = $array;
             }
+            if (isset($array['user_id']) && isset($array['is_enabled'])) {
+                $this->records[$array['user_id']] = $array;
+            }
         }
         return '';
     }
@@ -372,6 +375,13 @@ assert_test($protocol_relative === 'http://example.com/phpbb/index.php', '[Secur
 // Test backslash protocol-relative redirect attempt (\\evil.com)
 $backslash_relative = $verify_ctrl->get_safe_redirect_url('\\\\evil.com/phishing');
 assert_test($backslash_relative === 'http://example.com/phpbb/index.php', '[Security Fix - Flaw 2] Blocks backslash open redirect (\\\\evil.com)');
+
+// 12. Accidental 2FA Activation Prevention
+// User 99 has no record in 2fa_users (never activated 2FA)
+assert_test($manager->is_user_2fa_enabled(99) === false, 'User 99 does not have 2FA enabled');
+$manager->mark_session_verified('sess_oauth_99', 99, 'trusted_device', 'login');
+assert_test($manager->is_user_2fa_enabled(99) === false, '[Fix] mark_session_verified on non-2FA user does NOT activate 2FA or create blank secret record');
+assert_test(!isset($db->records[99]), '[Fix] No row created in 2fa_users for non-2FA user when verifying session');
 
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";
