@@ -1,0 +1,259 @@
+/**
+ * Booskit Dark Mode - Smart Theme Styles
+ * Preserves custom theme colors (e.g. dark green, dark navy) and enhances readability
+ *
+ * @package booskit/darkmode
+ * @license MIT
+ */
+
+/* ==========================================================================
+   Root Dark Mode Variables & Scheme
+   ========================================================================== */
+
+html[data-theme="dark"],
+html.dark-mode {
+	color-scheme: dark !important;
+}
+
+/* Smooth transition when switching themes */
+html.darkmode-ready,
+html.darkmode-ready body,
+html.darkmode-ready #wrap,
+html.darkmode-ready .wrap {
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* ==========================================================================
+   Forum Lists, Categories & Topics
+   ========================================================================== */
+
+html.dark-mode ul.forums,
+html.dark-mode ul.topics,
+html.dark-mode table.table1 tbody {
+	background-color: #1a1d21 !important;
+}
+
+/* Row backgrounds - replaces bright/blue cells with cohesive dark rows */
+html.dark-mode li.row,
+html.dark-mode .forabg ul.topiclist li.row dt,
+html.dark-mode .forabg ul.topiclist li.row dd,
+html.dark-mode .forumbg ul.topiclist li.row dt,
+html.dark-mode .forumbg ul.topiclist li.row dd,
+html.dark-mode table.table1 tbody tr td {
+	background-color: #1e2227 !important;
+	border-color: #2b3036 !important;
+	color: #d1d5db !important;
+}
+
+/* Even rows */
+html.dark-mode li.row:nth-child(even),
+html.dark-mode .forabg ul.topiclist li.row:nth-child(even) dt,
+html.dark-mode .forabg ul.topiclist li.row:nth-child(even) dd,
+html.dark-mode .forumbg ul.topiclist li.row:nth-child(even) dt,
+html.dark-mode .forumbg ul.topiclist li.row:nth-child(even) dd,
+html.dark-mode table.table1 tbody tr:nth-child(even) td {
+	background-color: #24282e !important;
+}
+
+/* Hover rows */
+html.dark-mode li.row:hover,
+html.dark-mode .forabg ul.topiclist li.row:hover dt,
+html.dark-mode .forabg ul.topiclist li.row:hover dd,
+html.dark-mode .forumbg ul.topiclist li.row:hover dt,
+html.dark-mode .forumbg ul.topiclist li.row:hover dd,
+html.dark-mode table.table1 tbody tr:hover td {
+	background-color: #2a2f37 !important;
+}
+
+/* ==========================================================================
+   Links & Readability
+   ========================================================================== */
+
+html.dark-mode a.forumtitle,
+html.dark-mode a.topictitle {
+	color: #93c5fd !important;
+	font-weight: 600;
+}
+
+html.dark-mode a.forumtitle:hover,
+html.dark-mode a.topictitle:hover {
+	color: #bfdbfe !important;
+}
+
+html.dark-mode a.subforum {
+	color: #93c5fd !important;
+}
+
+html.dark-mode a.subforum:before {
+	color: #818cf8 !important;
+}
+
+html.dark-mode .forum-description,
+html.dark-mode .topiclist li.row dt .list-inner,
+html.dark-mode .topiclist li.row dt {
+	color: #c9ccd3 !important;
+}
+
+html.dark-mode dd.topics,
+html.dark-mode dd.posts,
+html.dark-mode dd.views {
+	color: #a1a6b0 !important;
+}
+
+html.dark-mode dd.lastpost,
+html.dark-mode dd.lastpost span {
+	color: #a1a6b0 !important;
+}
+
+html.dark-mode dd.lastpost a {
+	color: #93c5fd !important;
+}
+
+/* ==========================================================================
+   Stat Blocks & Lower Panels
+   ========================================================================== */
+
+html.dark-mode .stat-block,
+html.dark-mode .online-list {
+	color: #d1d5db !important;
+}
+
+html.dark-mode .stat-block h3,
+html.dark-mode .online-list h3 {
+	color: #f2f3f5 !important;
+	border-bottom-color: #2b3036 !important;
+}
+
+/* Breadcrumbs & Navigation */
+html.dark-mode #nav-breadcrumbs,
+html.dark-mode .breadcrumbs {
+	color: #c9ccd3 !important;
+}
+
+html.dark-mode .breadcrumbs a {
+	color: #93c5fd !important;
+}
+
+/* ==========================================================================
+   Quotes & Codeboxes
+   ========================================================================== */
+
+html.dark-mode blockquote {
+	background-color: rgba(0, 0, 0, 0.28) !important;
+	border-color: rgba(255, 255, 255, 0.15) !important;
+	color: #d1d5db !important;
+}
+
+html.dark-mode .codebox {
+	background-color: rgba(0, 0, 0, 0.38) !important;
+	border-color: rgba(255, 255, 255, 0.15) !important;
+	color: #e5e7eb !important;
+}
+
+html.dark-mode blockquote cite,
+html.dark-mode .codebox dt {
+	border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+	color: #f2f3f5 !important;
+}
+
+/* ==========================================================================
+   Dropdown Menus
+   ========================================================================== */
+
+html.dark-mode .dropdown,
+html.dark-mode .dropdown-contents {
+	background-color: #1e2125 !important;
+	border-color: #353940 !important;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+
+html.dark-mode .dropdown-contents li a {
+	color: #d1d5db !important;
+}
+
+html.dark-mode .dropdown-contents li a:hover,
+html.dark-mode .dropdown-contents li a:focus {
+	background-color: #2a2e35 !important;
+	color: #ffffff !important;
+}
+
+html.dark-mode .dropdown-contents .separator {
+	border-top-color: #353940 !important;
+}
+
+html.dark-mode .pointer-inner {
+	border-bottom-color: #1e2125 !important;
+}
+
+/* ==========================================================================
+   Form Inputs & Controls
+   ========================================================================== */
+
+html.dark-mode .inputbox,
+html.dark-mode input[type="text"],
+html.dark-mode input[type="password"],
+html.dark-mode input[type="search"],
+html.dark-mode select,
+html.dark-mode textarea {
+	background-color: #23272d !important;
+	border-color: #3a3f47 !important;
+	color: #f2f3f5 !important;
+}
+
+html.dark-mode .inputbox:focus,
+html.dark-mode select:focus,
+html.dark-mode textarea:focus {
+	border-color: #5865f2 !important;
+	background-color: #282c33 !important;
+}
+
+html.dark-mode .button,
+html.dark-mode .button1,
+html.dark-mode .button2 {
+	background-color: #282c33 !important;
+	border-color: #3a3f47 !important;
+	color: #f2f3f5 !important;
+}
+
+html.dark-mode .button:hover,
+html.dark-mode .button1:hover,
+html.dark-mode .button2:hover {
+	background-color: #323740 !important;
+	border-color: #4a505b !important;
+	color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Toggle Button Styling
+   ========================================================================== */
+
+.darkmode-toggle-btn {
+	cursor: pointer !important;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.darkmode-guest-container {
+	display: inline-block;
+}
+
+.darkmode-guest-container .darkmode-toggle-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+#darkmode-toggle-user-container .darkmode-toggle-btn {
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+#darkmode-toggle-user-container .darkmode-icon,
+.darkmode-guest-container .darkmode-icon {
+	margin-right: 5px;
+}
+
+html.dark-mode .darkmode-icon {
+	color: #f39c12 !important;
+}

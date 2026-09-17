@@ -1,0 +1,329 @@
+{% INCLUDE 'overall_header.html' %}
+
+<div class="dashboard-container">
+
+	<!-- Hero Header -->
+	<div class="dashboard-hero">
+		<div class="dashboard-hero-content">
+			<h1><i class="icon fa-tachometer fa-fw" aria-hidden="true"></i> {{ lang('DASHBOARD_TITLE') }}</h1>
+			<p>{{ lang('DASHBOARD_PAGE_SUBTITLE') }}</p>
+		</div>
+		<form method="get" action="{{ U_BOOSKIT_DASHBOARD }}" class="dashboard-search-form">
+			<input type="text" name="search_user" placeholder="{{ lang('DASHBOARD_SEARCH_USER') }}" required />
+			<button type="submit"><i class="icon fa-search fa-fw" aria-hidden="true"></i></button>
+		</form>
+	</div>
+
+	{% if S_SEARCH_USER_NOT_FOUND %}
+	<div class="dash-archive-notice" style="margin-bottom: 20px;">
+		<i class="icon fa-exclamation-triangle fa-fw"></i> {{ lang('DASHBOARD_USER_NOT_FOUND') }}
+	</div>
+	{% endif %}
+
+	<!-- Quick Statistics Grid -->
+	<div class="dashboard-stats-grid">
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon users">
+				<i class="icon fa-users fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ STATS_TOTAL_USERS|number_format }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_TOTAL_MEMBERS') }}</span>
+			</div>
+		</div>
+
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon online">
+				<i class="icon fa-circle fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ STATS_ONLINE_REGISTERED }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_ONLINE_NOW') }} ({{ STATS_ONLINE_GUESTS }} {{ lang('DASHBOARD_STAT_GUESTS') }})</span>
+			</div>
+		</div>
+
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon activity">
+				<i class="icon fa-bolt fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ STATS_ACTIVE_TODAY|number_format }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_ACTIVE_TODAY') }}</span>
+			</div>
+		</div>
+
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon content">
+				<i class="icon fa-comments fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ STATS_TOTAL_TOPICS|number_format }} / {{ STATS_TOTAL_POSTS|number_format }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_TOPICS_POSTS') }}</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main 2-Column Section: Active Users & Hot Topics -->
+	<div class="dashboard-grid-2col">
+
+		<!-- Active Users & Live Browsing -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title">
+					<i class="icon fa-user-circle-o fa-fw" style="color: var(--dash-primary);"></i>
+					{{ lang('DASHBOARD_ACTIVE_USERS_TITLE') }}
+				</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				<ul class="active-users-list">
+					{% for user in active_users %}
+					<li class="active-user-row">
+						<div class="active-user-meta">
+							<div class="active-user-avatar">
+								{{ user.AVATAR|raw }}
+								<span class="online-pulse-dot" title="{{ lang('DASHBOARD_ONLINE_PULSE') }}"></span>
+							</div>
+							<div class="active-user-info">
+								<span class="active-user-name">{{ user.USERNAME|raw }}</span>
+								<div class="active-user-browsing">
+									{% if user.BROWSING_URL %}
+									<a href="{{ user.BROWSING_URL }}" class="browsing-badge" title="{{ user.BROWSING_LABEL }}">{{ user.BROWSING_LABEL }}</a>
+									{% else %}
+									<span class="browsing-badge">{{ user.BROWSING_LABEL }}</span>
+									{% endif %}
+									<span>&bull; {{ user.TIME_AGO }}</span>
+								</div>
+							</div>
+						</div>
+						<div class="active-user-actions">
+							{% if user.CAN_VIEW_PROFILE and user.U_VIEW_PROFILE %}
+							<a href="{{ user.U_VIEW_PROFILE }}" class="dash-btn dash-btn-secondary dash-btn-sm" title="{{ lang('DASHBOARD_VIEW_PROFILE') }}">
+								<i class="icon fa-address-card-o fa-fw"></i> {{ lang('DASHBOARD_VIEW_PROFILE') }}
+							</a>
+							{% endif %}
+						</div>
+					</li>
+					{% else %}
+					<li class="dash-empty-state">
+						<i class="icon fa-users fa-fw"></i>
+						{{ lang('DASHBOARD_NO_ACTIVE_USERS') }}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+
+		<!-- Trending & Hot Topics -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title">
+					<i class="icon fa-fire fa-fw" style="color: #ef4444;"></i>
+					{{ lang('DASHBOARD_HOT_TOPICS_TITLE') }}
+				</h3>
+				<div class="hot-topics-tabs">
+					<a href="{{ U_PERIOD_DAY }}" class="hot-topics-tab{% if CURRENT_PERIOD == 'day' %} active{% endif %}">{{ lang('DASHBOARD_PERIOD_DAY') }}</a>
+					<a href="{{ U_PERIOD_WEEK }}" class="hot-topics-tab{% if CURRENT_PERIOD == 'week' %} active{% endif %}">{{ lang('DASHBOARD_PERIOD_WEEK') }}</a>
+					<a href="{{ U_PERIOD_MONTH }}" class="hot-topics-tab{% if CURRENT_PERIOD == 'month' %} active{% endif %}">{{ lang('DASHBOARD_PERIOD_MONTH') }}</a>
+				</div>
+			</div>
+			<div class="dash-card-body no-padding" style="overflow-x: auto;">
+				<table class="hot-topics-table">
+					<thead>
+						<tr>
+							<th>Topic</th>
+							<th style="text-align: center;">Activity</th>
+							<th style="text-align: center;">Stats</th>
+							<th>Last Activity</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for topic in hot_topics %}
+						<tr>
+							<td>
+								<a href="{{ topic.U_VIEW_TOPIC }}" class="topic-title-link">{{ topic.TOPIC_TITLE }}</a>
+								<a href="{{ topic.U_VIEW_FORUM }}" class="topic-forum-badge">{{ topic.FORUM_NAME }}</a>
+								<div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
+									by {{ topic.POSTER|raw }}
+								</div>
+							</td>
+							<td style="text-align: center;">
+								{% if topic.PERIOD_POSTS > 0 %}
+								<span class="topic-activity-badge">
+									<i class="icon fa-fire fa-fw"></i> {{ topic.PERIOD_POSTS }}
+								</span>
+								{% else %}
+								<span style="color: #94a3b8; font-size: 0.8rem;">-</span>
+								{% endif %}
+							</td>
+							<td style="text-align: center; font-size: 0.8rem; color: #475569;">
+								<div><strong>{{ topic.TOTAL_REPLIES }}</strong> replies</div>
+								<div style="color: #94a3b8;">{{ topic.VIEWS }} views</div>
+							</td>
+							<td style="font-size: 0.8rem;">
+								<div>{{ topic.LAST_POST_TIME }}</div>
+								<div style="color: #64748b;">{{ topic.LAST_POSTER|raw }}</div>
+							</td>
+						</tr>
+						{% else %}
+						<tr>
+							<td colspan="4" class="dash-empty-state">
+								<i class="icon fa-comments-o fa-fw"></i>
+								{{ lang('DASHBOARD_NO_HOT_TOPICS') }}
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Aggregated Extension Activity Feeds (UCC parity) -->
+	<div class="dashboard-grid-2col">
+
+		{% if S_SHOW_DISCIPLINARY %}
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_DISCIPLINARY_TITLE') }}</h3>
+				<a href="{{ U_VIEW_ALL_DISCIPLINARY }}" class="dash-btn dash-btn-secondary dash-btn-sm">{{ lang('DASHBOARD_VIEW_ALL') }}</a>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in disciplinary %}
+				<div class="dash-item"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.03);"{% endif %}>
+					<div class="dash-item-main">
+						{% if item.IS_ARCHIVED %}
+						<div class="dash-archive-notice">
+							<i class="icon fa-archive fa-fw"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+						</div>
+						{% endif %}
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ item.USERNAME|raw }}</div>
+						<div style="margin-top: 2px;">by {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 2px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_DATA') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+		{% if S_SHOW_IC_DISCIPLINARY %}
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_IC_DISCIPLINARY_TITLE') }}</h3>
+				<a href="{{ U_VIEW_ALL_IC_DISCIPLINARY }}" class="dash-btn dash-btn-secondary dash-btn-sm">{{ lang('DASHBOARD_VIEW_ALL') }}</a>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in ic_disciplinary %}
+				<div class="dash-item"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.03);"{% endif %}>
+					<div class="dash-item-main">
+						{% if item.IS_ARCHIVED %}
+						<div class="dash-archive-notice">
+							<i class="icon fa-archive fa-fw"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+						</div>
+						{% endif %}
+						<span class="dash-item-badge">{{ item.TYPE }} ({{ item.CHARACTER }})</span>
+						<div class="dash-item-content">{{ item.CONTENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ item.USERNAME|raw }}</div>
+						<div style="margin-top: 2px;">by {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 2px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_DATA') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+		{% if S_SHOW_AWARDS %}
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_AWARDS_TITLE') }}</h3>
+				<a href="{{ U_VIEW_ALL_AWARDS }}" class="dash-btn dash-btn-secondary dash-btn-sm">{{ lang('DASHBOARD_VIEW_ALL') }}</a>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for award in awards %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge">{{ award.TYPE }}</span>
+						<div class="dash-item-content">{{ award.CONTENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ award.USERNAME|raw }}</div>
+						<div style="margin-top: 2px;">by {{ award.ISSUER|raw }}</div>
+						<div style="margin-top: 2px; color: #94a3b8;">{{ award.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_DATA') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+		{% if S_SHOW_CAREER %}
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-briefcase fa-fw" style="color: #0284c7;"></i> {{ lang('DASHBOARD_CAREER_TITLE') }}</h3>
+				<a href="{{ U_VIEW_ALL_CAREER }}" class="dash-btn dash-btn-secondary dash-btn-sm">{{ lang('DASHBOARD_VIEW_ALL') }}</a>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in career %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ item.USERNAME|raw }}</div>
+						<div style="margin-top: 2px;">by {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 2px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_DATA') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+		{% if S_SHOW_COMMENDATIONS %}
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_COMMENDATIONS_TITLE') }}</h3>
+				<a href="{{ U_VIEW_ALL_COMMENDATIONS }}" class="dash-btn dash-btn-secondary dash-btn-sm">{{ lang('DASHBOARD_VIEW_ALL') }}</a>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in commendations %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ item.USERNAME|raw }}</div>
+						<div style="margin-top: 2px;">by {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 2px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_DATA') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
+
+	</div>
+
+</div>
+
+{% INCLUDE 'overall_footer.html' %}

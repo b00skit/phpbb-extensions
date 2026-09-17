@@ -153,6 +153,13 @@ class mock_db implements \phpbb\db\driver\driver_interface {
                 }
             }
         }
+
+        if (strpos($sql, 'booskit_2fa_users') !== false && strpos($sql, 'DELETE FROM') !== false) {
+            if (preg_match('/user_id = (\d+)/', $sql, $m)) {
+                $uid = (int)$m[1];
+                unset($this->records[$uid]);
+            }
+        }
         return $sql;
     }
 
@@ -264,6 +271,7 @@ $manager = new twofactor_manager($config, $db, $user, $request, $log, $totp, $ba
 // User 2: 2FA enabled, belongs to group 2 (Registered Users)
 $db->records[2] = [
     'user_id' => 2,
+    'secret' => 'JBSWY3DPEHPK3PXP',
     'is_enabled' => 1,
 ];
 
@@ -276,6 +284,7 @@ $db->records[3] = [
 // User 5: 2FA enabled, belongs to group 5 (Administrators)
 $db->records[5] = [
     'user_id' => 5,
+    'secret' => 'JBSWY3DPEHPK3PXP',
     'is_enabled' => 1,
 ];
 
@@ -382,6 +391,21 @@ assert_test($manager->is_user_2fa_enabled(99) === false, 'User 99 does not have 
 $manager->mark_session_verified('sess_oauth_99', 99, 'trusted_device', 'login');
 assert_test($manager->is_user_2fa_enabled(99) === false, '[Fix] mark_session_verified on non-2FA user does NOT activate 2FA or create blank secret record');
 assert_test(!isset($db->records[99]), '[Fix] No row created in 2fa_users for non-2FA user when verifying session');
+
+// 13. Self-Healing of Corrupt Records (Account with is_enabled = 1 but empty secret)
+$db->records[100] = [
+    'user_id'              => 100,
+    'secret'               => '',
+    'is_enabled'           => 1,
+    'enabled_at'           => time(),
+    'last_login_at'        => time(),
+    'last_login_ip'        => '127.0.0.1',
+    'last_login_method'    => 'trusted_device',
+    'reset_backup_pending' => 0,
+];
+assert_test($manager->is_user_2fa_enabled(100) === false, '[Fix] User with empty secret is NOT considered 2FA-enabled');
+assert_test($manager->get_user_record(100) === null, '[Fix] Corrupted user record with empty secret is self-healed and cleaned up from database');
+assert_test(!isset($db->records[100]), '[Fix] Corrupt row removed from users table');
 
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";

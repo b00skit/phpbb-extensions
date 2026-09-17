@@ -1,0 +1,41 @@
+services:
+    booskit.dashboard.manager:
+        class: booskit\dashboard\service\dashboard_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@ext.manager'
+            - '@cache.driver'
+            - '@auth'
+            - '%core.table_prefix%'
+
+    booskit.dashboard.controller.main:
+        class: booskit\dashboard\controller\main
+        arguments:
+            - '@config'
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@request'
+            - '@pagination'
+            - '@booskit.dashboard.manager'
+            - '@auth'
+            - '@log'
+            - '%core.root_path%'
+            - '%core.php_ext%'
+
+    booskit.dashboard.listener:
+        class: booskit\dashboard\event\listener
+        arguments:
+            - '@config'
+            - '@user'
+            - '@template'
+            - '@controller.helper'
+            - '@dbal.conn'
+            - '@booskit.dashboard.manager'
+            - '%core.table_prefix%'
+        tags:
+            - { name: event.listener }
+
+    booskit.dashboard.acp.main_module:
+        class: booskit\dashboard\acp\main_module

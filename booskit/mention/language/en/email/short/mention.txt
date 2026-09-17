@@ -1,0 +1,4 @@
+Subject: Mentioned in "{TOPIC_TITLE}"
+
+"{AUTHOR_NAME}" mentioned you in "{TOPIC_TITLE}":
+{U_VIEW_POST}

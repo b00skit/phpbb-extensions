@@ -1,0 +1,10 @@
+services:
+    booskit.darkmode.listener:
+        class: booskit\darkmode\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@request'
+            - '@config'
+        tags:
+            - { name: event.listener }

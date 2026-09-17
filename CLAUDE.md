@@ -69,3 +69,7 @@ booskit/{name}/
 | `gtawtracker` | Displays GTAW character data on forum profiles (requires `gtawoauth`). |
 | `usercommandcenter` | Unified dashboard aggregating data from other extensions. |
 | `twofactor` | Two-Factor Authentication (TOTP + Backup Keys) with group policies, OAuth support, and ACP user management. |
+| `mention` | User mentions (@username autocomplete suggestions, [mention] BBCode, and post-creation notifications). |
+| `darkmode` | Dynamic dark mode with toggle button in user profile dropdown and guest header. |
+| `dashboard` | Comprehensive dashboard with user overview, live browsing activity, cross-extension profiles, and hot topics. |
+

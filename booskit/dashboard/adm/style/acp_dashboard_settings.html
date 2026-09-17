@@ -1,0 +1,141 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_DASHBOARD_TITLE') }}</h1>
+
+<form id="acp_dashboard" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('DASHBOARD_GENERAL_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_dashboard_enabled">{{ lang('DASHBOARD_ENABLED') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_enabled" value="1" {% if BOOSKIT_DASHBOARD_ENABLED %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_enabled" value="0" {% if not BOOSKIT_DASHBOARD_ENABLED %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ALLOWED_GROUPS_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_dashboard_allowed_groups" name="booskit_dashboard_allowed_groups" value="{{ BOOSKIT_DASHBOARD_ALLOWED_GROUPS }}" size="50"></dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('DASHBOARD_PROFILE_ACCESS_SETTINGS') }}</legend>
+	<p>{{ lang('DASHBOARD_PROFILE_ACCESS_DESC') }}</p>
+	<dl>
+		<dt><label for="booskit_dashboard_profile_admin_override">{{ lang('DASHBOARD_ADMIN_OVERRIDE') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ADMIN_OVERRIDE_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="1" {% if BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="0" {% if not BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_group_profile_access">{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS_EXPLAIN') }}</span></dt>
+		<dd>
+			<textarea id="booskit_dashboard_group_profile_access" name="booskit_dashboard_group_profile_access" rows="6" cols="50">{{ BOOSKIT_DASHBOARD_GROUP_PROFILE_ACCESS }}</textarea>
+			<br><small style="color: #666;">Format: <code>ViewerGroupID:TargetGroupID,TargetGroupID</code> (One rule per line). If left completely blank, all dashboard users can view profiles.</small>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('DASHBOARD_ISSUED_ACTIONS_SETTINGS') }}</legend>
+	<p>{{ lang('DASHBOARD_ISSUED_ACTIONS_DESC') }}</p>
+	<dl>
+		<dt><label for="booskit_dashboard_issued_groups">{{ lang('DASHBOARD_ISSUED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_GROUPS_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_dashboard_issued_groups" name="booskit_dashboard_issued_groups" value="{{ BOOSKIT_DASHBOARD_ISSUED_GROUPS }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_issued_allow_self">{{ lang('DASHBOARD_ISSUED_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_ALLOW_SELF_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="1" {% if BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('DASHBOARD_RECENT_TOPICS_SETTINGS') }}</legend>
+	<p>{{ lang('DASHBOARD_RECENT_TOPICS_DESC') }}</p>
+	<dl>
+		<dt><label for="booskit_dashboard_recent_topics_groups">{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_dashboard_recent_topics_groups" name="booskit_dashboard_recent_topics_groups" value="{{ BOOSKIT_DASHBOARD_RECENT_TOPICS_GROUPS }}" size="50"></dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_recent_topics_allow_self">{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="1" {% if BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('DASHBOARD_MODULE_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_dashboard_include_awards">{{ lang('DASHBOARD_INCLUDE_AWARDS') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_awards" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_AWARDS %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_awards" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_AWARDS %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_include_career">{{ lang('DASHBOARD_INCLUDE_CAREER') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_career" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_CAREER %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_career" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_CAREER %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_include_commendations">{{ lang('DASHBOARD_INCLUDE_COMMENDATIONS') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_commendations" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_COMMENDATIONS %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_commendations" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_COMMENDATIONS %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_include_disciplinary">{{ lang('DASHBOARD_INCLUDE_DISCIPLINARY') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_disciplinary" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_disciplinary" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label for="booskit_dashboard_include_ic_disciplinary">{{ lang('DASHBOARD_INCLUDE_IC_DISCIPLINARY') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_ic_disciplinary" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_IC_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_ic_disciplinary" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_IC_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+</fieldset>
+
+<fieldset>
+	<legend>Group Reference Guide</legend>
+	<p>Use these Group IDs when configuring comma-separated allowed groups or group mapping lines above:</p>
+	<table class="table1 zebra-table">
+		<thead>
+			<tr>
+				<th style="width: 15%;">Group ID</th>
+				<th>Group Name</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for group in groups %}
+			<tr>
+				<td><strong>{{ group.GROUP_ID }}</strong></td>
+				<td>{{ group.GROUP_NAME }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</fieldset>
+
+<fieldset class="submit-buttons">
+	<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+	<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
+	{{ S_FORM_TOKEN }}
+</fieldset>
+
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

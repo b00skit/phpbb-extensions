@@ -153,6 +153,13 @@ class twofactor_manager
         $row = $this->db->sql_fetchrow($result);
         $this->db->sql_freeresult($result);
 
+        // Self-heal: If an account has a corrupt record with empty secret and is_enabled = 1, clean it up
+        if ($row && empty($row['secret']) && !empty($row['is_enabled'])) {
+            $sql = 'DELETE FROM ' . $this->users_table . ' WHERE user_id = ' . $user_id . " AND (secret = '' OR secret IS NULL)";
+            $this->db->sql_query($sql);
+            $row = null;
+        }
+
         $this->user_record_cache[$user_id] = $row ?: null;
         return $this->user_record_cache[$user_id];
     }
@@ -166,7 +173,7 @@ class twofactor_manager
     public function is_user_2fa_enabled($user_id)
     {
         $record = $this->get_user_record($user_id);
-        return !empty($record) && !empty($record['is_enabled']);
+        return !empty($record) && !empty($record['is_enabled']) && !empty($record['secret']);
     }
 
     /**
@@ -973,7 +980,7 @@ class twofactor_manager
 
         // Update user's last login information if 2FA is enabled for this user
         $record = $this->get_user_record($user_id);
-        if ($record && !empty($record['is_enabled'])) {
+        if ($record && !empty($record['is_enabled']) && !empty($record['secret'])) {
             $sql = 'UPDATE ' . $this->users_table . "
                     SET last_login_at = {$time},
                         last_login_ip = '" . $this->db->sql_escape($ip) . "',

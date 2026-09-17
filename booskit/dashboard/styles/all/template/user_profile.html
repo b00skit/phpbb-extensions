@@ -1,0 +1,443 @@
+{% INCLUDE 'overall_header.html' %}
+
+<div class="dashboard-container">
+
+	<div style="margin-bottom: 16px;">
+		<a href="{{ U_BACK_DASHBOARD }}" class="dash-btn dash-btn-secondary">
+			<i class="icon fa-arrow-left fa-fw"></i> {{ lang('DASHBOARD_BACK') }}
+		</a>
+	</div>
+
+	<!-- Profile Hero Header -->
+	<div class="profile-hero">
+		<div class="profile-hero-user">
+			<div class="profile-avatar-wrapper">
+				{{ PROFILE_AVATAR|raw }}
+			</div>
+			<div class="profile-user-titles">
+				<h2>
+					{{ PROFILE_USERNAME|raw }}
+					{% if PROFILE_IS_ONLINE %}
+					<span class="browsing-badge" style="background: #dcfce7; color: #166534; font-size: 0.75rem;">
+						<i class="icon fa-circle fa-fw" style="color: #10b981; font-size: 0.6rem;"></i> {{ lang('DASHBOARD_STATUS_ONLINE') }}
+					</span>
+					{% else %}
+					<span class="browsing-badge" style="background: #f1f5f9; color: #64748b; font-size: 0.75rem;">
+						{{ lang('DASHBOARD_STATUS_OFFLINE') }}
+					</span>
+					{% endif %}
+				</h2>
+				{% if PROFILE_GROUP_NAME %}
+				<span class="profile-group-badge">{{ PROFILE_GROUP_NAME }}</span>
+				{% endif %}
+				<div class="profile-meta-grid">
+					<div class="profile-meta-item">
+						<span>{{ lang('DASHBOARD_MEMBER_SINCE') }}:</span> <strong>{{ PROFILE_JOINED }}</strong>
+					</div>
+					<div class="profile-meta-item">
+						<span>{{ lang('DASHBOARD_LAST_ACTIVE') }}:</span> <strong>{{ PROFILE_LAST_ACTIVE }}</strong>
+					</div>
+					<div class="profile-meta-item">
+						<span>{{ lang('DASHBOARD_TOTAL_POSTS') }}:</span> <strong>{{ PROFILE_POSTS|number_format }}</strong>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="profile-actions">
+			<a href="{{ U_MEMBERLIST_PROFILE }}" class="dash-btn dash-btn-secondary" target="_blank">
+				<i class="icon fa-external-link fa-fw"></i> {{ lang('DASHBOARD_MEMBERLIST_PROFILE') }}
+			</a>
+			{% if U_PM %}
+			<a href="{{ U_PM }}" class="dash-btn dash-btn-primary">
+				<i class="icon fa-envelope fa-fw"></i> {{ lang('DASHBOARD_SEND_PM') }}
+			</a>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- Profile Navigation Tabs -->
+	<div class="profile-tabs-nav">
+		<button type="button" class="profile-tab-btn active" data-tab="tab-disciplinary">
+			<i class="icon fa-gavel fa-fw"></i> {{ lang('DASHBOARD_TAB_DISCIPLINARY') }}
+			<span class="profile-tab-badge">{{ COUNT_DISCIPLINARY }}</span>
+		</button>
+		<button type="button" class="profile-tab-btn" data-tab="tab-ic-disciplinary">
+			<i class="icon fa-shield fa-fw"></i> {{ lang('DASHBOARD_TAB_IC_DISCIPLINARY') }}
+			<span class="profile-tab-badge">{{ COUNT_IC_DISCIPLINARY }}</span>
+		</button>
+		<button type="button" class="profile-tab-btn" data-tab="tab-awards">
+			<i class="icon fa-trophy fa-fw"></i> {{ lang('DASHBOARD_TAB_AWARDS') }}
+			<span class="profile-tab-badge">{{ COUNT_AWARDS }}</span>
+		</button>
+		<button type="button" class="profile-tab-btn" data-tab="tab-career">
+			<i class="icon fa-briefcase fa-fw"></i> {{ lang('DASHBOARD_TAB_CAREER') }}
+			<span class="profile-tab-badge">{{ COUNT_CAREER }}</span>
+		</button>
+		<button type="button" class="profile-tab-btn" data-tab="tab-commendations">
+			<i class="icon fa-star fa-fw"></i> {{ lang('DASHBOARD_TAB_COMMENDATIONS') }}
+			<span class="profile-tab-badge">{{ COUNT_COMMENDATIONS }}</span>
+		</button>
+		{% if COUNT_GTAW > 0 %}
+		<button type="button" class="profile-tab-btn" data-tab="tab-gtaw">
+			<i class="icon fa-id-card fa-fw"></i> {{ lang('DASHBOARD_TAB_GTAW') }}
+			<span class="profile-tab-badge">{{ COUNT_GTAW }}</span>
+		</button>
+		{% endif %}
+		{% if S_CAN_VIEW_ISSUED %}
+		<button type="button" class="profile-tab-btn" data-tab="tab-issued">
+			<i class="icon fa-share-square-o fa-fw"></i> {{ lang('DASHBOARD_TAB_ISSUED') }}
+			<span class="profile-tab-badge">{{ COUNT_ISSUED_TOTAL }}</span>
+		</button>
+		{% endif %}
+		{% if S_CAN_VIEW_TOPICS %}
+		<button type="button" class="profile-tab-btn" data-tab="tab-topics">
+			<i class="icon fa-history fa-fw"></i> {{ lang('DASHBOARD_TAB_RECENT_TOPICS') }}
+			<span class="profile-tab-badge">{{ COUNT_RECENT_TOPICS }}</span>
+		</button>
+		{% endif %}
+	</div>
+
+	<!-- TAB 1: Disciplinary (OOC) -->
+	<div id="tab-disciplinary" class="profile-tab-content active">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_TAB_DISCIPLINARY') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in profile_disciplinary %}
+				<div class="dash-item"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.03);"{% endif %}>
+					<div class="dash-item-main">
+						{% if item.IS_ARCHIVED %}
+						<div class="dash-archive-notice">
+							<i class="icon fa-archive fa-fw"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+							{% if item.ARCHIVED_BY %}<span style="font-style: italic; opacity: 0.85;">(by {{ item.ARCHIVED_BY|raw }} on {{ item.ARCHIVE_DATE }})</span>{% endif %}
+						</div>
+						{% endif %}
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
+						{% if item.EVIDENCE %}
+						<div class="dash-evidence-box">
+							<strong><i class="icon fa-lock fa-fw"></i> {{ lang('DASHBOARD_PRIVATE_NOTES') }}:</strong>
+							<div style="margin-top: 4px;">{{ item.EVIDENCE|raw }}</div>
+						</div>
+						{% endif %}
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_ISSUED_BY') }}: {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-check-circle-o fa-fw" style="color: #10b981;"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<!-- TAB 2: IC Disciplinary -->
+	<div id="tab-ic-disciplinary" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_TAB_IC_DISCIPLINARY') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in profile_ic_disciplinary %}
+				<div class="dash-item"{% if item.IS_ARCHIVED %} style="border-left: 3px solid #ef4444; background: rgba(239, 68, 68, 0.03);"{% endif %}>
+					<div class="dash-item-main">
+						{% if item.IS_ARCHIVED %}
+						<div class="dash-archive-notice">
+							<i class="icon fa-archive fa-fw"></i> <strong>Archived:</strong> {{ item.ARCHIVE_REASON }}
+							{% if item.ARCHIVED_BY %}<span style="font-style: italic; opacity: 0.85;">(by {{ item.ARCHIVED_BY|raw }} on {{ item.ARCHIVE_DATE }})</span>{% endif %}
+						</div>
+						{% endif %}
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<span class="browsing-badge" style="margin-left: 6px;">Character: {{ item.CHARACTER }}</span>
+						<div class="dash-item-content" style="margin-top: 6px;">{{ item.CONTENT|raw }}</div>
+						{% if item.EVIDENCE %}
+						<div class="dash-evidence-box">
+							<strong><i class="icon fa-lock fa-fw"></i> {{ lang('DASHBOARD_PRIVATE_NOTES') }}:</strong>
+							<div style="margin-top: 4px;">{{ item.EVIDENCE|raw }}</div>
+						</div>
+						{% endif %}
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_ISSUED_BY') }}: {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-check-circle-o fa-fw" style="color: #10b981;"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<!-- TAB 3: Awards -->
+	<div id="tab-awards" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_TAB_AWARDS') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in profile_awards %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge" style="background: #fef9c3; color: #854d0e;">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_ISSUED_BY') }}: {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-trophy fa-fw"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<!-- TAB 4: Career Timeline -->
+	<div id="tab-career" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-briefcase fa-fw" style="color: #0284c7;"></i> {{ lang('DASHBOARD_TAB_CAREER') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in profile_career %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge" style="background: #e0f2fe; color: #0369a1;">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_ISSUED_BY') }}: {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-briefcase fa-fw"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<!-- TAB 5: Commendations -->
+	<div id="tab-commendations" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_TAB_COMMENDATIONS') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in profile_commendations %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge" style="background: #dcfce7; color: #166534;">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_ISSUED_BY') }}: {{ item.ISSUER|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-star-o fa-fw"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+
+	<!-- TAB 6: GTAW Characters -->
+	{% if COUNT_GTAW > 0 %}
+	<div id="tab-gtaw" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-id-card fa-fw" style="color: #6366f1;"></i> {{ lang('DASHBOARD_TAB_GTAW') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for char in profile_gtaw_characters %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<strong>{{ char.CHARACTER_NAME }}</strong>
+						{% if char.FACTION_NAME %}
+						<div style="font-size: 0.85rem; color: #64748b; margin-top: 3px;">
+							{{ char.FACTION_NAME }} &bull; {{ char.RANK_NAME }}
+						</div>
+						{% endif %}
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% endif %}
+
+	<!-- TAB 7: Actions ISSUED by this user -->
+	{% if S_CAN_VIEW_ISSUED %}
+	<div id="tab-issued" class="profile-tab-content">
+		
+		<!-- OOC Disciplinary Issued -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_ISSUED_OOC_TITLE') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in issued_disciplinary %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.REASON }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<!-- IC Disciplinary Issued -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_ISSUED_IC_TITLE') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in issued_ic_disciplinary %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge">{{ item.TYPE }}</span>
+						<span class="browsing-badge">{{ item.CHARACTER }}</span>
+						<div class="dash-item-content" style="margin-top: 4px;">{{ item.REASON }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<!-- Commendations Issued -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_ISSUED_COMM_TITLE') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in issued_commendations %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge" style="background: #dcfce7; color: #166534;">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.REASON }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+
+		<!-- Awards Issued -->
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_ISSUED_AWARDS_TITLE') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for item in issued_awards %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<span class="dash-item-badge" style="background: #fef9c3; color: #854d0e;">{{ item.TYPE }}</span>
+						<div class="dash-item-content">{{ item.COMMENT }}</div>
+					</div>
+					<div class="dash-item-meta">
+						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+
+	</div>
+	{% endif %}
+
+	<!-- TAB 8: Recently Visited Topics -->
+	{% if S_CAN_VIEW_TOPICS %}
+	<div id="tab-topics" class="profile-tab-content">
+		<div class="dash-card">
+			<div class="dash-card-header">
+				<h3 class="dash-card-title"><i class="icon fa-history fa-fw" style="color: #3b82f6;"></i> {{ lang('DASHBOARD_TAB_RECENT_TOPICS') }}</h3>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for topic in profile_recent_topics %}
+				<div class="dash-item">
+					<div class="dash-item-main">
+						<a href="{{ topic.U_VIEW_TOPIC }}" class="topic-title-link" target="_blank">{{ topic.TOPIC_TITLE }}</a>
+						<a href="{{ topic.U_VIEW_FORUM }}" class="topic-forum-badge" target="_blank">{{ topic.FORUM_NAME }}</a>
+					</div>
+					<div class="dash-item-meta">
+						<span>{{ lang('DASHBOARD_VISITED_AT') }}: {{ topic.VIEW_TIME }}</span>
+					</div>
+				</div>
+				{% else %}
+				<div class="dash-empty-state">
+					<i class="icon fa-history fa-fw"></i>
+					{{ lang('DASHBOARD_NO_RECORDS') }}
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	var tabs = document.querySelectorAll('.profile-tab-btn');
+	var contents = document.querySelectorAll('.profile-tab-content');
+
+	tabs.forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var targetId = this.getAttribute('data-tab');
+
+			tabs.forEach(function(t) { t.classList.remove('active'); });
+			contents.forEach(function(c) { c.classList.remove('active'); });
+
+			this.classList.add('active');
+			var activeContent = document.getElementById(targetId);
+			if (activeContent) {
+				activeContent.classList.add('active');
+			}
+		});
+	});
+});
+</script>
+
+{% INCLUDE 'overall_footer.html' %}

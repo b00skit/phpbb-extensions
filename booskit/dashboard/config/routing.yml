@@ -1,0 +1,23 @@
+booskit_dashboard_home:
+    path: /dashboard
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:dashboard'
+
+booskit_dashboard_user_profile:
+    path: /dashboard/user/{user_id}
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:user_profile'
+    requirements:
+        user_id: '\d+'
+
+booskit_dashboard_hot_topics:
+    path: /dashboard/hot-topics/{period}
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:hot_topics_view'
+    requirements:
+        period: 'day|week|month'
+
+booskit_dashboard_view_list:
+    path: /dashboard/view/all/{module}
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:view_all'

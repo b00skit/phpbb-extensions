@@ -1,0 +1,120 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_MENTION_TITLE') }}</h1>
+
+<p>{{ lang('ACP_BOOSKIT_MENTION_SETTINGS_EXPLAIN') }}</p>
+
+<form id="acp_booskit_mention" method="post" action="{{ U_ACTION }}">
+	<input type="hidden" name="configured_groups_present" value="1" />
+
+	<fieldset>
+		<legend>{{ lang('ACP_BOOSKIT_MENTION_GENERAL_SETTINGS') }}</legend>
+
+		<dl>
+			<dt><label for="booskit_mention_group_enabled">{{ lang('BOOSKIT_MENTION_GROUP_ENABLED') }}{{ lang('COLON') }}</label><br /><span>{{ lang('BOOSKIT_MENTION_GROUP_ENABLED_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_mention_group_enabled" value="1" {% if BOOSKIT_MENTION_GROUP_ENABLED %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="booskit_mention_group_enabled" value="0" {% if not BOOSKIT_MENTION_GROUP_ENABLED %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+	</fieldset>
+
+
+	<fieldset>
+		<legend>{{ lang('BOOSKIT_MENTION_GROUP_MATRIX_TITLE') }}</legend>
+		<p style="font-size: 12px; color: #555; margin-bottom: 15px;">
+			{{ lang('BOOSKIT_MENTION_GROUP_MATRIX_EXPLAIN') }}
+		</p>
+
+		{% if S_MATRIX_IS_EMPTY %}
+		<div style="background: #eef6fc; border-left: 4px solid #1d5d8c; padding: 10px 15px; margin-bottom: 15px; border-radius: 2px;">
+			<strong style="color: #1d5d8c;">{{ lang('BOOSKIT_MENTION_STATUS_FREE_FOR_ALL') }}</strong><br />
+			<span style="color: #444; font-size: 12px;">{{ lang('BOOSKIT_MENTION_STATUS_FREE_FOR_ALL_EXPLAIN') }}</span>
+		</div>
+		{% else %}
+		<div style="background: #eef9ee; border-left: 4px solid #2e6930; padding: 10px 15px; margin-bottom: 15px; border-radius: 2px;">
+			<strong style="color: #2e6930;">{{ lang('BOOSKIT_MENTION_STATUS_RESTRICTED') }}</strong><br />
+			<span style="color: #444; font-size: 12px;">{{ lang('BOOSKIT_MENTION_STATUS_RESTRICTED_EXPLAIN') }}</span>
+		</div>
+		{% endif %}
+
+		<table class="table1 zebra-table" style="margin-bottom: 0;">
+			<thead>
+				<tr>
+					<th style="width: 25%;">{{ lang('BOOSKIT_MENTION_SOURCE_GROUP') }}</th>
+					<th style="width: 60%;">{{ lang('BOOSKIT_MENTION_ALLOWED_TARGET_GROUPS') }}</th>
+					<th style="width: 15%; text-align: center;">{{ lang('BOOSKIT_MENTION_ACTION') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for sgroup in loops.source_groups %}
+				<tr>
+					<td style="vertical-align: top; padding-top: 10px;">
+						<input type="hidden" name="configured_groups[]" value="{{ sgroup.ID }}" />
+						<strong {% if sgroup.COLOUR %}style="color: {{ sgroup.COLOUR }};"{% endif %}>{{ sgroup.NAME }}</strong>
+					</td>
+					<td>
+						<div style="margin-bottom: 6px;">
+							<label style="font-weight: bold;">
+								<input type="checkbox" id="all_targets_{{ sgroup.ID }}" name="mention_targets_all_{{ sgroup.ID }}" value="1" {% if sgroup.IS_ALL_TARGETS %}checked="checked"{% endif %} onchange="toggleTargetGroupSelect({{ sgroup.ID }});" />
+								{{ lang('BOOSKIT_MENTION_CAN_MENTION_ALL') }}
+							</label>
+						</div>
+						<div id="target_select_container_{{ sgroup.ID }}" {% if sgroup.IS_ALL_TARGETS %}style="display:none;"{% endif %}>
+							<select name="mention_targets_{{ sgroup.ID }}[]" multiple="multiple" size="5" style="width: 100%; max-width: 400px;">
+								{% for topt in sgroup.target_options %}
+									<option value="{{ topt.ID }}" {% if topt.SELECTED %}selected="selected"{% endif %}>{{ topt.NAME }}</option>
+								{% endfor %}
+							</select>
+							<div style="font-size: 11px; color: #666; margin-top: 2px;">{{ lang('BOOSKIT_MENTION_SELECT_MULTIPLE_HINT') }}</div>
+						</div>
+					</td>
+					<td style="vertical-align: top; padding-top: 10px; text-align: center;">
+						<button type="submit" name="delete_source_group" value="{{ sgroup.ID }}" class="button2" style="color: #bc0000; font-size: 11px; padding: 4px 10px;" onclick="return confirm('Are you sure you want to remove this group permission rule?');">{{ lang('BOOSKIT_MENTION_REMOVE_GROUP') }}</button>
+					</td>
+				</tr>
+				{% else %}
+				<tr>
+					<td colspan="3" style="text-align: center; padding: 20px; color: #777;">
+						<em>{{ lang('BOOSKIT_MENTION_NO_GROUPS_DEFINED') }}</em>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		<div style="background: #f7f7f7; border: 1px solid #dcdcdc; border-top: none; padding: 10px 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+			<label for="add_source_group_id" style="font-weight: bold; margin-right: 5px;">{{ lang('BOOSKIT_MENTION_ADD_GROUP') }}{{ lang('COLON') }}</label>
+			<select name="add_source_group_id" id="add_source_group_id" style="min-width: 220px; padding: 4px;">
+				{% if loops.available_groups|length > 0 %}
+					<option value="0">-- {{ lang('BOOSKIT_MENTION_SELECT_GROUP_TO_ADD') }} --</option>
+					{% for agrp in loops.available_groups %}
+						<option value="{{ agrp.ID }}">{{ agrp.NAME }}</option>
+					{% endfor %}
+				{% else %}
+					<option value="0">{{ lang('BOOSKIT_MENTION_ALL_GROUPS_ADDED') }}</option>
+				{% endif %}
+			</select>
+			<input class="button2" type="submit" id="add_group_btn" name="add_group_btn" value="{{ lang('ADD') }}" {% if loops.available_groups|length == 0 %}disabled="disabled"{% endif %} />
+		</div>
+	</fieldset>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
+		<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
+	</p>
+
+	{{ S_FORM_TOKEN }}
+</form>
+
+<script>
+function toggleTargetGroupSelect(sourceId) {
+	var chk = document.getElementById('all_targets_' + sourceId);
+	var container = document.getElementById('target_select_container_' + sourceId);
+	if (container) {
+		container.style.display = chk.checked ? 'none' : 'block';
+	}
+}
+</script>
+
+{% INCLUDE 'overall_footer.html' %}

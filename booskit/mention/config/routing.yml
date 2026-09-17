@@ -1,0 +1,4 @@
+booskit_mention_find_users:
+    path: /mention/find
+    defaults: { _controller: 'booskit.mention.controller.mention:find_users' }
+    methods: [GET]

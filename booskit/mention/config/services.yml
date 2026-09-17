@@ -1,0 +1,60 @@
+services:
+    booskit.mention.service.mention_manager:
+        class: booskit\mention\service\mention_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '%core.table_prefix%'
+
+    booskit.mention.controller.acp.settings:
+        class: booskit\mention\controller\acp_controller
+        arguments:
+            - '@config'
+            - '@request'
+            - '@template'
+            - '@user'
+            - '@log'
+            - '@booskit.mention.service.mention_manager'
+
+    booskit.mention.notification.type.mention:
+        class: booskit\mention\notification\type\mention
+        shared: false
+        parent: notification.type.post
+        calls:
+            - [set_config, ['@config']]
+            - [set_user_loader, ['@user_loader']]
+        tags:
+            - { name: notification.type }
+
+    booskit.mention.notification.type.group_mention:
+        class: booskit\mention\notification\type\group_mention
+        shared: false
+        parent: notification.type.post
+        calls:
+            - [set_config, ['@config']]
+            - [set_user_loader, ['@user_loader']]
+            - [set_mention_manager, ['@booskit.mention.service.mention_manager']]
+        tags:
+            - { name: notification.type }
+
+    booskit.mention.controller.mention:
+        class: booskit\mention\controller\mention
+        arguments:
+            - '@dbal.conn'
+            - '@user'
+            - '@auth'
+            - '@request'
+            - '@booskit.mention.service.mention_manager'
+
+    booskit.mention.listener:
+        class: booskit\mention\event\listener
+        arguments:
+            - '@template'
+            - '@user'
+            - '@controller.helper'
+            - '@notification_manager'
+            - '@dbal.conn'
+            - '@booskit.mention.service.mention_manager'
+        tags:
+            - { name: event.listener }

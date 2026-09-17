@@ -1,0 +1,15 @@
+{% INCLUDECSS '@booskit_darkmode/darkmode.css' %}
+<script type="text/javascript">
+(function() {
+	try {
+		var local = localStorage.getItem('booskit_darkmode');
+		var cookie = document.cookie.match(/(?:^|;\s*)booskit_darkmode=([^;]*)/);
+		var cookieVal = cookie ? decodeURIComponent(cookie[1]) : null;
+		var isDark = (local === 'true') || (local === null && cookieVal === '1');
+		if (isDark) {
+			document.documentElement.setAttribute('data-theme', 'dark');
+			document.documentElement.classList.add('dark-mode');
+		}
+	} catch (e) {}
+})();
+</script>

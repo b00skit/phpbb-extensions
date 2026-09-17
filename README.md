@@ -198,3 +198,18 @@ A comprehensive, production-grade Two-Factor Authentication (2FA) extension for 
     *   Admin capability to remotely disable 2FA for individual users.
     *   Admin capability to reset backup keys, prompting the user with their new backup keys upon next login.
 *   **UCP Self-Management:** Users can self-enroll, view status and remaining backup keys, regenerate backup keys, or disconnect 2FA.
+
+---
+
+## 15. Dashboard (`booskit/dashboard`)
+
+A modern, comprehensive command center and dashboard providing live oversight over forum activity, real-time user browsing sessions, and unified member profiles.
+
+### Features
+*   **Overview & Real-Time Stats:** Live cards displaying total members, members online, active today (past 24h), and topics/posts.
+*   **Active Users & Live Browsing:** Real-time visibility into active members with pulsing online status, avatars, and permission-safe browsing location resolution (reading specific topics, browsing forums, writing posts, etc.).
+*   **In-Dashboard Member Profiles:** Dedicated profile view aggregating all installed Booskit extensions (`disciplinary`, `icdisciplinary`, `awards`, `usercareer`, `commendations`, `gtawtracker`) strictly obeying their permission matrices.
+*   **Group-to-Group Profile Access:** Flexible ACP matrix to configure which user groups can open and view profiles of which target user groups, with administrator override.
+*   **Issued Actions Tracking:** Profile section and ACP settings controlling who can view what a user has issued (disciplinary actions, commendations, awards).
+*   **Recently Visited Topics:** Tracks topics viewed by members and displays them on profiles based on configured group permissions and forum read ACLs.
+*   **Trending & Hot Topics:** Ranked hot topics filterable across 24 hours, 7 days, and 30 days.

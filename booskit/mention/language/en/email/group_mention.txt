@@ -1,0 +1,19 @@
+Subject: Group Mentioned in "{TOPIC_TITLE}"
+
+Hello {USERNAME},
+
+"{AUTHOR_NAME}" mentioned a group you belong to in the topic "{TOPIC_TITLE}" at "{SITENAME}".
+
+If you want to view the post, click the following link:
+{U_VIEW_POST}
+
+If you want to view the topic, click the following link:
+{U_TOPIC}
+
+If you want to view the forum, click the following link:
+{U_FORUM}
+
+If you no longer wish to receive updates when your group is mentioned, please update your notification settings here:
+{U_NOTIFICATION_SETTINGS}
+
+{EMAIL_SIG}

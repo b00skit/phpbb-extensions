@@ -1,0 +1,4 @@
+Subject: Group Mentioned in "{TOPIC_TITLE}"
+
+"{AUTHOR_NAME}" mentioned your group in "{TOPIC_TITLE}":
+{U_VIEW_POST}
