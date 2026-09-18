@@ -44,6 +44,8 @@ class listener implements EventSubscriberInterface
 			'core.user_setup'                           => 'load_language_on_setup',
 			'core.page_header'                          => 'add_navigation_links',
 			'core.viewtopic_assign_template_vars_before' => 'log_topic_view',
+			'core.viewforum_assign_template_vars_before' => 'log_forum_view',
+			'core.memberlist_view_profile'              => 'log_user_view',
 		];
 	}
 
@@ -81,12 +83,52 @@ class listener implements EventSubscriberInterface
 			return;
 		}
 
-		$topic_id = (int) $event['topic_id'];
-		$forum_id = (int) $event['forum_id'];
+		$topic_id = isset($event['topic_id']) ? (int) $event['topic_id'] : 0;
+		$forum_id = isset($event['forum_id']) ? (int) $event['forum_id'] : 0;
 
 		if ($topic_id > 0)
 		{
 			$this->dashboard_manager->log_topic_view($user_id, $topic_id, $forum_id);
+		}
+	}
+
+	public function log_forum_view($event)
+	{
+		$user_id = (int) $this->user->data['user_id'];
+		if ($user_id <= 0 || $user_id == ANONYMOUS || !empty($this->user->data['is_bot']))
+		{
+			return;
+		}
+
+		$forum_id = isset($event['forum_id']) ? (int) $event['forum_id'] : 0;
+		if ($forum_id > 0)
+		{
+			$this->dashboard_manager->log_forum_view($user_id, $forum_id);
+		}
+	}
+
+	public function log_user_view($event)
+	{
+		$member = isset($event['member']) ? $event['member'] : [];
+		$viewed_user_id = isset($member['user_id']) ? (int) $member['user_id'] : 0;
+		$user_id = (int) $this->user->data['user_id'];
+
+		if ($viewed_user_id > 0)
+		{
+			// Check if viewer can view the dashboard profile for this user
+			if (!empty($this->config['booskit_dashboard_enabled']) && $this->dashboard_manager->can_view_user_profile($user_id, $viewed_user_id))
+			{
+				$this->template->assign_vars([
+					'U_BOOSKIT_DASHBOARD_PROFILE'  => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $viewed_user_id]),
+					'S_CAN_VIEW_DASHBOARD_PROFILE' => true,
+				]);
+			}
+
+			// Log profile view if not anonymous/bot and not self
+			if ($user_id > 0 && $user_id !== ANONYMOUS && empty($this->user->data['is_bot']) && $viewed_user_id !== $user_id)
+			{
+				$this->dashboard_manager->log_user_view($user_id, $viewed_user_id);
+			}
 		}
 	}
 }

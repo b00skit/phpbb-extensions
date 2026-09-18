@@ -17,6 +17,11 @@ booskit_dashboard_hot_topics:
     requirements:
         period: 'day|week|month'
 
+booskit_dashboard_view_all:
+    path: /dashboard/view/all/{module}
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:view_all'
+
 booskit_dashboard_view_list:
     path: /dashboard/view/all/{module}
     defaults:

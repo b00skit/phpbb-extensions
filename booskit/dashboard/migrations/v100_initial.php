@@ -30,7 +30,7 @@ class v100_initial extends \phpbb\db\migration\migration
 						'user_id'   => array('UINT', 0),
 						'topic_id'  => array('UINT', 0),
 						'forum_id'  => array('UINT', 0),
-						'view_time' => array('UINT', 0),
+						'view_time' => array('TIMESTAMP', 0),
 					),
 					'PRIMARY_KEY' => 'view_id',
 					'KEYS' => array(

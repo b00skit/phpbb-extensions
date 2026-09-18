@@ -9,6 +9,8 @@ services:
             - '@auth'
             - '%core.table_prefix%'
 
+    booskit.dashboard.service.dashboard_manager: '@booskit.dashboard.manager'
+
     booskit.dashboard.controller.main:
         class: booskit\dashboard\controller\main
         arguments:

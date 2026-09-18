@@ -2,7 +2,7 @@
 
 <h1>{{ lang('ACP_BOOSKIT_DASHBOARD_TITLE') }}</h1>
 
-<form id="acp_dashboard" method="post" action="{{ U_ACTION }}">
+<form id="acp_booskit_dashboard" method="post" action="{{ U_ACTION }}">
 
 <fieldset>
 	<legend>{{ lang('DASHBOARD_GENERAL_SETTINGS') }}</legend>
@@ -13,60 +13,33 @@
 			<label><input type="radio" class="radio" name="booskit_dashboard_enabled" value="0" {% if not BOOSKIT_DASHBOARD_ENABLED %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
 		</dd>
 	</dl>
-	<dl>
-		<dt><label for="booskit_dashboard_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ALLOWED_GROUPS_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_dashboard_allowed_groups" name="booskit_dashboard_allowed_groups" value="{{ BOOSKIT_DASHBOARD_ALLOWED_GROUPS }}" size="50"></dd>
-	</dl>
-</fieldset>
 
-<fieldset>
-	<legend>{{ lang('DASHBOARD_PROFILE_ACCESS_SETTINGS') }}</legend>
-	<p>{{ lang('DASHBOARD_PROFILE_ACCESS_DESC') }}</p>
 	<dl>
-		<dt><label for="booskit_dashboard_profile_admin_override">{{ lang('DASHBOARD_ADMIN_OVERRIDE') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ADMIN_OVERRIDE_EXPLAIN') }}</span></dt>
+		<dt><label for="booskit_dashboard_perm_system">{{ lang('BOOSKIT_DASHBOARD_PERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('BOOSKIT_DASHBOARD_PERM_SYSTEM_EXPLAIN') }}</span></dt>
 		<dd>
-			<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="1" {% if BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-			<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="0" {% if not BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
-		</dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_dashboard_group_profile_access">{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS_EXPLAIN') }}</span></dt>
-		<dd>
-			<textarea id="booskit_dashboard_group_profile_access" name="booskit_dashboard_group_profile_access" rows="6" cols="50">{{ BOOSKIT_DASHBOARD_GROUP_PROFILE_ACCESS }}</textarea>
-			<br><small style="color: #666;">Format: <code>ViewerGroupID:TargetGroupID,TargetGroupID</code> (One rule per line). If left completely blank, all dashboard users can view profiles.</small>
+			<label><input type="radio" class="radio" name="booskit_dashboard_perm_system" value="groups" {% if BOOSKIT_DASHBOARD_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DASHBOARD_PERM_SYSTEM_GROUPS') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_perm_system" value="legacy" {% if BOOSKIT_DASHBOARD_PERM_SYSTEM == 'legacy' %}checked="checked"{% endif %} /> {{ lang('BOOSKIT_DASHBOARD_PERM_SYSTEM_LEGACY') }}</label>
 		</dd>
 	</dl>
 </fieldset>
 
 <fieldset>
-	<legend>{{ lang('DASHBOARD_ISSUED_ACTIONS_SETTINGS') }}</legend>
-	<p>{{ lang('DASHBOARD_ISSUED_ACTIONS_DESC') }}</p>
+	<legend>{{ lang('DASHBOARD_GROUP_METRIC_SETTINGS') }}</legend>
+	<p>{{ lang('DASHBOARD_GROUP_METRIC_SETTINGS_DESC') }}</p>
 	<dl>
-		<dt><label for="booskit_dashboard_issued_groups">{{ lang('DASHBOARD_ISSUED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_GROUPS_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_dashboard_issued_groups" name="booskit_dashboard_issued_groups" value="{{ BOOSKIT_DASHBOARD_ISSUED_GROUPS }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_dashboard_issued_allow_self">{{ lang('DASHBOARD_ISSUED_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_ALLOW_SELF_EXPLAIN') }}</span></dt>
+		<dt><label for="booskit_dashboard_group_metric_group">{{ lang('DASHBOARD_GROUP_METRIC_GROUP') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_METRIC_GROUP_EXPLAIN') }}</span></dt>
 		<dd>
-			<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="1" {% if BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-			<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+			<select id="booskit_dashboard_group_metric_group" name="booskit_dashboard_group_metric_group" style="width: 280px;">
+				<option value="0" {% if BOOSKIT_DASHBOARD_GROUP_METRIC_GROUP == 0 %}selected="selected"{% endif %}>{{ lang('DASHBOARD_GROUP_METRIC_ALL_MEMBERS') }}</option>
+				{% for g in PHPBB_GROUPS %}
+					<option value="{{ g.group_id }}" {% if g.group_id == BOOSKIT_DASHBOARD_GROUP_METRIC_GROUP %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+				{% endfor %}
+			</select>
 		</dd>
 	</dl>
-</fieldset>
-
-<fieldset>
-	<legend>{{ lang('DASHBOARD_RECENT_TOPICS_SETTINGS') }}</legend>
-	<p>{{ lang('DASHBOARD_RECENT_TOPICS_DESC') }}</p>
 	<dl>
-		<dt><label for="booskit_dashboard_recent_topics_groups">{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS_EXPLAIN') }}</span></dt>
-		<dd><input type="text" id="booskit_dashboard_recent_topics_groups" name="booskit_dashboard_recent_topics_groups" value="{{ BOOSKIT_DASHBOARD_RECENT_TOPICS_GROUPS }}" size="50"></dd>
-	</dl>
-	<dl>
-		<dt><label for="booskit_dashboard_recent_topics_allow_self">{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF_EXPLAIN') }}</span></dt>
-		<dd>
-			<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="1" {% if BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
-			<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
-		</dd>
+		<dt><label for="booskit_dashboard_group_metric_label">{{ lang('DASHBOARD_GROUP_METRIC_LABEL') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_METRIC_LABEL_EXPLAIN') }}</span></dt>
+		<dd><input type="text" id="booskit_dashboard_group_metric_label" name="booskit_dashboard_group_metric_label" value="{{ BOOSKIT_DASHBOARD_GROUP_METRIC_LABEL }}" size="40" placeholder="e.g. Active Officers / Faction Members" /></dd>
 	</dl>
 </fieldset>
 
@@ -107,35 +80,289 @@
 			<label><input type="radio" class="radio" name="booskit_dashboard_include_ic_disciplinary" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_IC_DISCIPLINARY %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
 		</dd>
 	</dl>
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
 </fieldset>
 
-<fieldset>
-	<legend>Group Reference Guide</legend>
-	<p>Use these Group IDs when configuring comma-separated allowed groups or group mapping lines above:</p>
-	<table class="table1 zebra-table">
-		<thead>
-			<tr>
-				<th style="width: 15%;">Group ID</th>
-				<th>Group Name</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for group in groups %}
-			<tr>
-				<td><strong>{{ group.GROUP_ID }}</strong></td>
-				<td>{{ group.GROUP_NAME }}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-</fieldset>
+<div id="booskit_dashboard_legacy_settings" {% if BOOSKIT_DASHBOARD_PERM_SYSTEM == 'groups' %}style="display: none;"{% endif %}>
+	<fieldset>
+		<legend>{{ lang('DASHBOARD_PROFILE_ACCESS_SETTINGS') }}</legend>
+		<p>{{ lang('DASHBOARD_PROFILE_ACCESS_DESC') }}</p>
+		<dl>
+			<dt><label for="booskit_dashboard_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ALLOWED_GROUPS_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_dashboard_allowed_groups" name="booskit_dashboard_allowed_groups" value="{{ BOOSKIT_DASHBOARD_ALLOWED_GROUPS }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_dashboard_profile_admin_override">{{ lang('DASHBOARD_ADMIN_OVERRIDE') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ADMIN_OVERRIDE_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="1" {% if BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="booskit_dashboard_profile_admin_override" value="0" {% if not BOOSKIT_DASHBOARD_PROFILE_ADMIN_OVERRIDE %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_dashboard_group_profile_access">{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_PROFILE_ACCESS_EXPLAIN') }}</span></dt>
+			<dd><textarea id="booskit_dashboard_group_profile_access" name="booskit_dashboard_group_profile_access" rows="5" cols="60" style="width: 95%;">{{ BOOSKIT_DASHBOARD_GROUP_PROFILE_ACCESS }}</textarea></dd>
+		</dl>
+	</fieldset>
 
-<fieldset class="submit-buttons">
-	<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
-	<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
-	{{ S_FORM_TOKEN }}
-</fieldset>
+	<fieldset>
+		<legend>{{ lang('DASHBOARD_ISSUED_ACTIONS_SETTINGS') }}</legend>
+		<p>{{ lang('DASHBOARD_ISSUED_ACTIONS_DESC') }}</p>
+		<dl>
+			<dt><label for="booskit_dashboard_issued_groups">{{ lang('DASHBOARD_ISSUED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_GROUPS_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_dashboard_issued_groups" name="booskit_dashboard_issued_groups" value="{{ BOOSKIT_DASHBOARD_ISSUED_GROUPS }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_dashboard_issued_allow_self">{{ lang('DASHBOARD_ISSUED_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_ISSUED_ALLOW_SELF_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="1" {% if BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="booskit_dashboard_issued_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_ISSUED_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+	</fieldset>
 
+	<fieldset>
+		<legend>{{ lang('DASHBOARD_RECENT_TOPICS_SETTINGS') }}</legend>
+		<p>{{ lang('DASHBOARD_RECENT_TOPICS_DESC') }}</p>
+		<dl>
+			<dt><label for="booskit_dashboard_recent_topics_groups">{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_GROUPS_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="booskit_dashboard_recent_topics_groups" name="booskit_dashboard_recent_topics_groups" value="{{ BOOSKIT_DASHBOARD_RECENT_TOPICS_GROUPS }}" size="50"></dd>
+		</dl>
+		<dl>
+			<dt><label for="booskit_dashboard_recent_topics_allow_self">{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_RECENT_TOPICS_ALLOW_SELF_EXPLAIN') }}</span></dt>
+			<dd>
+				<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="1" {% if BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+				<label><input type="radio" class="radio" name="booskit_dashboard_recent_topics_allow_self" value="0" {% if not BOOSKIT_DASHBOARD_RECENT_TOPICS_ALLOW_SELF %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+		</p>
+	</fieldset>
+</div>
+
+<div id="booskit_dashboard_groups_settings" {% if BOOSKIT_DASHBOARD_PERM_SYSTEM == 'legacy' %}style="display: none;"{% endif %}>
+	<fieldset>
+		<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+		<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+		{% for pg in PERMISSION_GROUPS %}
+		<div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 16px; margin-bottom: 20px; border-radius: 6px;">
+			<dl>
+				<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+				<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" style="font-weight: bold;" /></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 320px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px; font-weight: bold;">
+						<input type="checkbox" name="power_over_all[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_all %}checked="checked"{% endif %} /> {{ lang('ALL_GROUPS') }}
+					</label>
+					<label style="display: inline-block; margin-right: 15px; font-weight: bold;">
+						<input type="checkbox" name="power_over_self[{{ pg.perm_group_id }}]" value="1" {% if pg.power_over_self %}checked="checked"{% endif %} /> {{ lang('SELF_GROUP') }}
+					</label>
+					<br><br>
+					<select name="power_over_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 320px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.power_over_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+				<dd>
+					<select name="exclude_groups[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 320px;">
+						{% for g in PHPBB_GROUPS %}
+							<option value="{{ g.group_id }}" {% if g.group_id in pg.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+						{% endfor %}
+					</select>
+				</dd>
+			</dl>
+
+			<!-- Granular Permissions Matrix -->
+			<dl>
+				<dt><label>{{ lang('DASHBOARD_PERMISSIONS_GENERAL') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_dashboard]" value="1" {% if pg.permissions_array.view_dashboard %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_DASHBOARD') }}</label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_stats]" value="1" {% if pg.permissions_array.view_stats %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_STATS') }}</label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_active_users]" value="1" {% if pg.permissions_array.view_active_users %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_ACTIVE_USERS') }}</label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_hot_topics]" value="1" {% if pg.permissions_array.view_hot_topics %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_HOT_TOPICS') }}</label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feeds]" value="1" {% if pg.permissions_array.view_feeds %}checked="checked"{% endif %} /> <strong>{{ lang('PERM_VIEW_FEEDS') }}</strong></label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][search_users]" value="1" {% if pg.permissions_array.search_users %}checked="checked"{% endif %} /> {{ lang('PERM_SEARCH_USERS') }}</label>
+				</dd>
+			</dl>
+
+			<dl>
+				<dt><label>{{ lang('DASHBOARD_PERMISSIONS_FEEDS') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feed_disciplinary]" value="1" {% if pg.permissions_array.view_feed_disciplinary or (pg.permissions_array.view_feeds and pg.permissions_array.view_feed_disciplinary is not defined) %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_FEED_DISCIPLINARY') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feed_ic_disciplinary]" value="1" {% if pg.permissions_array.view_feed_ic_disciplinary or (pg.permissions_array.view_feeds and pg.permissions_array.view_feed_ic_disciplinary is not defined) %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_FEED_IC_DISCIPLINARY') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feed_awards]" value="1" {% if pg.permissions_array.view_feed_awards or (pg.permissions_array.view_feeds and pg.permissions_array.view_feed_awards is not defined) %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_FEED_AWARDS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feed_career]" value="1" {% if pg.permissions_array.view_feed_career or (pg.permissions_array.view_feeds and pg.permissions_array.view_feed_career is not defined) %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_FEED_CAREER') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feed_commendations]" value="1" {% if pg.permissions_array.view_feed_commendations or (pg.permissions_array.view_feeds and pg.permissions_array.view_feed_commendations is not defined) %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_FEED_COMMENDATIONS') }}</label>
+					</div>
+				</dd>
+			</dl>
+
+			<dl>
+				<dt><label>{{ lang('DASHBOARD_PERMISSIONS_PROFILE') }}{{ lang('COLON') }}</label></dt>
+				<dd>
+					<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_profile]" value="1" {% if pg.permissions_array.view_profile %}checked="checked"{% endif %} /> <strong>{{ lang('PERM_VIEW_PROFILE') }}</strong></label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_issued]" value="1" {% if pg.permissions_array.view_issued %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_ISSUED') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_visited_topics]" value="1" {% if pg.permissions_array.view_visited_topics %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_VISITED_TOPICS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_visited_forums]" value="1" {% if pg.permissions_array.view_visited_forums %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_VISITED_FORUMS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_visited_users]" value="1" {% if pg.permissions_array.view_visited_users %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_VISITED_USERS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_visited_profiles]" value="1" {% if pg.permissions_array.view_visited_profiles %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_VISITED_PROFILES') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_disciplinary]" value="1" {% if pg.permissions_array.view_disciplinary %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_DISCIPLINARY') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_ic_disciplinary]" value="1" {% if pg.permissions_array.view_ic_disciplinary %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_IC_DISCIPLINARY') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_awards]" value="1" {% if pg.permissions_array.view_awards %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_AWARDS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_career]" value="1" {% if pg.permissions_array.view_career %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_CAREER') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_commendations]" value="1" {% if pg.permissions_array.view_commendations %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_COMMENDATIONS') }}</label>
+						<label><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_gtaw]" value="1" {% if pg.permissions_array.view_gtaw %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_GTAW') }}</label>
+					</div>
+				</dd>
+			</dl>
+
+			<p class="submit-buttons" style="margin-top: 15px;">
+				<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+				<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+			</p>
+		</div>
+		{% else %}
+		<p>{{ lang('NO_PERMISSION_GROUPS') }}</p>
+		{% endfor %}
+	</fieldset>
+
+	<fieldset>
+		<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+		<dl>
+			<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Command Staff / Supervisors" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 320px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('POWER_OVER_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('POWER_OVER_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_all" value="1" /> {{ lang('ALL_GROUPS') }}
+				</label>
+				<label style="display: inline-block; margin-right: 15px; font-weight: bold;">
+					<input type="checkbox" name="new_power_over_self" value="1" /> {{ lang('SELF_GROUP') }}
+				</label>
+				<br><br>
+				<select name="new_power_over_groups[]" multiple="multiple" size="5" style="width: 320px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('EXCLUDE_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXCLUDE_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 320px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label>{{ lang('DASHBOARD_PERMISSIONS_GENERAL') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_dashboard]" value="1" checked="checked" /> {{ lang('PERM_VIEW_DASHBOARD') }}</label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_stats]" value="1" checked="checked" /> {{ lang('PERM_VIEW_STATS') }}</label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_active_users]" value="1" checked="checked" /> {{ lang('PERM_VIEW_ACTIVE_USERS') }}</label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_hot_topics]" value="1" checked="checked" /> {{ lang('PERM_VIEW_HOT_TOPICS') }}</label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_feeds]" value="1" checked="checked" /> <strong>{{ lang('PERM_VIEW_FEEDS') }}</strong></label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[search_users]" value="1" checked="checked" /> {{ lang('PERM_SEARCH_USERS') }}</label>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label>{{ lang('DASHBOARD_PERMISSIONS_FEEDS') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
+					<label><input type="checkbox" name="new_perms[view_feed_disciplinary]" value="1" checked="checked" /> {{ lang('PERM_VIEW_FEED_DISCIPLINARY') }}</label>
+					<label><input type="checkbox" name="new_perms[view_feed_ic_disciplinary]" value="1" checked="checked" /> {{ lang('PERM_VIEW_FEED_IC_DISCIPLINARY') }}</label>
+					<label><input type="checkbox" name="new_perms[view_feed_awards]" value="1" checked="checked" /> {{ lang('PERM_VIEW_FEED_AWARDS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_feed_career]" value="1" checked="checked" /> {{ lang('PERM_VIEW_FEED_CAREER') }}</label>
+					<label><input type="checkbox" name="new_perms[view_feed_commendations]" value="1" checked="checked" /> {{ lang('PERM_VIEW_FEED_COMMENDATIONS') }}</label>
+				</div>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label>{{ lang('DASHBOARD_PERMISSIONS_PROFILE') }}{{ lang('COLON') }}</label></dt>
+			<dd>
+				<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">
+					<label><input type="checkbox" name="new_perms[view_profile]" value="1" checked="checked" /> <strong>{{ lang('PERM_VIEW_PROFILE') }}</strong></label>
+					<label><input type="checkbox" name="new_perms[view_issued]" value="1" checked="checked" /> {{ lang('PERM_VIEW_ISSUED') }}</label>
+					<label><input type="checkbox" name="new_perms[view_visited_topics]" value="1" checked="checked" /> {{ lang('PERM_VIEW_VISITED_TOPICS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_visited_forums]" value="1" checked="checked" /> {{ lang('PERM_VIEW_VISITED_FORUMS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_visited_users]" value="1" checked="checked" /> {{ lang('PERM_VIEW_VISITED_USERS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_visited_profiles]" value="1" checked="checked" /> {{ lang('PERM_VIEW_VISITED_PROFILES') }}</label>
+					<label><input type="checkbox" name="new_perms[view_disciplinary]" value="1" checked="checked" /> {{ lang('PERM_VIEW_DISCIPLINARY') }}</label>
+					<label><input type="checkbox" name="new_perms[view_ic_disciplinary]" value="1" checked="checked" /> {{ lang('PERM_VIEW_IC_DISCIPLINARY') }}</label>
+					<label><input type="checkbox" name="new_perms[view_awards]" value="1" checked="checked" /> {{ lang('PERM_VIEW_AWARDS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_career]" value="1" checked="checked" /> {{ lang('PERM_VIEW_CAREER') }}</label>
+					<label><input type="checkbox" name="new_perms[view_commendations]" value="1" checked="checked" /> {{ lang('PERM_VIEW_COMMENDATIONS') }}</label>
+					<label><input type="checkbox" name="new_perms[view_gtaw]" value="1" checked="checked" /> {{ lang('PERM_VIEW_GTAW') }}</label>
+				</div>
+			</dd>
+		</dl>
+
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('ADD_PERMISSION_GROUP') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+		</p>
+	</fieldset>
+</div>
+
+{{ S_FORM_TOKEN }}
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	var permRadios = document.querySelectorAll('input[name="booskit_dashboard_perm_system"]');
+	var groupsSec = document.getElementById('booskit_dashboard_groups_settings');
+	var legacySec = document.getElementById('booskit_dashboard_legacy_settings');
+
+	permRadios.forEach(function(r) {
+		r.addEventListener('change', function() {
+			if (this.value === 'groups') {
+				if (groupsSec) groupsSec.style.display = 'block';
+				if (legacySec) legacySec.style.display = 'none';
+			} else {
+				if (groupsSec) groupsSec.style.display = 'none';
+				if (legacySec) legacySec.style.display = 'block';
+			}
+		});
+	});
+});
+</script>
 
 {% INCLUDE 'overall_footer.html' %}

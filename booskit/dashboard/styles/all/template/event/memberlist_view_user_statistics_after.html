@@ -1,0 +1,15 @@
+﻿{% if S_CAN_VIEW_DASHBOARD_PROFILE and U_BOOSKIT_DASHBOARD_PROFILE %}
+<div class="panel bg3" style="margin-top: 10px;">
+	<div class="inner">
+		<div style="display: flex; justify-content: space-between; align-items: center;">
+			<div>
+				<i class="icon fa-tachometer fa-fw" style="color: #2563eb; font-size: 1.2rem;"></i>
+				<strong style="margin-left: 5px;">{{ lang('DASHBOARD_TITLE') }}</strong>
+			</div>
+			<a href="{{ U_BOOSKIT_DASHBOARD_PROFILE }}" class="button button-secondary">
+				<i class="icon fa-external-link fa-fw"></i> {{ lang('DASHBOARD_OPEN_PROFILE') }}
+			</a>
+		</div>
+	</div>
+</div>
+{% endif %}

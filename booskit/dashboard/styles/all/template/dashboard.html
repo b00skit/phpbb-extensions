@@ -8,10 +8,12 @@
 			<h1><i class="icon fa-tachometer fa-fw" aria-hidden="true"></i> {{ lang('DASHBOARD_TITLE') }}</h1>
 			<p>{{ lang('DASHBOARD_PAGE_SUBTITLE') }}</p>
 		</div>
+		{% if S_PERM_SEARCH_USERS %}
 		<form method="get" action="{{ U_BOOSKIT_DASHBOARD }}" class="dashboard-search-form">
 			<input type="text" name="search_user" placeholder="{{ lang('DASHBOARD_SEARCH_USER') }}" required />
 			<button type="submit"><i class="icon fa-search fa-fw" aria-hidden="true"></i></button>
 		</form>
+		{% endif %}
 	</div>
 
 	{% if S_SEARCH_USER_NOT_FOUND %}
@@ -21,17 +23,20 @@
 	{% endif %}
 
 	<!-- Quick Statistics Grid -->
+	{% if S_PERM_VIEW_STATS %}
 	<div class="dashboard-stats-grid">
+		<!-- Configured Primary Group Metric -->
 		<div class="dashboard-stat-card">
 			<div class="dashboard-stat-icon users">
 				<i class="icon fa-users fa-fw"></i>
 			</div>
 			<div class="dashboard-stat-details">
-				<span class="dashboard-stat-value">{{ STATS_TOTAL_USERS|number_format }}</span>
-				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_TOTAL_MEMBERS') }}</span>
+				<span class="dashboard-stat-value">{{ STATS_GROUP_METRIC_VALUE|number_format }}</span>
+				<span class="dashboard-stat-label">{{ STATS_GROUP_METRIC_LABEL }}</span>
 			</div>
 		</div>
 
+		<!-- Online Now -->
 		<div class="dashboard-stat-card">
 			<div class="dashboard-stat-icon online">
 				<i class="icon fa-circle fa-fw"></i>
@@ -42,6 +47,7 @@
 			</div>
 		</div>
 
+		<!-- Active Today -->
 		<div class="dashboard-stat-card">
 			<div class="dashboard-stat-icon activity">
 				<i class="icon fa-bolt fa-fw"></i>
@@ -52,21 +58,24 @@
 			</div>
 		</div>
 
+		<!-- Total Extension Actions -->
 		<div class="dashboard-stat-card">
 			<div class="dashboard-stat-icon content">
-				<i class="icon fa-comments fa-fw"></i>
+				<i class="icon fa-tasks fa-fw"></i>
 			</div>
 			<div class="dashboard-stat-details">
-				<span class="dashboard-stat-value">{{ STATS_TOTAL_TOPICS|number_format }} / {{ STATS_TOTAL_POSTS|number_format }}</span>
-				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_TOPICS_POSTS') }}</span>
+				<span class="dashboard-stat-value">{{ STATS_TOTAL_ACTIONS|number_format }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_STAT_TOTAL_ACTIONS') }}</span>
 			</div>
 		</div>
 	</div>
+	{% endif %}
 
 	<!-- Main 2-Column Section: Active Users & Hot Topics -->
 	<div class="dashboard-grid-2col">
 
 		<!-- Active Users & Live Browsing -->
+		{% if S_PERM_VIEW_ACTIVE_USERS %}
 		<div class="dash-card">
 			<div class="dash-card-header">
 				<h3 class="dash-card-title">
@@ -112,8 +121,10 @@
 				</ul>
 			</div>
 		</div>
+		{% endif %}
 
 		<!-- Trending & Hot Topics -->
+		{% if S_PERM_VIEW_HOT_TOPICS %}
 		<div class="dash-card">
 			<div class="dash-card-header">
 				<h3 class="dash-card-title">
@@ -176,10 +187,48 @@
 				</table>
 			</div>
 		</div>
+		{% endif %}
 
 	</div>
 
-	<!-- Aggregated Extension Activity Feeds (UCC parity) -->
+	<!-- Recent Dashboard Profile Views Section -->
+	{% if recent_profile_views %}
+	<div class="dash-card" style="margin-bottom: 24px;">
+		<div class="dash-card-header">
+			<h3 class="dash-card-title">
+				<i class="icon fa-eye fa-fw" style="color: #6366f1;"></i>
+				{{ lang('DASHBOARD_PROFILES_VISITED_TITLE') }}
+			</h3>
+		</div>
+		<div class="dash-card-body no-padding">
+			<ul class="active-users-list">
+				{% for pv in recent_profile_views %}
+				<li class="active-user-row">
+					<div class="active-user-meta">
+						<div class="active-user-avatar">
+							{{ pv.VIEWER_AVATAR|raw }}
+						</div>
+						<div class="active-user-info">
+							<div>{{ pv.VIEWER_NAME|raw }} <span style="color: #94a3b8; font-size: 0.85rem;">viewed</span> {{ pv.VIEWED_NAME|raw }}'s profile</div>
+							<div style="color: #94a3b8; font-size: 0.78rem; margin-top: 2px;">{{ pv.TIME_AGO }}</div>
+						</div>
+					</div>
+					<div class="active-user-actions">
+						{% if pv.CAN_VIEW_TARGET and pv.U_VIEW_PROFILE %}
+						<a href="{{ pv.U_VIEW_PROFILE }}" class="dash-btn dash-btn-secondary dash-btn-sm">
+							<i class="icon fa-address-card-o fa-fw"></i> {{ lang('DASHBOARD_VIEW_PROFILE') }}
+						</a>
+						{% endif %}
+					</div>
+				</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+	{% endif %}
+
+	<!-- Aggregated Extension Activity Feeds -->
+	{% if S_PERM_VIEW_FEEDS %}
 	<div class="dashboard-grid-2col">
 
 		{% if S_SHOW_DISCIPLINARY %}
@@ -198,7 +247,7 @@
 						</div>
 						{% endif %}
 						<span class="dash-item-badge">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.CONTENT }}</div>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
 					</div>
 					<div class="dash-item-meta">
 						<div>{{ item.USERNAME|raw }}</div>
@@ -229,7 +278,7 @@
 						</div>
 						{% endif %}
 						<span class="dash-item-badge">{{ item.TYPE }} ({{ item.CHARACTER }})</span>
-						<div class="dash-item-content">{{ item.CONTENT }}</div>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
 					</div>
 					<div class="dash-item-meta">
 						<div>{{ item.USERNAME|raw }}</div>
@@ -255,7 +304,7 @@
 				<div class="dash-item">
 					<div class="dash-item-main">
 						<span class="dash-item-badge">{{ award.TYPE }}</span>
-						<div class="dash-item-content">{{ award.CONTENT }}</div>
+						<div class="dash-item-content">{{ award.CONTENT|raw }}</div>
 					</div>
 					<div class="dash-item-meta">
 						<div>{{ award.USERNAME|raw }}</div>
@@ -281,7 +330,7 @@
 				<div class="dash-item">
 					<div class="dash-item-main">
 						<span class="dash-item-badge">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.CONTENT }}</div>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
 					</div>
 					<div class="dash-item-meta">
 						<div>{{ item.USERNAME|raw }}</div>
@@ -307,7 +356,7 @@
 				<div class="dash-item">
 					<div class="dash-item-main">
 						<span class="dash-item-badge">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.CONTENT }}</div>
+						<div class="dash-item-content">{{ item.CONTENT|raw }}</div>
 					</div>
 					<div class="dash-item-meta">
 						<div>{{ item.USERNAME|raw }}</div>
@@ -323,6 +372,7 @@
 		{% endif %}
 
 	</div>
+	{% endif %}
 
 </div>
 

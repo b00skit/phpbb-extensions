@@ -16,6 +16,8 @@ class dashboard_manager
 	protected $cache;
 	protected $auth;
 	protected $table_prefix;
+	protected $table_perm_groups;
+	protected $group_avatars_cache = null;
 
 	public function __construct(
 		\phpbb\config\config $config,
@@ -31,6 +33,7 @@ class dashboard_manager
 		$this->cache = is_object($cache) ? $cache : null;
 		$this->auth = is_object($auth) ? $auth : null;
 		$this->table_prefix = (string) $table_prefix;
+		$this->table_perm_groups = $this->table_prefix . 'booskit_dashboard_perm_groups';
 	}
 
 	public function is_ext_enabled($ext_name)
@@ -48,14 +51,9 @@ class dashboard_manager
 		return $this->table_prefix;
 	}
 
-	public function get_allowed_groups()
+	public function get_perm_system()
 	{
-		$raw = isset($this->config['booskit_dashboard_allowed_groups']) ? $this->config['booskit_dashboard_allowed_groups'] : '';
-		if (empty($raw))
-		{
-			return [];
-		}
-		return array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
+		return isset($this->config['booskit_dashboard_perm_system']) ? $this->config['booskit_dashboard_perm_system'] : 'groups';
 	}
 
 	public function get_user_groups($user_id)
@@ -81,66 +79,502 @@ class dashboard_manager
 	{
 		if ($this->auth !== null && $user_id === 0)
 		{
-			return $this->auth->acl_get('a_');
+			return (bool) $this->auth->acl_get('a_');
 		}
 
 		if ($this->auth !== null && $user_id > 0)
 		{
-			return $this->auth->acl_get('a_');
+			return (bool) $this->auth->acl_get('a_');
 		}
 
 		return false;
 	}
 
-	public function can_view_dashboard($viewer_id)
+	public function get_phpbb_groups()
 	{
-		if (empty($this->config['booskit_dashboard_enabled']))
+		global $user;
+		$sql = 'SELECT group_id, group_name, group_type FROM ' . GROUPS_TABLE . ' ORDER BY group_type DESC, group_name ASC';
+		$result = $this->db->sql_query($sql);
+		$groups = [];
+		while ($row = $this->db->sql_fetchrow($result))
 		{
-			return false;
+			$name = ($row['group_type'] == GROUP_SPECIAL && isset($user->lang['G_' . $row['group_name']])) ? $user->lang['G_' . $row['group_name']] : $row['group_name'];
+			$groups[] = [
+				'group_id'   => (int) $row['group_id'],
+				'group_name' => $name,
+			];
 		}
-
-		$allowed_groups = $this->get_allowed_groups();
-		if (empty($allowed_groups))
-		{
-			return true;
-		}
-
-		$viewer_groups = $this->get_user_groups($viewer_id);
-		return (bool) array_intersect($viewer_groups, $allowed_groups);
+		$this->db->sql_freeresult($result);
+		return $groups;
 	}
 
-	/**
-	 * Check if a viewer has permission to access a target user's dashboard profile
-	 */
-	public function can_view_user_profile($viewer_id, $target_user_id)
+	/* =========================================================================
+	 * PERMISSION GROUPS MANAGEMENT
+	 * ========================================================================= */
+
+	public function get_permission_groups()
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' ORDER BY perm_group_id ASC';
+		$result = @$this->db->sql_query($sql);
+		$groups = [];
+		if ($result)
+		{
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['applies_to'])))) : [];
+				$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['power_over_groups'])))) : [];
+				$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['exclude_groups'])))) : [];
+				$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+				$groups[] = $row;
+			}
+			$this->db->sql_freeresult($result);
+		}
+		return $groups;
+	}
+
+	public function get_permission_group($perm_group_id)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		if ($row)
+		{
+			$row['applies_to_array'] = !empty($row['applies_to']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['applies_to'])))) : [];
+			$row['power_over_groups_array'] = !empty($row['power_over_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['power_over_groups'])))) : [];
+			$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['exclude_groups'])))) : [];
+			$row['permissions_array'] = !empty($row['permissions']) ? json_decode($row['permissions'], true) : [];
+		}
+		return $row;
+	}
+
+	public function add_permission_group($group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name'        => $group_name,
+			'applies_to'        => $applies_str,
+			'power_over_all'    => (int) $power_over_all,
+			'power_over_self'   => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups'    => $exclude_groups_str,
+			'permissions'       => $perms_json,
+		];
+		$sql = 'INSERT INTO ' . $this->table_perm_groups . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+	}
+
+	public function update_permission_group($perm_group_id, $group_name, $applies_to, $power_over_all, $power_over_self, $power_over_groups, $exclude_groups, $permissions)
+	{
+		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', $applies_to)) : (string) $applies_to;
+		$power_groups_str = is_array($power_over_groups) ? implode(',', array_map('intval', $power_over_groups)) : (string) $power_over_groups;
+		$exclude_groups_str = is_array($exclude_groups) ? implode(',', array_map('intval', $exclude_groups)) : (string) $exclude_groups;
+		$perms_json = is_array($permissions) ? json_encode($permissions) : (string) $permissions;
+
+		$sql_ary = [
+			'group_name'        => $group_name,
+			'applies_to'        => $applies_str,
+			'power_over_all'    => (int) $power_over_all,
+			'power_over_self'   => (int) $power_over_self,
+			'power_over_groups' => $power_groups_str,
+			'exclude_groups'    => $exclude_groups_str,
+			'permissions'       => $perms_json,
+		];
+		$sql = 'UPDATE ' . $this->table_perm_groups . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_permission_group($perm_group_id)
+	{
+		$sql = 'DELETE FROM ' . $this->table_perm_groups . ' WHERE perm_group_id = ' . (int) $perm_group_id;
+		$this->db->sql_query($sql);
+	}
+
+	/* =========================================================================
+	 * EFFECTIVE PERMISSION EVALUATION
+	 * ========================================================================= */
+
+	public function get_effective_permissions($viewer_id, $target_user_id = 0)
 	{
 		$viewer_id = (int) $viewer_id;
 		$target_user_id = (int) $target_user_id;
 
+		$default_perms = [
+			'view_dashboard'           => false,
+			'view_stats'               => false,
+			'view_active_users'        => false,
+			'view_hot_topics'          => false,
+			'view_feeds'               => false,
+			'view_feed_disciplinary'   => false,
+			'view_feed_ic_disciplinary'=> false,
+			'view_feed_awards'         => false,
+			'view_feed_career'         => false,
+			'view_feed_commendations'  => false,
+			'search_users'             => false,
+			'view_profile'             => false,
+			'view_issued'              => false,
+			'view_visited_topics'      => false,
+			'view_visited_forums'      => false,
+			'view_visited_users'       => false,
+			'view_visited_profiles'    => false,
+			'view_disciplinary'        => false,
+			'view_ic_disciplinary'     => false,
+			'view_awards'              => false,
+			'view_career'              => false,
+			'view_commendations'       => false,
+			'view_gtaw'                => false,
+		];
+
+		if (empty($this->config['booskit_dashboard_enabled']))
+		{
+			return $default_perms;
+		}
+
+		$perm_system = $this->get_perm_system();
+
+		// Legacy mode
+		if ($perm_system === 'legacy')
+		{
+			$can_dash = $this->can_view_dashboard_legacy($viewer_id);
+			$can_prof = ($target_user_id > 0) ? $this->can_view_user_profile_legacy($viewer_id, $target_user_id) : true;
+			$can_iss = ($target_user_id > 0) ? $this->can_view_issued_actions_legacy($viewer_id, $target_user_id) : true;
+			$can_top = ($target_user_id > 0) ? $this->can_view_recent_topics_legacy($viewer_id, $target_user_id) : true;
+
+			return [
+				'view_dashboard'           => $can_dash,
+				'view_stats'               => $can_dash,
+				'view_active_users'        => $can_dash,
+				'view_hot_topics'          => $can_dash,
+				'view_feeds'               => $can_dash,
+				'view_feed_disciplinary'   => $can_dash,
+				'view_feed_ic_disciplinary'=> $can_dash,
+				'view_feed_awards'         => $can_dash,
+				'view_feed_career'         => $can_dash,
+				'view_feed_commendations'  => $can_dash,
+				'search_users'             => $can_dash,
+				'view_profile'             => $can_dash && $can_prof,
+				'view_issued'              => $can_dash && $can_iss,
+				'view_visited_topics'      => $can_dash && $can_top,
+				'view_visited_forums'      => $can_dash && $can_top,
+				'view_visited_users'       => $can_dash && $can_top,
+				'view_visited_profiles'    => $can_dash && $can_top,
+				'view_disciplinary'        => $can_dash,
+				'view_ic_disciplinary'     => $can_dash,
+				'view_awards'              => $can_dash,
+				'view_career'              => $can_dash,
+				'view_commendations'       => $can_dash,
+				'view_gtaw'                => $can_dash,
+			];
+		}
+
+		// Advanced Groups mode
+		$perm_groups = $this->get_permission_groups();
+		if (empty($perm_groups))
+		{
+			return $default_perms;
+		}
+
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		$target_groups = ($target_user_id > 0) ? $this->get_user_groups($target_user_id) : [];
+
+		$effective = $default_perms;
+
+		foreach ($perm_groups as $pg)
+		{
+			// Check if permission group applies to viewer
+			if (empty($pg['applies_to_array']) || !array_intersect($viewer_groups, $pg['applies_to_array']))
+			{
+				continue;
+			}
+
+			$perms = !empty($pg['permissions_array']) ? $pg['permissions_array'] : [];
+
+			// Dashboard General permissions (not target dependent)
+			foreach (['view_dashboard', 'view_stats', 'view_active_users', 'view_hot_topics', 'view_feeds', 'search_users'] as $k)
+			{
+				if (!empty($perms[$k]))
+				{
+					$effective[$k] = true;
+				}
+			}
+
+			// Feeds granular permissions
+			if (!empty($perms['view_feeds']))
+			{
+				foreach (['view_feed_disciplinary', 'view_feed_ic_disciplinary', 'view_feed_awards', 'view_feed_career', 'view_feed_commendations'] as $fk)
+				{
+					if (!isset($perms[$fk]) || !empty($perms[$fk]))
+					{
+						$effective[$fk] = true;
+					}
+				}
+			}
+
+			// Target-dependent profile permissions
+			if ($target_user_id > 0)
+			{
+				// Check exclude groups
+				if (!empty($pg['exclude_groups_array']) && array_intersect($target_groups, $pg['exclude_groups_array']))
+				{
+					continue;
+				}
+
+				$has_power = false;
+				if (!empty($pg['power_over_all']))
+				{
+					$has_power = true;
+				}
+				if (!$has_power && !empty($pg['power_over_self']) && $viewer_id === $target_user_id)
+				{
+					$has_power = true;
+				}
+				if (!$has_power && !empty($pg['power_over_groups_array']) && array_intersect($target_groups, $pg['power_over_groups_array']))
+				{
+					$has_power = true;
+				}
+
+				if ($has_power)
+				{
+					foreach (['view_profile', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
+					{
+						if (!empty($perms[$k]))
+						{
+							$effective[$k] = true;
+						}
+					}
+				}
+			}
+			else
+			{
+				// Grant capability flags in general scope if enabled
+				foreach (['view_profile', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
+				{
+					if (!empty($perms[$k]))
+					{
+						$effective[$k] = true;
+					}
+				}
+			}
+		}
+
+		return $effective;
+	}
+
+	public function is_user_online($user_id)
+	{
+		$user_id = (int) $user_id;
+		if ($user_id <= 0 || $user_id === ANONYMOUS)
+		{
+			return false;
+		}
+
+		$online_window = time() - ((int) $this->config['load_online_time'] * 60);
+		$sql = 'SELECT 1 FROM ' . SESSIONS_TABLE . '
+				WHERE session_user_id = ' . $user_id . '
+				  AND session_time >= ' . $online_window . '
+				  AND session_user_id <> ' . ANONYMOUS;
+		$result = $this->db->sql_query_limit($sql, 1);
+		$is_online = (bool) $this->db->sql_fetchfield('1');
+		$this->db->sql_freeresult($result);
+		return $is_online;
+	}
+
+	/* =========================================================================
+	 * CROSS-EXTENSION ISSUE PERMISSION HELPERS
+	 * ========================================================================= */
+
+	public function can_issue_disciplinary($viewer_id, $target_user_id)
+	{
+		global $phpbb_container;
+		if (!$this->is_ext_enabled('booskit/disciplinary'))
+		{
+			return false;
+		}
+		if ($phpbb_container !== null && $phpbb_container->has('booskit.disciplinary.service.disciplinary_manager'))
+		{
+			try {
+				$mgr = $phpbb_container->get('booskit.disciplinary.service.disciplinary_manager');
+				if (method_exists($mgr, 'can_add_disciplinary'))
+				{
+					return (bool) $mgr->can_add_disciplinary($viewer_id, $target_user_id);
+				}
+			} catch (\Throwable $e) {
+				// fallback
+			}
+		}
+		return $this->is_admin($viewer_id);
+	}
+
+	public function can_issue_ic_disciplinary($viewer_id, $target_user_id)
+	{
+		global $phpbb_container;
+		if (!$this->is_ext_enabled('booskit/icdisciplinary'))
+		{
+			return false;
+		}
+		if ($phpbb_container !== null && $phpbb_container->has('booskit.icdisciplinary.service.ic_manager'))
+		{
+			try {
+				$ic_mgr = $phpbb_container->get('booskit.icdisciplinary.service.ic_manager');
+				$can_create = method_exists($ic_mgr, 'can_create_character') && $ic_mgr->can_create_character($viewer_id, $target_user_id);
+				$can_add = method_exists($ic_mgr, 'can_add_record') && $ic_mgr->can_add_record($viewer_id, $target_user_id);
+				return (bool) ($can_create || $can_add);
+			} catch (\Throwable $e) {
+				// fallback
+			}
+		}
+		return $this->is_admin($viewer_id);
+	}
+
+	public function can_issue_award($viewer_id, $target_user_id)
+	{
+		global $phpbb_container;
+		if (!$this->is_ext_enabled('booskit/awards'))
+		{
+			return false;
+		}
+		if ($phpbb_container !== null && $phpbb_container->has('booskit.awards.service.award_manager'))
+		{
+			try {
+				$mgr = $phpbb_container->get('booskit.awards.service.award_manager');
+				if (method_exists($mgr, 'can_add_award'))
+				{
+					return (bool) $mgr->can_add_award($viewer_id, $target_user_id);
+				}
+			} catch (\Throwable $e) {
+				// fallback
+			}
+		}
+		return $this->is_admin($viewer_id);
+	}
+
+	public function can_issue_career($viewer_id, $target_user_id)
+	{
+		global $phpbb_container;
+		if (!$this->is_ext_enabled('booskit/usercareer'))
+		{
+			return false;
+		}
+		if ($phpbb_container !== null && $phpbb_container->has('booskit.usercareer.service.career_manager'))
+		{
+			try {
+				$mgr = $phpbb_container->get('booskit.usercareer.service.career_manager');
+				if (method_exists($mgr, 'can_add_career_note'))
+				{
+					return (bool) $mgr->can_add_career_note($viewer_id, $target_user_id);
+				}
+			} catch (\Throwable $e) {
+				// fallback
+			}
+		}
+		return $this->is_admin($viewer_id);
+	}
+
+	public function can_issue_commendation($viewer_id, $target_user_id)
+	{
+		global $phpbb_container;
+		if (!$this->is_ext_enabled('booskit/commendations'))
+		{
+			return false;
+		}
+		if ($phpbb_container !== null && $phpbb_container->has('booskit.commendations.service.commendations_manager'))
+		{
+			try {
+				$mgr = $phpbb_container->get('booskit.commendations.service.commendations_manager');
+				if (method_exists($mgr, 'can_add_commendation'))
+				{
+					return (bool) $mgr->can_add_commendation($viewer_id, $target_user_id);
+				}
+			} catch (\Throwable $e) {
+				// fallback
+			}
+		}
+		return $this->is_admin($viewer_id);
+	}
+
+	public function can_view_dashboard($viewer_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id);
+		return !empty($perms['view_dashboard']);
+	}
+
+	public function can_view_user_profile($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_profile']);
+	}
+
+	public function can_view_issued_actions($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_issued']);
+	}
+
+	public function can_view_recent_topics($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_visited_topics']);
+	}
+
+	public function can_view_visited_forums($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_visited_forums']);
+	}
+
+	public function can_view_visited_users($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_visited_users']);
+	}
+
+	public function can_view_visited_profiles($viewer_id, $target_user_id)
+	{
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+		return !empty($perms['view_visited_profiles']);
+	}
+
+	/* Legacy permission helpers */
+	protected function can_view_dashboard_legacy($viewer_id)
+	{
+		$raw = isset($this->config['booskit_dashboard_allowed_groups']) ? $this->config['booskit_dashboard_allowed_groups'] : '';
+		if (empty($raw))
+		{
+			return true;
+		}
+		$allowed = array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
+		$groups = $this->get_user_groups($viewer_id);
+		return (bool) array_intersect($groups, $allowed);
+	}
+
+	protected function can_view_user_profile_legacy($viewer_id, $target_user_id)
+	{
 		if ($viewer_id === $target_user_id)
 		{
 			return true;
 		}
-
-		// Admin override
 		if (!empty($this->config['booskit_dashboard_profile_admin_override']) && $this->is_admin($viewer_id))
 		{
 			return true;
 		}
-
 		$raw_map = isset($this->config['booskit_dashboard_group_profile_access']) ? trim($this->config['booskit_dashboard_group_profile_access']) : '';
 		if (empty($raw_map))
 		{
-			// If no group matrix restrictions are configured, allow users with dashboard access
 			return true;
 		}
 
 		$viewer_groups = $this->get_user_groups($viewer_id);
 		$target_groups = $this->get_user_groups($target_user_id);
 
-		// Parse group mapping: ViewerGroupID:TargetGroupID1,TargetGroupID2,...
 		$lines = preg_split('/[\r\n]+/', $raw_map);
-		$allowed_targets_for_viewer = [];
+		$allowed_targets = [];
 
 		foreach ($lines as $line)
 		{
@@ -153,20 +587,20 @@ class dashboard_manager
 					$targets = array_map('intval', array_filter(array_map('trim', explode(',', $parts[1]))));
 					foreach ($targets as $t_gid)
 					{
-						$allowed_targets_for_viewer[$t_gid] = true;
+						$allowed_targets[$t_gid] = true;
 					}
 				}
 			}
 		}
 
-		if (empty($allowed_targets_for_viewer))
+		if (empty($allowed_targets))
 		{
 			return false;
 		}
 
 		foreach ($target_groups as $tg)
 		{
-			if (isset($allowed_targets_for_viewer[$tg]))
+			if (isset($allowed_targets[$tg]))
 			{
 				return true;
 			}
@@ -175,72 +609,213 @@ class dashboard_manager
 		return false;
 	}
 
-	/**
-	 * Check if viewer can view what target user ISSUED on their profile
-	 */
-	public function can_view_issued_actions($viewer_id, $target_user_id)
+	protected function can_view_issued_actions_legacy($viewer_id, $target_user_id)
 	{
-		$viewer_id = (int) $viewer_id;
-		$target_user_id = (int) $target_user_id;
-
 		if ($viewer_id === $target_user_id && !empty($this->config['booskit_dashboard_issued_allow_self']))
 		{
 			return true;
 		}
-
 		if ($this->is_admin($viewer_id))
 		{
 			return true;
 		}
-
 		$raw = isset($this->config['booskit_dashboard_issued_groups']) ? $this->config['booskit_dashboard_issued_groups'] : '';
 		if (empty($raw))
 		{
 			return false;
 		}
-
-		$allowed_groups = array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
+		$allowed = array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
 		$viewer_groups = $this->get_user_groups($viewer_id);
-
-		return (bool) array_intersect($viewer_groups, $allowed_groups);
+		return (bool) array_intersect($viewer_groups, $allowed);
 	}
 
-	/**
-	 * Check if viewer can view recent topics visited by target user
-	 */
-	public function can_view_recent_topics($viewer_id, $target_user_id)
+	protected function can_view_recent_topics_legacy($viewer_id, $target_user_id)
 	{
-		$viewer_id = (int) $viewer_id;
-		$target_user_id = (int) $target_user_id;
-
 		if ($viewer_id === $target_user_id && !empty($this->config['booskit_dashboard_recent_topics_allow_self']))
 		{
 			return true;
 		}
-
 		if ($this->is_admin($viewer_id))
 		{
 			return true;
 		}
-
 		$raw = isset($this->config['booskit_dashboard_recent_topics_groups']) ? $this->config['booskit_dashboard_recent_topics_groups'] : '';
 		if (empty($raw))
 		{
 			return false;
 		}
-
-		$allowed_groups = array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
+		$allowed = array_map('intval', array_filter(array_map('trim', explode(',', $raw))));
 		$viewer_groups = $this->get_user_groups($viewer_id);
-
-		return (bool) array_intersect($viewer_groups, $allowed_groups);
+		return (bool) array_intersect($viewer_groups, $allowed);
 	}
 
-	/**
-	 * Retrieve overall system statistics
-	 */
+	/* =========================================================================
+	 * METRICS & STATISTICS
+	 * ========================================================================= */
+
+	public function get_group_metric_stats()
+	{
+		$configured_group = (int) (isset($this->config['booskit_dashboard_group_metric_group']) ? $this->config['booskit_dashboard_group_metric_group'] : 0);
+		$custom_label = isset($this->config['booskit_dashboard_group_metric_label']) ? trim($this->config['booskit_dashboard_group_metric_label']) : '';
+
+		$count = 0;
+		$group_name = '';
+
+		if ($configured_group > 0)
+		{
+			$sql = 'SELECT group_name, group_type FROM ' . GROUPS_TABLE . ' WHERE group_id = ' . $configured_group;
+			$res = $this->db->sql_query($sql);
+			$grow = $this->db->sql_fetchrow($res);
+			$this->db->sql_freeresult($res);
+
+			if ($grow)
+			{
+				global $user;
+				$group_name = ($grow['group_type'] == GROUP_SPECIAL && isset($user->lang['G_' . $grow['group_name']])) ? $user->lang['G_' . $grow['group_name']] : $grow['group_name'];
+			}
+
+			$sql = 'SELECT COUNT(ug.user_id) as cnt
+					FROM ' . USER_GROUP_TABLE . ' ug
+					JOIN ' . USERS_TABLE . ' u ON ug.user_id = u.user_id
+					WHERE ug.group_id = ' . $configured_group . '
+					  AND ug.user_pending = 0
+					  AND u.user_type IN (' . USER_NORMAL . ', ' . USER_FOUNDER . ')';
+			$res = $this->db->sql_query($sql);
+			$count = (int) $this->db->sql_fetchfield('cnt');
+			$this->db->sql_freeresult($res);
+		}
+		else
+		{
+			$count = (int) (isset($this->config['num_users']) ? $this->config['num_users'] : 0);
+		}
+
+		$label = !empty($custom_label) ? $custom_label : (!empty($group_name) ? $group_name : 'Total Members');
+
+		return [
+			'value'    => $count,
+			'label'    => $label,
+			'group_id' => $configured_group,
+		];
+	}
+
+	public function get_total_actions()
+	{
+		$total = 0;
+
+		// Disciplinary records
+		if ($this->is_ext_enabled('booskit/disciplinary'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_disciplinary_users';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		// IC Disciplinary records
+		if ($this->is_ext_enabled('booskit/icdisciplinary'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_ic_records';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		// Commendations
+		if ($this->is_ext_enabled('booskit/commendations'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_commendations';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		// Awards
+		if ($this->is_ext_enabled('booskit/awards'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_awards_users';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		// Career notes
+		if ($this->is_ext_enabled('booskit/usercareer'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_career_notes';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		// GTAW OAuth tokens
+		if ($this->is_ext_enabled('booskit/gtawoauth'))
+		{
+			try
+			{
+				$table = $this->table_prefix . 'booskit_oauth_tokens';
+				$sql = 'SELECT COUNT(*) as cnt FROM ' . $table;
+				$res = @$this->db->sql_query($sql);
+				if ($res)
+				{
+					$total += (int) $this->db->sql_fetchfield('cnt');
+					$this->db->sql_freeresult($res);
+				}
+			}
+			catch (\Exception $e) {}
+		}
+
+		return $total;
+	}
+
 	public function get_overview_stats()
 	{
+		$group_metric = $this->get_group_metric_stats();
+		$total_actions = $this->get_total_actions();
+
 		$stats = [
+			'group_metric_value' => $group_metric['value'],
+			'group_metric_label' => $group_metric['label'],
+			'total_actions'      => $total_actions,
 			'total_users'        => (int) (isset($this->config['num_users']) ? $this->config['num_users'] : 0),
 			'total_topics'       => (int) (isset($this->config['num_topics']) ? $this->config['num_topics'] : 0),
 			'total_posts'        => (int) (isset($this->config['num_posts']) ? $this->config['num_posts'] : 0),
@@ -275,9 +850,89 @@ class dashboard_manager
 		return $stats;
 	}
 
-	/**
-	 * Retrieve active users and what they are currently browsing
-	 */
+	/* =========================================================================
+	 * AVATAR / GROUP LOGO / INITIAL FALLBACK
+	 * ========================================================================= */
+
+	public function get_user_avatar_or_group_or_initial($user_row, $username = '', $group_id = 0)
+	{
+		$username = !empty($username) ? $username : (isset($user_row['username']) ? $user_row['username'] : '');
+		$group_id = (int) ($group_id ?: (isset($user_row['group_id']) ? $user_row['group_id'] : 0));
+
+		// 1. Check if group has a group avatar/logo
+		if ($group_id > 0)
+		{
+			$group_avatar = $this->get_group_avatar_html($group_id);
+			if (!empty($group_avatar))
+			{
+				return $group_avatar;
+			}
+		}
+
+		// 2. Fallback: First character of username in styled circle
+		$first_char = '';
+		if (!empty($username))
+		{
+			$clean = trim($username);
+			$first_char = mb_strtoupper(mb_substr($clean, 0, 1, 'UTF-8'), 'UTF-8');
+		}
+		if (empty($first_char))
+		{
+			$first_char = '?';
+		}
+
+		$user_colour = isset($user_row['user_colour']) ? trim($user_row['user_colour']) : '';
+		$bg_color = !empty($user_colour) ? '#' . ltrim($user_colour, '#') : $this->get_initial_color($username);
+
+		return '<span class="dash-avatar-initial" style="background-color: ' . htmlspecialchars($bg_color, ENT_QUOTES, 'UTF-8') . ';" title="' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($first_char, ENT_QUOTES, 'UTF-8') . '</span>';
+	}
+
+	public function get_group_avatar_html($group_id)
+	{
+		$group_id = (int) $group_id;
+		if ($group_id <= 0)
+		{
+			return '';
+		}
+
+		if ($this->group_avatars_cache === null)
+		{
+			$this->group_avatars_cache = [];
+			$sql = 'SELECT group_id, group_avatar, group_avatar_type, group_avatar_width, group_avatar_height FROM ' . GROUPS_TABLE;
+			$res = @$this->db->sql_query($sql);
+			if ($res)
+			{
+				while ($row = $this->db->sql_fetchrow($res))
+				{
+					$this->group_avatars_cache[(int) $row['group_id']] = $row;
+				}
+				$this->db->sql_freeresult($res);
+			}
+		}
+
+		if (isset($this->group_avatars_cache[$group_id]))
+		{
+			$grow = $this->group_avatars_cache[$group_id];
+			if (!empty($grow['group_avatar']))
+			{
+				return phpbb_get_group_avatar($grow);
+			}
+		}
+
+		return '';
+	}
+
+	public function get_initial_color($str)
+	{
+		$colors = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed', '#db2777', '#0891b2', '#4f46e5', '#0d9488', '#ea580c'];
+		$idx = abs(crc32((string) $str)) % count($colors);
+		return $colors[$idx];
+	}
+
+	/* =========================================================================
+	 * ACTIVE USERS & BROWSING
+	 * ========================================================================= */
+
 	public function get_active_users_browsing($viewer_id, $limit = 40)
 	{
 		$online_window = time() - ((int) $this->config['load_online_time'] * 60);
@@ -305,7 +960,6 @@ class dashboard_manager
 			}
 			$seen_users[$uid] = true;
 
-			// Extract topic_id and forum_id from session_page if not present
 			$topic_id = 0;
 			$forum_id = (int) $row['session_forum_id'];
 
@@ -330,7 +984,6 @@ class dashboard_manager
 		}
 		$this->db->sql_freeresult($result);
 
-		// Resolve topics and their forums
 		$topics_info = [];
 		if (!empty($topic_ids_to_fetch))
 		{
@@ -344,7 +997,6 @@ class dashboard_manager
 			$this->db->sql_freeresult($res);
 		}
 
-		// Resolve forum names
 		$forums_info = [];
 		if (!empty($forum_ids_to_fetch))
 		{
@@ -357,183 +1009,172 @@ class dashboard_manager
 			$this->db->sql_freeresult($res);
 		}
 
-		// Build user items with browsing descriptions
-		$items = [];
+		$final_users = [];
 		foreach ($users as $u)
 		{
-			$f_id = (int) $u['parsed_forum_id'];
-			$t_id = (int) $u['parsed_topic_id'];
-
-			if ($t_id > 0 && isset($topics_info[$t_id]))
-			{
-				$f_id = (int) $topics_info[$t_id]['forum_id'];
-			}
-
-			$can_read_forum = true;
-			if ($f_id > 0 && $this->auth !== null)
-			{
-				$can_read_forum = $this->auth->acl_get('f_read', $f_id) || $this->auth->acl_get('f_list', $f_id);
-			}
-
-			$browsing_label = 'Browsing the forum';
+			$browsing_label = 'Browsing forum';
 			$browsing_url = '';
-			$page = $u['session_page'];
 
-			if (strpos($page, 'viewtopic') !== false || $t_id > 0)
+			if (!empty($u['parsed_topic_id']) && isset($topics_info[$u['parsed_topic_id']]))
 			{
-				if ($can_read_forum && isset($topics_info[$t_id]))
+				$tinfo = $topics_info[$u['parsed_topic_id']];
+				$fid = (int) $tinfo['forum_id'];
+				if ($this->auth === null || $this->auth->acl_get('f_read', $fid))
 				{
-					$browsing_label = 'Viewing Topic: ' . $topics_info[$t_id]['topic_title'];
-					$browsing_url = 'viewtopic.php?t=' . $t_id;
-				}
-				else if ($can_read_forum && $f_id > 0 && isset($forums_info[$f_id]))
-				{
-					$browsing_label = 'Viewing Topic in ' . $forums_info[$f_id];
-					$browsing_url = 'viewforum.php?f=' . $f_id;
-				}
-				else
-				{
-					$browsing_label = 'Viewing Topic';
+					$browsing_label = 'Viewing: ' . $tinfo['topic_title'];
+					$browsing_url = 'viewtopic.php?t=' . $u['parsed_topic_id'];
 				}
 			}
-			else if (strpos($page, 'viewforum') !== false || $f_id > 0)
+			else if (!empty($u['parsed_forum_id']) && isset($forums_info[$u['parsed_forum_id']]))
 			{
-				if ($can_read_forum && isset($forums_info[$f_id]))
+				$fid = (int) $u['parsed_forum_id'];
+				if ($this->auth === null || $this->auth->acl_get('f_read', $fid))
 				{
-					$browsing_label = 'Browsing Forum: ' . $forums_info[$f_id];
-					$browsing_url = 'viewforum.php?f=' . $f_id;
-				}
-				else
-				{
-					$browsing_label = 'Browsing Forum';
+					$browsing_label = 'In: ' . $forums_info[$fid];
+					$browsing_url = 'viewforum.php?f=' . $fid;
 				}
 			}
-			else if (strpos($page, 'posting') !== false)
-			{
-				if ($can_read_forum && isset($forums_info[$f_id]))
-				{
-					$browsing_label = 'Posting in ' . $forums_info[$f_id];
-				}
-				else
-				{
-					$browsing_label = 'Writing a Post';
-				}
-			}
-			else if (strpos($page, 'dashboard') !== false || strpos($page, 'ucc') !== false)
+			else if (strpos($u['session_page'], 'app.php/dashboard') !== false)
 			{
 				$browsing_label = 'Viewing Dashboard';
 			}
-			else if (strpos($page, 'memberlist') !== false)
+			else if (strpos($u['session_page'], 'ucp.php') !== false)
 			{
-				$browsing_label = 'Browsing Members / Profile';
+				$browsing_label = 'User Control Panel';
 			}
-			else if (strpos($page, 'search') !== false)
+			else if (strpos($u['session_page'], 'memberlist.php') !== false)
 			{
-				$browsing_label = 'Searching Forums';
-			}
-			else if (strpos($page, 'adm') !== false)
-			{
-				$browsing_label = 'Administration Control Panel';
-			}
-			else if (strpos($page, 'index') !== false || empty($page))
-			{
-				$browsing_label = 'Viewing Board Index';
-				$browsing_url = 'index.php';
+				$browsing_label = 'Memberlist';
 			}
 
-			$items[] = [
+			$can_view_prof = $this->can_view_user_profile($viewer_id, $u['user_id']);
+			$avatar_html = $this->get_user_avatar_or_group_or_initial($u, $u['username'], $u['group_id']);
+
+			$final_users[] = [
 				'user_id'          => (int) $u['user_id'],
 				'username'         => $u['username'],
 				'user_colour'      => $u['user_colour'],
-				'avatar'           => $u['user_avatar'],
-				'avatar_type'      => $u['user_avatar_type'],
-				'avatar_width'     => $u['user_avatar_width'],
-				'avatar_height'    => $u['user_avatar_height'],
-				'session_time'     => (int) $u['session_time'],
-				'time_ago'         => $this->format_time_ago((int) $u['session_time']),
+				'avatar_html'      => $avatar_html,
+				'time_ago'         => $this->format_time_ago($u['session_time']),
 				'browsing_label'   => $browsing_label,
 				'browsing_url'     => $browsing_url,
-				'can_view_profile' => $this->can_view_user_profile($viewer_id, (int) $u['user_id']),
+				'can_view_profile' => $can_view_prof,
 			];
 		}
 
-		return $items;
+		return $final_users;
 	}
 
-	/**
-	 * Retrieve hot topics for Day, Week, or Month
-	 */
+	/* =========================================================================
+	 * HOT TOPICS
+	 * ========================================================================= */
+
 	public function get_hot_topics($viewer_id, $period = 'day', $limit = 10)
 	{
-		$since = time() - 86400; // default 1 day
-		if ($period === 'week')
+		$now = time();
+		switch ($period)
 		{
-			$since = time() - (86400 * 7);
-		}
-		else if ($period === 'month')
-		{
-			$since = time() - (86400 * 30);
+			case 'week':
+				$since = $now - (7 * 86400);
+				break;
+			case 'month':
+				$since = $now - (30 * 86400);
+				break;
+			case 'day':
+			default:
+				$since = $now - 86400;
+				break;
 		}
 
-		// Find forums readable by viewer
-		$readable_forums = [];
-		$sql = 'SELECT forum_id FROM ' . FORUMS_TABLE . ' WHERE forum_type = ' . FORUM_POST;
-		$res = $this->db->sql_query($sql);
+		$sql = 'SELECT p.topic_id, COUNT(p.post_id) as period_posts
+				FROM ' . POSTS_TABLE . ' p
+				WHERE p.post_time >= ' . $since . '
+				  AND p.post_visibility = ' . ITEM_APPROVED . '
+				GROUP BY p.topic_id
+				ORDER BY period_posts DESC';
+		$res = $this->db->sql_query_limit($sql, $limit * 3);
+
+		$topic_counts = [];
 		while ($row = $this->db->sql_fetchrow($res))
 		{
-			$fid = (int) $row['forum_id'];
-			if ($this->auth === null || $this->auth->acl_get('f_read', $fid))
-			{
-				$readable_forums[] = $fid;
-			}
+			$topic_counts[(int) $row['topic_id']] = (int) $row['period_posts'];
 		}
 		$this->db->sql_freeresult($res);
 
-		if (empty($readable_forums))
+		if (empty($topic_counts))
 		{
 			return [];
 		}
 
-		// Query topics with recent posts in period
-		$sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_poster, t.topic_first_poster_name, t.topic_first_poster_colour,
-				       t.topic_views, t.topic_posts_approved, t.topic_time, t.topic_last_post_time, t.topic_last_poster_name, t.topic_last_poster_colour,
-				       f.forum_name, COUNT(p.post_id) as period_posts
-				FROM ' . POSTS_TABLE . ' p
-				JOIN ' . TOPICS_TABLE . ' t ON p.topic_id = t.topic_id
+		$sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_poster, t.topic_first_poster_name,
+				       t.topic_first_poster_colour, t.topic_last_post_time, t.topic_last_poster_name,
+				       t.topic_last_poster_colour, t.topic_views, t.topic_posts_approved,
+				       f.forum_name
+				FROM ' . TOPICS_TABLE . ' t
 				JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
-				WHERE p.post_time >= ' . $since . '
-				  AND ' . $this->db->sql_in_set('t.forum_id', $readable_forums) . '
-				  AND t.topic_visibility = 1
-				GROUP BY t.topic_id, t.forum_id, t.topic_title, t.topic_poster, t.topic_first_poster_name, t.topic_first_poster_colour,
-				         t.topic_views, t.topic_posts_approved, t.topic_time, t.topic_last_post_time, t.topic_last_poster_name, t.topic_last_poster_colour,
-				         f.forum_name
-				ORDER BY period_posts DESC, t.topic_views DESC';
-		$result = $this->db->sql_query_limit($sql, $limit);
-		$topics = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
+				WHERE ' . $this->db->sql_in_set('t.topic_id', array_keys($topic_counts)) . '
+				  AND t.topic_visibility = ' . ITEM_APPROVED;
+		$res = $this->db->sql_query($sql);
 
-		// If no posts in selected period, fallback to active topics
-		if (empty($topics))
+		$hot_topics = [];
+		while ($row = $this->db->sql_fetchrow($res))
 		{
-			$sql = 'SELECT t.topic_id, t.forum_id, t.topic_title, t.topic_poster, t.topic_first_poster_name, t.topic_first_poster_colour,
-					       t.topic_views, t.topic_posts_approved, t.topic_time, t.topic_last_post_time, t.topic_last_poster_name, t.topic_last_poster_colour,
-					       f.forum_name, 0 as period_posts
-					FROM ' . TOPICS_TABLE . ' t
-					JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
-					WHERE ' . $this->db->sql_in_set('t.forum_id', $readable_forums) . '
-					  AND t.topic_visibility = 1
-					ORDER BY t.topic_last_post_time DESC';
-			$result = $this->db->sql_query_limit($sql, $limit);
-			$topics = $this->db->sql_fetchrowset($result);
-			$this->db->sql_freeresult($result);
+			$fid = (int) $row['forum_id'];
+			if ($this->auth !== null && !$this->auth->acl_get('f_read', $fid))
+			{
+				continue;
+			}
+			$tid = (int) $row['topic_id'];
+			$row['period_posts'] = isset($topic_counts[$tid]) ? $topic_counts[$tid] : 0;
+			$hot_topics[] = $row;
 		}
+		$this->db->sql_freeresult($res);
 
-		return $topics;
+		usort($hot_topics, function ($a, $b) {
+			if ($a['period_posts'] === $b['period_posts'])
+			{
+				return $b['topic_last_post_time'] <=> $a['topic_last_post_time'];
+			}
+			return $b['period_posts'] <=> $a['period_posts'];
+		});
+
+		return array_slice($hot_topics, 0, $limit);
 	}
 
-	/**
-	 * Log a topic view to custom tracking table
-	 */
+	/* =========================================================================
+	 * VISITED TRACKING & PAGINATION (TOPICS, FORUMS, USERS, PROFILES)
+	 * ========================================================================= */
+
+	protected function ensure_view_time_schema()
+	{
+		static $checked = false;
+		if ($checked)
+		{
+			return;
+		}
+		$checked = true;
+
+		$tables = [
+			'booskit_dashboard_topic_views',
+			'booskit_dashboard_forum_views',
+			'booskit_dashboard_user_views',
+			'booskit_dashboard_profile_views',
+		];
+
+		foreach ($tables as $t)
+		{
+			$full_table = $this->table_prefix . $t;
+			try
+			{
+				@$this->db->sql_query('ALTER TABLE ' . $full_table . ' MODIFY view_time INT(11) UNSIGNED NOT NULL DEFAULT 0');
+			}
+			catch (\Exception $e)
+			{
+				// Ignore if already modified or restricted
+			}
+		}
+	}
+
 	public function log_topic_view($user_id, $topic_id, $forum_id)
 	{
 		$user_id = (int) $user_id;
@@ -545,126 +1186,459 @@ class dashboard_manager
 			return;
 		}
 
-		$table = $this->table_prefix . 'booskit_dashboard_topic_views';
+		$this->ensure_view_time_schema();
 		$now = time();
+		$table = $this->table_prefix . 'booskit_dashboard_topic_views';
 
-		// Check existing entry to update timestamp or insert
-		$sql = 'SELECT view_id FROM ' . $table . ' WHERE user_id = ' . $user_id . ' AND topic_id = ' . $topic_id;
-		$result = @$this->db->sql_query($sql);
-		if ($result && ($row = $this->db->sql_fetchrow($result)))
+		try
 		{
-			$this->db->sql_freeresult($result);
-			$sql = 'UPDATE ' . $table . ' SET view_time = ' . $now . ', forum_id = ' . $forum_id . ' WHERE view_id = ' . (int) $row['view_id'];
-			@$this->db->sql_query($sql);
-		}
-		else
-		{
-			if ($result)
+			$sql = 'SELECT view_id, view_time FROM ' . $table . ' WHERE user_id = ' . $user_id . ' AND topic_id = ' . $topic_id;
+			$res = @$this->db->sql_query($sql);
+			$row = $res ? $this->db->sql_fetchrow($res) : null;
+			if ($res) { $this->db->sql_freeresult($res); }
+
+			if ($row)
 			{
-				$this->db->sql_freeresult($result);
+				if ($now - (int)$row['view_time'] > 60)
+				{
+					$sql = 'UPDATE ' . $table . ' SET view_time = ' . $now . ', forum_id = ' . $forum_id . ' WHERE view_id = ' . (int)$row['view_id'];
+					@$this->db->sql_query($sql);
+				}
 			}
-			$sql_ary = [
-				'user_id'   => $user_id,
-				'topic_id'  => $topic_id,
-				'forum_id'  => $forum_id,
-				'view_time' => $now,
-			];
-			@$this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+			else
+			{
+				$sql_ary = [
+					'user_id'   => $user_id,
+					'topic_id'  => $topic_id,
+					'forum_id'  => $forum_id,
+					'view_time' => $now,
+				];
+				@$this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+			}
+		}
+		catch (\Exception $e)
+		{
+			// Safe fallback
 		}
 	}
 
-	/**
-	 * Retrieve recent topics viewed by target user
-	 */
-	public function get_user_recent_topics($viewer_id, $target_user_id, $limit = 20)
+	public function log_forum_view($user_id, $forum_id)
 	{
-		if (!$this->can_view_recent_topics($viewer_id, $target_user_id))
+		$user_id = (int) $user_id;
+		$forum_id = (int) $forum_id;
+		if ($user_id <= 0 || $forum_id <= 0) { return; }
+
+		$this->ensure_view_time_schema();
+		$now = time();
+		$table = $this->table_prefix . 'booskit_dashboard_forum_views';
+
+		try
 		{
-			return [];
+			$sql = 'SELECT view_id, view_time, view_count FROM ' . $table . ' WHERE user_id = ' . $user_id . ' AND forum_id = ' . $forum_id;
+			$res = @$this->db->sql_query($sql);
+			$row = $res ? $this->db->sql_fetchrow($res) : null;
+			if ($res) { $this->db->sql_freeresult($res); }
+
+			if ($row)
+			{
+				if ($now - (int)$row['view_time'] > 60)
+				{
+					$sql = 'UPDATE ' . $table . ' SET view_time = ' . $now . ', view_count = view_count + 1 WHERE view_id = ' . (int)$row['view_id'];
+					@$this->db->sql_query($sql);
+				}
+			}
+			else
+			{
+				$sql_ary = [
+					'user_id'    => $user_id,
+					'forum_id'   => $forum_id,
+					'view_time'  => $now,
+					'view_count' => 1,
+				];
+				@$this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+			}
+		}
+		catch (\Exception $e)
+		{
+			// Safe fallback
+		}
+	}
+
+	public function log_user_view($user_id, $viewed_user_id)
+	{
+		$user_id = (int) $user_id;
+		$viewed_user_id = (int) $viewed_user_id;
+		if ($user_id <= 0 || $viewed_user_id <= 0 || $user_id === $viewed_user_id) { return; }
+
+		$this->ensure_view_time_schema();
+		$now = time();
+		$table = $this->table_prefix . 'booskit_dashboard_user_views';
+
+		try
+		{
+			$sql = 'SELECT view_id, view_time, view_count FROM ' . $table . ' WHERE user_id = ' . $user_id . ' AND viewed_user_id = ' . $viewed_user_id;
+			$res = @$this->db->sql_query($sql);
+			$row = $res ? $this->db->sql_fetchrow($res) : null;
+			if ($res) { $this->db->sql_freeresult($res); }
+
+			if ($row)
+			{
+				if ($now - (int)$row['view_time'] > 60)
+				{
+					$sql = 'UPDATE ' . $table . ' SET view_time = ' . $now . ', view_count = view_count + 1 WHERE view_id = ' . (int)$row['view_id'];
+					@$this->db->sql_query($sql);
+				}
+			}
+			else
+			{
+				$sql_ary = [
+					'user_id'        => $user_id,
+					'viewed_user_id' => $viewed_user_id,
+					'view_time'      => $now,
+					'view_count'     => 1,
+				];
+				@$this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+			}
+		}
+		catch (\Exception $e)
+		{
+			// Safe fallback
+		}
+	}
+
+	public function log_dashboard_profile_view($user_id, $viewed_user_id)
+	{
+		$user_id = (int) $user_id;
+		$viewed_user_id = (int) $viewed_user_id;
+		if ($user_id <= 0 || $viewed_user_id <= 0 || $user_id === $viewed_user_id) { return; }
+
+		$this->ensure_view_time_schema();
+		$now = time();
+		$table = $this->table_prefix . 'booskit_dashboard_profile_views';
+
+		try
+		{
+			$sql = 'SELECT view_id, view_time, view_count FROM ' . $table . ' WHERE user_id = ' . $user_id . ' AND viewed_user_id = ' . $viewed_user_id;
+			$res = @$this->db->sql_query($sql);
+			$row = $res ? $this->db->sql_fetchrow($res) : null;
+			if ($res) { $this->db->sql_freeresult($res); }
+
+			if ($row)
+			{
+				if ($now - (int)$row['view_time'] > 60)
+				{
+					$sql = 'UPDATE ' . $table . ' SET view_time = ' . $now . ', view_count = view_count + 1 WHERE view_id = ' . (int)$row['view_id'];
+					@$this->db->sql_query($sql);
+				}
+			}
+			else
+			{
+				$sql_ary = [
+					'user_id'        => $user_id,
+					'viewed_user_id' => $viewed_user_id,
+					'view_time'      => $now,
+					'view_count'     => 1,
+				];
+				@$this->db->sql_query('INSERT INTO ' . $table . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+			}
+		}
+		catch (\Exception $e)
+		{
+			// Safe fallback
+		}
+	}
+
+	/* Visited Topics */
+	public function sync_historical_views($target_user_id)
+	{
+		$target_user_id = (int) $target_user_id;
+		if ($target_user_id <= 0)
+		{
+			return;
 		}
 
-		$target_user_id = (int) $target_user_id;
+		$this->ensure_view_time_schema();
 
-		// Collect topics from dashboard views table
+		$topics_track = defined('TOPICS_TRACK_TABLE') ? TOPICS_TRACK_TABLE : $this->table_prefix . 'topics_track';
+		$forums_track = defined('FORUMS_TRACK_TABLE') ? FORUMS_TRACK_TABLE : $this->table_prefix . 'forums_track';
+		$log_table    = defined('LOG_TABLE') ? LOG_TABLE : $this->table_prefix . 'log';
+
+		// 1. Backfill topic views from phpbb_topics_track
+		try
+		{
+			$sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_dashboard_topic_views (user_id, topic_id, forum_id, view_time)
+					SELECT tt.user_id, tt.topic_id, tt.forum_id, tt.mark_time
+					FROM ' . $topics_track . ' tt
+					WHERE tt.user_id = ' . $target_user_id . '
+					  AND NOT EXISTS (
+						  SELECT 1 FROM ' . $this->table_prefix . 'booskit_dashboard_topic_views dt
+						  WHERE dt.user_id = tt.user_id AND dt.topic_id = tt.topic_id
+					  )';
+			@$this->db->sql_query($sql);
+		}
+		catch (\Exception $e) {}
+
+		// 2. Backfill topic views from phpbb_log (e.g. topiclogviews or moderator log)
+		try
+		{
+			$sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_dashboard_topic_views (user_id, topic_id, forum_id, view_time)
+					SELECT l.user_id, l.topic_id, l.forum_id, MAX(l.log_time)
+					FROM ' . $log_table . ' l
+					WHERE l.user_id = ' . $target_user_id . ' AND l.topic_id > 0
+					  AND NOT EXISTS (
+						  SELECT 1 FROM ' . $this->table_prefix . 'booskit_dashboard_topic_views dt
+						  WHERE dt.user_id = l.user_id AND dt.topic_id = l.topic_id
+					  )
+					GROUP BY l.user_id, l.topic_id, l.forum_id';
+			@$this->db->sql_query($sql);
+		}
+		catch (\Exception $e) {}
+
+		// 3. Backfill forum views from phpbb_forums_track
+		try
+		{
+			$sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_dashboard_forum_views (user_id, forum_id, view_time, view_count)
+					SELECT ft.user_id, ft.forum_id, ft.mark_time, 1
+					FROM ' . $forums_track . ' ft
+					WHERE ft.user_id = ' . $target_user_id . '
+					  AND NOT EXISTS (
+						  SELECT 1 FROM ' . $this->table_prefix . 'booskit_dashboard_forum_views df
+						  WHERE df.user_id = ft.user_id AND df.forum_id = ft.forum_id
+					  )';
+			@$this->db->sql_query($sql);
+		}
+		catch (\Exception $e) {}
+
+		// 4. Backfill forum views from topics track (if forum views not yet recorded)
+		try
+		{
+			$sql = 'INSERT INTO ' . $this->table_prefix . 'booskit_dashboard_forum_views (user_id, forum_id, view_time, view_count)
+					SELECT tt.user_id, tt.forum_id, MAX(tt.mark_time), COUNT(tt.topic_id)
+					FROM ' . $topics_track . ' tt
+					WHERE tt.user_id = ' . $target_user_id . ' AND tt.forum_id > 0
+					  AND NOT EXISTS (
+						  SELECT 1 FROM ' . $this->table_prefix . 'booskit_dashboard_forum_views df
+						  WHERE df.user_id = tt.user_id AND df.forum_id = tt.forum_id
+					  )
+					GROUP BY tt.user_id, tt.forum_id';
+			@$this->db->sql_query($sql);
+		}
+		catch (\Exception $e) {}
+	}
+
+	public function get_user_visited_topics_count($viewer_id, $target_user_id)
+	{
+		if (!$this->can_view_recent_topics($viewer_id, $target_user_id)) { return 0; }
+		$this->sync_historical_views($target_user_id);
+		$table = $this->table_prefix . 'booskit_dashboard_topic_views';
+		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
+	}
+
+	public function get_user_visited_topics($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	{
+		if (!$this->can_view_recent_topics($viewer_id, $target_user_id)) { return []; }
+		$this->sync_historical_views($target_user_id);
+
 		$table = $this->table_prefix . 'booskit_dashboard_topic_views';
 		$sql = 'SELECT v.topic_id, v.forum_id, v.view_time,
 				       t.topic_title, t.topic_poster, t.topic_first_poster_name, t.topic_first_poster_colour,
-				       t.topic_views, t.topic_posts_approved, t.topic_last_post_time,
 				       f.forum_name
 				FROM ' . $table . ' v
 				JOIN ' . TOPICS_TABLE . ' t ON v.topic_id = t.topic_id
 				JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
-				WHERE v.user_id = ' . $target_user_id . '
+				WHERE v.user_id = ' . (int)$target_user_id . '
 				ORDER BY v.view_time DESC';
-		$result = @$this->db->sql_query_limit($sql, $limit);
-		$topics = [];
-		$seen_topics = [];
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
 
-		if ($result)
+		$topics = [];
+		if ($res)
 		{
-			while ($row = $this->db->sql_fetchrow($result))
+			while ($row = $this->db->sql_fetchrow($res))
 			{
 				$fid = (int) $row['forum_id'];
 				if ($this->auth !== null && !$this->auth->acl_get('f_read', $fid))
 				{
 					continue;
 				}
-				$tid = (int) $row['topic_id'];
-				$seen_topics[$tid] = true;
 				$topics[] = $row;
 			}
-			$this->db->sql_freeresult($result);
-		}
-
-		// Fallback to TOPICS_TRACK_TABLE if fewer than 5 records
-		if (count($topics) < 5)
-		{
-			$sql = 'SELECT tt.topic_id, tt.mark_time as view_time,
-					       t.forum_id, t.topic_title, t.topic_poster, t.topic_first_poster_name, t.topic_first_poster_colour,
-					       t.topic_views, t.topic_posts_approved, t.topic_last_post_time,
-					       f.forum_name
-					FROM ' . TOPICS_TRACK_TABLE . ' tt
-					JOIN ' . TOPICS_TABLE . ' t ON tt.topic_id = t.topic_id
-					JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
-					WHERE tt.user_id = ' . $target_user_id . '
-					ORDER BY tt.mark_time DESC';
-			$res = @$this->db->sql_query_limit($sql, $limit);
-			if ($res)
-			{
-				while ($row = $this->db->sql_fetchrow($res))
-				{
-					$fid = (int) $row['forum_id'];
-					if ($this->auth !== null && !$this->auth->acl_get('f_read', $fid))
-					{
-						continue;
-					}
-					$tid = (int) $row['topic_id'];
-					if (isset($seen_topics[$tid]))
-					{
-						continue;
-					}
-					$seen_topics[$tid] = true;
-					$topics[] = $row;
-					if (count($topics) >= $limit)
-					{
-						break;
-					}
-				}
-				$this->db->sql_freeresult($res);
-			}
+			$this->db->sql_freeresult($res);
 		}
 
 		return $topics;
 	}
 
-	/**
-	 * Retrieve records ISSUED by the target user across all extensions
-	 */
+	/* Visited Forums */
+	public function get_user_visited_forums_count($viewer_id, $target_user_id)
+	{
+		if (!$this->can_view_visited_forums($viewer_id, $target_user_id)) { return 0; }
+		$this->sync_historical_views($target_user_id);
+		$table = $this->table_prefix . 'booskit_dashboard_forum_views';
+		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
+	}
+
+	public function get_user_visited_forums($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	{
+		if (!$this->can_view_visited_forums($viewer_id, $target_user_id)) { return []; }
+		$this->sync_historical_views($target_user_id);
+
+		$table = $this->table_prefix . 'booskit_dashboard_forum_views';
+		$sql = 'SELECT v.forum_id, v.view_time, v.view_count, f.forum_name, f.forum_desc
+				FROM ' . $table . ' v
+				JOIN ' . FORUMS_TABLE . ' f ON v.forum_id = f.forum_id
+				WHERE v.user_id = ' . (int)$target_user_id . '
+				ORDER BY v.view_time DESC';
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+
+		$forums = [];
+		if ($res)
+		{
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$fid = (int) $row['forum_id'];
+				if ($this->auth !== null && !$this->auth->acl_get('f_read', $fid))
+				{
+					continue;
+				}
+				$forums[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+
+		return $forums;
+	}
+
+	/* Visited Users (Memberlist views) */
+	public function get_user_visited_users_count($viewer_id, $target_user_id)
+	{
+		if (!$this->can_view_visited_users($viewer_id, $target_user_id)) { return 0; }
+		$table = $this->table_prefix . 'booskit_dashboard_user_views';
+		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
+	}
+
+	public function get_user_visited_users($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	{
+		if (!$this->can_view_visited_users($viewer_id, $target_user_id)) { return []; }
+
+		$table = $this->table_prefix . 'booskit_dashboard_user_views';
+		$sql = 'SELECT v.viewed_user_id, v.view_time, v.view_count,
+				       u.user_id, u.username, u.user_colour, u.user_avatar, u.user_avatar_type, u.group_id
+				FROM ' . $table . ' v
+				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
+				WHERE v.user_id = ' . (int)$target_user_id . '
+				ORDER BY v.view_time DESC';
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+
+		$users = [];
+		if ($res)
+		{
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['avatar_html'] = $this->get_user_avatar_or_group_or_initial($row, $row['username'], $row['group_id']);
+				$row['can_view_profile'] = $this->can_view_user_profile($viewer_id, $row['user_id']);
+				$users[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+
+		return $users;
+	}
+
+	/* Visited Dashboard Profiles */
+	public function get_user_visited_profiles_count($viewer_id, $target_user_id)
+	{
+		if (!$this->can_view_visited_profiles($viewer_id, $target_user_id)) { return 0; }
+		$table = $this->table_prefix . 'booskit_dashboard_profile_views';
+		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
+	}
+
+	public function get_user_visited_profiles($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	{
+		if (!$this->can_view_visited_profiles($viewer_id, $target_user_id)) { return []; }
+
+		$table = $this->table_prefix . 'booskit_dashboard_profile_views';
+		$sql = 'SELECT v.viewed_user_id, v.view_time, v.view_count,
+				       u.user_id, u.username, u.user_colour, u.user_avatar, u.user_avatar_type, u.group_id
+				FROM ' . $table . ' v
+				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
+				WHERE v.user_id = ' . (int)$target_user_id . '
+				ORDER BY v.view_time DESC';
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+
+		$profiles = [];
+		if ($res)
+		{
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['avatar_html'] = $this->get_user_avatar_or_group_or_initial($row, $row['username'], $row['group_id']);
+				$row['can_view_profile'] = $this->can_view_user_profile($viewer_id, $row['user_id']);
+				$profiles[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+
+		return $profiles;
+	}
+
+	public function get_recent_dashboard_profile_views($viewer_id, $limit = 15)
+	{
+		$table = $this->table_prefix . 'booskit_dashboard_profile_views';
+		$sql = 'SELECT v.user_id as viewer_user_id, v.viewed_user_id, v.view_time,
+				       u1.username as viewer_username, u1.user_colour as viewer_colour, u1.group_id as viewer_group_id,
+				       u2.username as viewed_username, u2.user_colour as viewed_colour, u2.group_id as viewed_group_id
+				FROM ' . $table . ' v
+				JOIN ' . USERS_TABLE . ' u1 ON v.user_id = u1.user_id
+				JOIN ' . USERS_TABLE . ' u2 ON v.viewed_user_id = u2.user_id
+				ORDER BY v.view_time DESC';
+		$res = @$this->db->sql_query_limit($sql, $limit);
+
+		$items = [];
+		if ($res)
+		{
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['viewer_avatar_html'] = $this->get_user_avatar_or_group_or_initial($row, $row['viewer_username'], $row['viewer_group_id']);
+				$row['viewed_avatar_html'] = $this->get_user_avatar_or_group_or_initial($row, $row['viewed_username'], $row['viewed_group_id']);
+				$row['can_view_target_profile'] = $this->can_view_user_profile($viewer_id, $row['viewed_user_id']);
+				$row['time_ago'] = $this->format_time_ago($row['view_time']);
+				$items[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+		return $items;
+	}
+
+	/* Backward compatible wrapper */
+	public function get_user_recent_topics($viewer_id, $target_user_id, $limit = 30)
+	{
+		return $this->get_user_visited_topics($viewer_id, $target_user_id, 0, $limit);
+	}
+
+	/* =========================================================================
+	 * ISSUED ACTIONS
+	 * ========================================================================= */
+
 	public function get_user_issued_actions($viewer_id, $target_user_id)
 	{
 		if (!$this->can_view_issued_actions($viewer_id, $target_user_id))
 		{
-			return [];
+			return ['disciplinary' => [], 'ic_disciplinary' => [], 'commendations' => [], 'awards' => []];
 		}
 
 		$target_user_id = (int) $target_user_id;
@@ -679,12 +1653,12 @@ class dashboard_manager
 		if ($this->is_ext_enabled('booskit/disciplinary'))
 		{
 			$disc_defs = $this->get_definitions('booskit/disciplinary');
-			$sql = 'SELECT d.*, u.username, u.user_colour
+			$sql = 'SELECT d.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
 					JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
 					WHERE d.issuer_user_id = ' . $target_user_id . '
 					ORDER BY d.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 20);
+			$res = @$this->db->sql_query_limit($sql, 30);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -696,17 +1670,17 @@ class dashboard_manager
 			}
 		}
 
-		// IC Disciplinary issued
+		// IC Disciplinary issued (Fix: explicitly select u.user_id)
 		if ($this->is_ext_enabled('booskit/icdisciplinary'))
 		{
 			$ic_defs = $this->get_definitions('booskit/icdisciplinary');
-			$sql = 'SELECT r.*, c.character_name, u.username, u.user_colour
+			$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_ic_records r
 					JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
 					JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 					WHERE r.issuer_user_id = ' . $target_user_id . '
 					ORDER BY r.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 20);
+			$res = @$this->db->sql_query_limit($sql, 30);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -721,12 +1695,12 @@ class dashboard_manager
 		// Commendations issued
 		if ($this->is_ext_enabled('booskit/commendations'))
 		{
-			$sql = 'SELECT c.*, u.username, u.user_colour
+			$sql = 'SELECT c.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_commendations c
 					JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 					WHERE c.issuer_user_id = ' . $target_user_id . '
 					ORDER BY c.commendation_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 20);
+			$res = @$this->db->sql_query_limit($sql, 30);
 			if ($res)
 			{
 				$issued['commendations'] = $this->db->sql_fetchrowset($res);
@@ -738,12 +1712,12 @@ class dashboard_manager
 		if ($this->is_ext_enabled('booskit/awards'))
 		{
 			$award_defs = $this->get_definitions('booskit/awards');
-			$sql = 'SELECT a.*, u.username, u.user_colour
+			$sql = 'SELECT a.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_awards_users a
 					JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
 					WHERE a.issuer_user_id = ' . $target_user_id . '
 					ORDER BY a.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 20);
+			$res = @$this->db->sql_query_limit($sql, 30);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -758,14 +1732,14 @@ class dashboard_manager
 		return $issued;
 	}
 
-	/**
-	 * Retrieve comprehensive profile data for a target user respecting all extension permissions
-	 */
+	/* =========================================================================
+	 * PROFILE DATA AGGREGATION
+	 * ========================================================================= */
+
 	public function get_user_profile_data($viewer_id, $target_user_id)
 	{
 		$target_user_id = (int) $target_user_id;
 
-		// Fetch user core data
 		$sql = 'SELECT u.*, g.group_name, g.group_colour
 				FROM ' . USERS_TABLE . ' u
 				LEFT JOIN ' . GROUPS_TABLE . ' g ON u.group_id = g.group_id
@@ -779,22 +1753,27 @@ class dashboard_manager
 			return null;
 		}
 
+		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
+
 		$data = [
-			'user'            => $user_data,
-			'awards'          => [],
-			'career'          => [],
-			'commendations'   => [],
-			'disciplinary'    => [],
-			'ic_disciplinary' => [],
-			'gtaw_characters' => [],
-			'issued'          => $this->get_user_issued_actions($viewer_id, $target_user_id),
-			'recent_topics'   => $this->get_user_recent_topics($viewer_id, $target_user_id),
-			'can_view_issued' => $this->can_view_issued_actions($viewer_id, $target_user_id),
-			'can_view_topics' => $this->can_view_recent_topics($viewer_id, $target_user_id),
+			'user'                     => $user_data,
+			'avatar_html'              => $this->get_user_avatar_or_group_or_initial($user_data, $user_data['username'], $user_data['group_id']),
+			'awards'                   => [],
+			'career'                   => [],
+			'commendations'            => [],
+			'disciplinary'             => [],
+			'ic_disciplinary'          => [],
+			'gtaw_characters'          => [],
+			'issued'                   => $this->get_user_issued_actions($viewer_id, $target_user_id),
+			'can_view_issued'          => !empty($perms['view_issued']),
+			'can_view_topics'          => !empty($perms['view_visited_topics']),
+			'can_view_visited_forums'  => !empty($perms['view_visited_forums']),
+			'can_view_visited_users'   => !empty($perms['view_visited_users']),
+			'can_view_visited_profiles'=> !empty($perms['view_visited_profiles']),
 		];
 
 		// Awards
-		if ($this->is_ext_enabled('booskit/awards') && !empty($this->config['booskit_dashboard_include_awards']))
+		if ($this->is_ext_enabled('booskit/awards') && !empty($this->config['booskit_dashboard_include_awards']) && !empty($perms['view_awards']))
 		{
 			$where = $this->get_module_where_clause('awards', $viewer_id);
 			if ($where !== false)
@@ -820,7 +1799,7 @@ class dashboard_manager
 		}
 
 		// Career
-		if ($this->is_ext_enabled('booskit/usercareer') && !empty($this->config['booskit_dashboard_include_career']))
+		if ($this->is_ext_enabled('booskit/usercareer') && !empty($this->config['booskit_dashboard_include_career']) && !empty($perms['view_career']))
 		{
 			$where = $this->get_module_where_clause('career', $viewer_id);
 			if ($where !== false)
@@ -846,7 +1825,7 @@ class dashboard_manager
 		}
 
 		// Commendations
-		if ($this->is_ext_enabled('booskit/commendations') && !empty($this->config['booskit_dashboard_include_commendations']))
+		if ($this->is_ext_enabled('booskit/commendations') && !empty($this->config['booskit_dashboard_include_commendations']) && !empty($perms['view_commendations']))
 		{
 			$where = $this->get_module_where_clause('commendations', $viewer_id);
 			if ($where !== false)
@@ -867,7 +1846,7 @@ class dashboard_manager
 		}
 
 		// Disciplinary
-		if ($this->is_ext_enabled('booskit/disciplinary') && !empty($this->config['booskit_dashboard_include_disciplinary']))
+		if ($this->is_ext_enabled('booskit/disciplinary') && !empty($this->config['booskit_dashboard_include_disciplinary']) && !empty($perms['view_disciplinary']))
 		{
 			$where = $this->get_module_where_clause('disciplinary', $viewer_id);
 			if ($where !== false)
@@ -897,7 +1876,7 @@ class dashboard_manager
 		}
 
 		// IC Disciplinary
-		if ($this->is_ext_enabled('booskit/icdisciplinary') && !empty($this->config['booskit_dashboard_include_ic_disciplinary']))
+		if ($this->is_ext_enabled('booskit/icdisciplinary') && !empty($this->config['booskit_dashboard_include_ic_disciplinary']) && !empty($perms['view_ic_disciplinary']))
 		{
 			$where = $this->get_module_where_clause('ic_disciplinary', $viewer_id);
 			if ($where !== false)
@@ -907,9 +1886,10 @@ class dashboard_manager
 						       a.username as archived_by_name, a.user_colour as archived_by_colour
 						FROM ' . $this->table_prefix . 'booskit_ic_records r
 						JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
-						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 						LEFT JOIN ' . USERS_TABLE . ' i ON r.issuer_user_id = i.user_id
 						LEFT JOIN ' . USERS_TABLE . ' a ON r.archived_by_user_id = a.user_id
+						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
+						LEFT JOIN ' . $this->table_prefix . 'booskit_ic_definitions def ON r.disciplinary_type_id = def.disc_id
 						WHERE c.user_id = ' . $target_user_id . ' AND (' . $where . ')
 						ORDER BY r.issue_date DESC';
 				$res = @$this->db->sql_query($sql);
@@ -926,10 +1906,10 @@ class dashboard_manager
 			}
 		}
 
-		// GTAW Tracker characters
-		if ($this->is_ext_enabled('booskit/gtawtracker'))
+		// GTAW Characters
+		if ($this->is_ext_enabled('booskit/gtawtracker') && !empty($perms['view_gtaw']))
 		{
-			$sql = 'SELECT * FROM ' . $this->table_prefix . 'booskit_gtaw_characters WHERE user_id = ' . $target_user_id;
+			$sql = 'SELECT * FROM ' . $this->table_prefix . 'booskit_gtaw_characters WHERE user_id = ' . $target_user_id . ' ORDER BY character_name ASC';
 			$res = @$this->db->sql_query($sql);
 			if ($res)
 			{
@@ -941,398 +1921,372 @@ class dashboard_manager
 		return $data;
 	}
 
-	/**
-	 * UCC Aggregation methods (feeds for dashboard)
-	 */
-	public function get_latest_awards($viewer_id, $limit = 5, $start = 0)
+	/* =========================================================================
+	 * FEED & LISTING HELPERS (UCC PARITY)
+	 * ========================================================================= */
+
+	public function get_latest_awards($viewer_id, $limit = 6, $start = 0)
 	{
 		if (!$this->is_ext_enabled('booskit/awards') || empty($this->config['booskit_dashboard_include_awards'])) return [];
-
 		$where = $this->get_module_where_clause('awards', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT a.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
+		$sql = 'SELECT a.*, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
 				FROM ' . $this->table_prefix . 'booskit_awards_users a
 				JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON a.issuer_user_id = i.user_id
 				WHERE ' . $where . '
 				ORDER BY a.issue_date DESC';
-		$result = $this->db->sql_query_limit($sql, $limit, $start);
-		$data = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
-		return $data;
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+		$items = [];
+		if ($res)
+		{
+			$defs = $this->get_definitions('booskit/awards');
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['type_name'] = $this->get_definition_name('booskit/awards', $row['award_definition_id'], $defs);
+				$items[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+		return $items;
 	}
 
 	public function get_total_awards($viewer_id)
 	{
-		if (!$this->is_ext_enabled('booskit/awards')) return 0;
+		if (!$this->is_ext_enabled('booskit/awards') || empty($this->config['booskit_dashboard_include_awards'])) return 0;
 		$where = $this->get_module_where_clause('awards', $viewer_id);
 		if ($where === false) return 0;
-
-		$sql = 'SELECT COUNT(a.award_id) as total 
-				FROM ' . $this->table_prefix . 'booskit_awards_users a
-				JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
-				WHERE ' . $where;
-		$result = $this->db->sql_query($sql);
-		$total = (int) $this->db->sql_fetchfield('total');
-		$this->db->sql_freeresult($result);
-		return $total;
+		$sql = 'SELECT COUNT(a.issue_id) as total FROM ' . $this->table_prefix . 'booskit_awards_users a JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id WHERE ' . $where;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('total') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
 	}
 
-	public function get_latest_career($viewer_id, $limit = 5, $start = 0)
+	public function get_latest_career($viewer_id, $limit = 6, $start = 0)
 	{
 		if (!$this->is_ext_enabled('booskit/usercareer') || empty($this->config['booskit_dashboard_include_career'])) return [];
-
 		$where = $this->get_module_where_clause('career', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT n.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
+		$sql = 'SELECT n.*, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
 				FROM ' . $this->table_prefix . 'booskit_career_notes n
 				JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON n.issuer_user_id = i.user_id
 				WHERE ' . $where . '
 				ORDER BY n.note_date DESC';
-		$result = $this->db->sql_query_limit($sql, $limit, $start);
-		$data = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
-		return $data;
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+		$items = [];
+		if ($res)
+		{
+			$defs = $this->get_definitions('booskit/usercareer');
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['type_name'] = $this->get_definition_name('booskit/usercareer', $row['career_type_id'], $defs);
+				$items[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+		return $items;
 	}
 
 	public function get_total_career($viewer_id)
 	{
-		if (!$this->is_ext_enabled('booskit/usercareer')) return 0;
+		if (!$this->is_ext_enabled('booskit/usercareer') || empty($this->config['booskit_dashboard_include_career'])) return 0;
 		$where = $this->get_module_where_clause('career', $viewer_id);
 		if ($where === false) return 0;
-
-		$sql = 'SELECT COUNT(n.note_id) as total 
-				FROM ' . $this->table_prefix . 'booskit_career_notes n
-				JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id
-				WHERE ' . $where;
-		$result = $this->db->sql_query($sql);
-		$total = (int) $this->db->sql_fetchfield('total');
-		$this->db->sql_freeresult($result);
-		return $total;
+		$sql = 'SELECT COUNT(n.note_id) as total FROM ' . $this->table_prefix . 'booskit_career_notes n JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id WHERE ' . $where;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('total') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
 	}
 
-	public function get_latest_commendations($viewer_id, $limit = 5, $start = 0)
+	public function get_latest_commendations($viewer_id, $limit = 6, $start = 0)
 	{
 		if (!$this->is_ext_enabled('booskit/commendations') || empty($this->config['booskit_dashboard_include_commendations'])) return [];
-
 		$where = $this->get_module_where_clause('commendations', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT c.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
+		$sql = 'SELECT c.*, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
 				FROM ' . $this->table_prefix . 'booskit_commendations c
 				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON c.issuer_user_id = i.user_id
 				WHERE ' . $where . '
 				ORDER BY c.commendation_date DESC';
-		$result = $this->db->sql_query_limit($sql, $limit, $start);
-		$data = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
-		return $data;
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+		$items = $res ? $this->db->sql_fetchrowset($res) : [];
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $items;
 	}
 
 	public function get_total_commendations($viewer_id)
 	{
-		if (!$this->is_ext_enabled('booskit/commendations')) return 0;
+		if (!$this->is_ext_enabled('booskit/commendations') || empty($this->config['booskit_dashboard_include_commendations'])) return 0;
 		$where = $this->get_module_where_clause('commendations', $viewer_id);
 		if ($where === false) return 0;
-
-		$sql = 'SELECT COUNT(c.commendation_id) as total 
-				FROM ' . $this->table_prefix . 'booskit_commendations c
-				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
-				WHERE ' . $where;
-		$result = $this->db->sql_query($sql);
-		$total = (int) $this->db->sql_fetchfield('total');
-		$this->db->sql_freeresult($result);
-		return $total;
+		$sql = 'SELECT COUNT(c.commendation_id) as total FROM ' . $this->table_prefix . 'booskit_commendations c JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id WHERE ' . $where;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('total') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
 	}
 
-	public function get_latest_disciplinary($viewer_id, $limit = 5, $start = 0)
+	public function get_latest_disciplinary($viewer_id, $limit = 6, $start = 0)
 	{
 		if (!$this->is_ext_enabled('booskit/disciplinary') || empty($this->config['booskit_dashboard_include_disciplinary'])) return [];
-
 		$where = $this->get_module_where_clause('disciplinary', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT d.*, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour, a.username as archived_by_name, a.user_colour as archived_by_colour
+		$sql = 'SELECT d.*, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
 				FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
 				JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON d.issuer_user_id = i.user_id
-				LEFT JOIN ' . USERS_TABLE . ' a ON d.archived_by_user_id = a.user_id
 				LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
 				WHERE ' . $where . '
 				ORDER BY d.issue_date DESC';
-		$result = $this->db->sql_query_limit($sql, $limit, $start);
-		$data = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
-		return $data;
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+		$items = [];
+		if ($res)
+		{
+			$defs = $this->get_definitions('booskit/disciplinary');
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['type_name'] = $this->get_definition_name('booskit/disciplinary', $row['disciplinary_type_id'], $defs);
+				$items[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+		return $items;
 	}
 
 	public function get_total_disciplinary($viewer_id)
 	{
-		if (!$this->is_ext_enabled('booskit/disciplinary')) return 0;
+		if (!$this->is_ext_enabled('booskit/disciplinary') || empty($this->config['booskit_dashboard_include_disciplinary'])) return 0;
 		$where = $this->get_module_where_clause('disciplinary', $viewer_id);
 		if ($where === false) return 0;
-
-		$sql = 'SELECT COUNT(d.record_id) as total 
-				FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
-				JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
-				LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
-				WHERE ' . $where;
-		$result = $this->db->sql_query($sql);
-		$total = (int) $this->db->sql_fetchfield('total');
-		$this->db->sql_freeresult($result);
-		return $total;
+		$sql = 'SELECT COUNT(d.record_id) as total FROM ' . $this->table_prefix . 'booskit_disciplinary_users d JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id WHERE ' . $where;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('total') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
 	}
 
-	public function get_latest_ic_disciplinary($viewer_id, $limit = 5, $start = 0)
+	public function get_latest_ic_disciplinary($viewer_id, $limit = 6, $start = 0)
 	{
 		if (!$this->is_ext_enabled('booskit/icdisciplinary') || empty($this->config['booskit_dashboard_include_ic_disciplinary'])) return [];
-
 		$where = $this->get_module_where_clause('ic_disciplinary', $viewer_id);
 		if ($where === false) return [];
 
-		$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour, a.username as archived_by_name, a.user_colour as archived_by_colour
+		$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour, i.username as issuer_name, i.user_colour as issuer_colour
 				FROM ' . $this->table_prefix . 'booskit_ic_records r
 				JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
 				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 				LEFT JOIN ' . USERS_TABLE . ' i ON r.issuer_user_id = i.user_id
-				LEFT JOIN ' . USERS_TABLE . ' a ON r.archived_by_user_id = a.user_id
+				LEFT JOIN ' . $this->table_prefix . 'booskit_ic_definitions def ON r.disciplinary_type_id = def.disc_id
 				WHERE ' . $where . '
 				ORDER BY r.issue_date DESC';
-		$result = $this->db->sql_query_limit($sql, $limit, $start);
-		$data = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
-		return $data;
+		$res = @$this->db->sql_query_limit($sql, $limit, $start);
+		$items = [];
+		if ($res)
+		{
+			$defs = $this->get_definitions('booskit/icdisciplinary');
+			while ($row = $this->db->sql_fetchrow($res))
+			{
+				$row['type_name'] = $this->get_definition_name('booskit/icdisciplinary', $row['disciplinary_type_id'], $defs);
+				$items[] = $row;
+			}
+			$this->db->sql_freeresult($res);
+		}
+		return $items;
 	}
 
 	public function get_total_ic_disciplinary($viewer_id)
 	{
-		if (!$this->is_ext_enabled('booskit/icdisciplinary')) return 0;
+		if (!$this->is_ext_enabled('booskit/icdisciplinary') || empty($this->config['booskit_dashboard_include_ic_disciplinary'])) return 0;
 		$where = $this->get_module_where_clause('ic_disciplinary', $viewer_id);
 		if ($where === false) return 0;
-
-		$sql = 'SELECT COUNT(r.record_id) as total 
-				FROM ' . $this->table_prefix . 'booskit_ic_records r
-				JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
-				JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
-				WHERE ' . $where;
-		$result = $this->db->sql_query($sql);
-		$total = (int) $this->db->sql_fetchfield('total');
-		$this->db->sql_freeresult($result);
-		return $total;
+		$sql = 'SELECT COUNT(r.record_id) as total FROM ' . $this->table_prefix . 'booskit_ic_records r JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id LEFT JOIN ' . $this->table_prefix . 'booskit_ic_definitions def ON r.disciplinary_type_id = def.disc_id WHERE ' . $where;
+		$res = @$this->db->sql_query($sql);
+		$cnt = $res ? (int)$this->db->sql_fetchfield('total') : 0;
+		if ($res) { $this->db->sql_freeresult($res); }
+		return $cnt;
 	}
 
 	public function get_module_where_clause($module, $viewer_id)
 	{
-		$viewer_id = (int) $viewer_id;
-		$user_groups = $this->get_user_groups($viewer_id);
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		$is_admin = $this->is_admin($viewer_id);
+
+		if ($is_admin)
+		{
+			return '1=1';
+		}
 
 		switch ($module)
 		{
 			case 'awards':
-				if (isset($this->config['booskit_awards_perm_system']) && $this->config['booskit_awards_perm_system'] === 'groups')
-				{
-					return $this->get_groups_perm_where_clause('awards', $viewer_id, $user_groups);
-				}
-
-				$l1 = $this->get_config_groups('booskit_awards_access_l1');
-				$l2 = $this->get_config_groups('booskit_awards_access_l2');
 				$full = $this->get_config_groups('booskit_awards_access_full');
-				
-				$viewer_level = 0;
-				if (array_intersect($user_groups, $full)) $viewer_level = 3;
-				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
-				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+				if (array_intersect($viewer_groups, $full)) return '1=1';
 
-				if ($viewer_level >= 3) return '1=1';
-				
-				$where = 'u.user_id = ' . $viewer_id;
-				if ($viewer_level > 0)
+				$l3 = $this->get_config_groups('booskit_awards_access_l3');
+				$l2 = $this->get_config_groups('booskit_awards_access_l2');
+				$l1 = $this->get_config_groups('booskit_awards_access_l1');
+
+				$max_level = 0;
+				if (array_intersect($viewer_groups, $l3)) $max_level = 3;
+				else if (array_intersect($viewer_groups, $l2)) $max_level = 2;
+				else if (array_intersect($viewer_groups, $l1)) $max_level = 1;
+
+				if ($max_level > 0)
 				{
-					$protected_groups = $full;
-					if ($viewer_level == 1) $protected_groups = array_merge($protected_groups, $l2, $l1);
-					else if ($viewer_level == 2) $protected_groups = array_merge($protected_groups, $l2);
-
-					$where .= ' OR (u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
+					return '1=1';
 				}
-				return $where;
+				return 'u.user_id = ' . (int)$viewer_id;
 
 			case 'career':
-				if (isset($this->config['booskit_career_perm_system']) && $this->config['booskit_career_perm_system'] === 'groups')
-				{
-					return $this->get_groups_perm_where_clause('career', $viewer_id, $user_groups);
-				}
-
-				$l1 = $this->get_config_groups('booskit_career_access_l1');
-				$l2 = $this->get_config_groups('booskit_career_access_l2');
-				$l3 = $this->get_config_groups('booskit_career_access_l3');
 				$full = $this->get_config_groups('booskit_career_access_full');
-				
-				$viewer_level = 0;
-				if (array_intersect($user_groups, $full)) $viewer_level = 4;
-				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
-				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
-				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+				if (array_intersect($viewer_groups, $full)) return '1=1';
 
-				if ($viewer_level >= 1) return '1=1';
+				$l2 = $this->get_config_groups('booskit_career_access_l2');
+				$l1 = $this->get_config_groups('booskit_career_access_l1');
 
-				$global = $this->get_config_groups('booskit_career_access_view_global');
-				if (array_intersect($user_groups, $global)) return '1=1';
+				$max_level = 0;
+				if (array_intersect($viewer_groups, $l2)) $max_level = 2;
+				else if (array_intersect($viewer_groups, $l1)) $max_level = 1;
 
-				$local = $this->get_config_groups('booskit_career_access_view');
-				if (array_intersect($user_groups, $local)) return 'u.user_id = ' . $viewer_id;
-				return false;
+				if ($max_level > 0)
+				{
+					return '1=1';
+				}
+				return 'u.user_id = ' . (int)$viewer_id;
 
 			case 'commendations':
-				if (isset($this->config['booskit_commendations_perm_system']) && $this->config['booskit_commendations_perm_system'] === 'groups')
-				{
-					return $this->get_groups_perm_where_clause('commendations', $viewer_id, $user_groups);
-				}
-
-				$l1 = $this->get_config_groups('booskit_commendations_access_l1');
-				$l2 = $this->get_config_groups('booskit_commendations_access_l2');
-				$l3 = $this->get_config_groups('booskit_commendations_access_l3');
 				$full = $this->get_config_groups('booskit_commendations_access_full');
-				
-				$viewer_level = 0;
-				if (array_intersect($user_groups, $full)) $viewer_level = 4;
-				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
-				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
-				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
+				if (array_intersect($viewer_groups, $full)) return '1=1';
 
-				if ($viewer_level >= 1) return '1=1';
+				$l2 = $this->get_config_groups('booskit_commendations_access_l2');
+				$l1 = $this->get_config_groups('booskit_commendations_access_l1');
 
-				$global = $this->get_config_groups('booskit_commendations_access_view_global');
-				if (array_intersect($user_groups, $global)) return '1=1';
-
-				$local = $this->get_config_groups('booskit_commendations_access_view');
-				if (array_intersect($user_groups, $local)) return 'u.user_id = ' . $viewer_id;
-				return false;
+				if (array_intersect($viewer_groups, $l2) || array_intersect($viewer_groups, $l1))
+				{
+					return '1=1';
+				}
+				return 'u.user_id = ' . (int)$viewer_id;
 
 			case 'disciplinary':
-				if (isset($this->config['booskit_disciplinary_perm_system']) && $this->config['booskit_disciplinary_perm_system'] === 'groups')
+			case 'ic_disciplinary':
+				$perm_system = ($module === 'disciplinary')
+					? (isset($this->config['booskit_disciplinary_perm_system']) ? $this->config['booskit_disciplinary_perm_system'] : 'legacy')
+					: (isset($this->config['booskit_icdisciplinary_perm_system']) ? $this->config['booskit_icdisciplinary_perm_system'] : 'legacy');
+
+				if ($perm_system === 'groups')
 				{
-					return $this->get_groups_perm_where_clause('disciplinary', $viewer_id, $user_groups);
+					return $this->get_groups_module_where_clause($module, $viewer_id, $viewer_groups);
 				}
 
-				$l1 = $this->get_config_groups('booskit_disciplinary_access_l1');
-				$l2 = $this->get_config_groups('booskit_disciplinary_access_l2');
-				$l3 = $this->get_config_groups('booskit_disciplinary_access_l3');
-				$full = $this->get_config_groups('booskit_disciplinary_access_full');
-				
-				$viewer_level = 0;
-				if (array_intersect($user_groups, $full)) $viewer_level = 4;
-				else if (array_intersect($user_groups, $l3)) $viewer_level = 3;
-				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
-				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
-
-				if ($viewer_level == 4) return '1=1';
-
-				$where_parts = [];
-				if ($viewer_level > 0)
+				if ($module === 'disciplinary')
 				{
-					$protected_groups = $full;
-					if ($viewer_level <= 3) $protected_groups = array_merge($protected_groups, $l3);
-					if ($viewer_level <= 2) $protected_groups = array_merge($protected_groups, $l2);
-					if ($viewer_level <= 1) $protected_groups = array_merge($protected_groups, $l1);
-					
-					$where_parts[] = '(u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
-				}
-
-				$global = $this->get_config_groups('booskit_disciplinary_access_view_global');
-				if (array_intersect($user_groups, $global)) return '1=1';
-
-				$exempted = $this->get_config_groups('booskit_disciplinary_access_view_exempted');
-				$local = $this->get_config_groups('booskit_disciplinary_access_view_local');
-				if (array_intersect($user_groups, array_merge($exempted, $local))) 
-				{
-					$where_parts[] = '(u.user_id = ' . $viewer_id . ' AND (def.locally_viewable = 1 OR def.locally_viewable IS NULL))';
-				}
-
-				$limited = $this->get_config_groups('booskit_disciplinary_access_view_limited');
-				if (array_intersect($user_groups, $limited))
-				{
-					$map = $this->get_limited_view_map();
-					$target_group_ids = [];
-					foreach ($user_groups as $g_id)
+					$global_groups = $this->get_config_groups('booskit_disciplinary_access_view_global');
+					if (array_intersect($viewer_groups, $global_groups))
 					{
-						if (isset($map[$g_id]))
+						$defs = $this->get_definitions('booskit/disciplinary');
+						$globally_viewable_ids = [];
+						if ($this->config['booskit_disciplinary_source'] === 'local')
 						{
-							$target_group_ids = array_merge($target_group_ids, $map[$g_id]);
+							$sql = 'SELECT disc_id FROM ' . $this->table_prefix . 'booskit_disciplinary_definitions WHERE globally_viewable = 1';
+							$res = @$this->db->sql_query($sql);
+							if ($res)
+							{
+								while ($row = $this->db->sql_fetchrow($res)) $globally_viewable_ids[] = $row['disc_id'];
+								$this->db->sql_freeresult($res);
+							}
+						}
+						if (!empty($globally_viewable_ids))
+						{
+							return $this->db->sql_in_set('d.disciplinary_type_id', $globally_viewable_ids);
 						}
 					}
-					
-					if (!empty($target_group_ids))
+
+					$full = $this->get_config_groups('booskit_disciplinary_access_full');
+					if (array_intersect($viewer_groups, $full)) return '1=1';
+
+					$l3 = $this->get_config_groups('booskit_disciplinary_access_l3');
+					$l2 = $this->get_config_groups('booskit_disciplinary_access_l2');
+					$l1 = $this->get_config_groups('booskit_disciplinary_access_l1');
+
+					$viewer_level = 0;
+					if (array_intersect($viewer_groups, $l3)) $viewer_level = 3;
+					else if (array_intersect($viewer_groups, $l2)) $viewer_level = 2;
+					else if (array_intersect($viewer_groups, $l1)) $viewer_level = 1;
+
+					if ($viewer_level > 0)
 					{
-						$target_group_ids = array_unique($target_group_ids);
-						$where_parts[] = '(def.globally_viewable = 1 AND u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $target_group_ids) . '))';
+						return '1=1';
 					}
+
+					$local_groups = $this->get_config_groups('booskit_disciplinary_access_view_local');
+					if (array_intersect($viewer_groups, $local_groups))
+					{
+						$user_groups = $this->get_user_groups($viewer_id);
+						if (!empty($user_groups))
+						{
+							return 'u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $user_groups) . ')';
+						}
+					}
+
+					$limited_groups = $this->get_config_groups('booskit_disciplinary_access_view_limited');
+					if (array_intersect($viewer_groups, $limited_groups))
+					{
+						$map = $this->get_limited_view_map();
+						$target_groups = [];
+						foreach ($viewer_groups as $vg)
+						{
+							if (isset($map[$vg]))
+							{
+								$target_groups = array_merge($target_groups, $map[$vg]);
+							}
+						}
+						$target_groups = array_unique($target_groups);
+						if (!empty($target_groups))
+						{
+							return 'u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $target_groups) . ')';
+						}
+					}
+
+					$exempted = $this->get_config_groups('booskit_disciplinary_access_view_exempted');
+					if (array_intersect($viewer_groups, $exempted))
+					{
+						return 'u.user_id = ' . (int)$viewer_id;
+					}
+
+					return false;
 				}
-
-				if (empty($where_parts)) return false;
-				return '(' . implode(' OR ', $where_parts) . ')';
-
-			case 'ic_disciplinary':
-				if (isset($this->config['booskit_icdisciplinary_perm_system']) && $this->config['booskit_icdisciplinary_perm_system'] === 'groups')
+				else
 				{
-					return $this->get_groups_perm_where_clause('ic_disciplinary', $viewer_id, $user_groups);
+					$full = $this->get_config_groups('booskit_icdisciplinary_access_full');
+					if (array_intersect($viewer_groups, $full)) return '1=1';
+
+					$l2 = $this->get_config_groups('booskit_icdisciplinary_access_l2');
+					$l1 = $this->get_config_groups('booskit_icdisciplinary_access_l1');
+
+					if (array_intersect($viewer_groups, $l2) || array_intersect($viewer_groups, $l1))
+					{
+						return '1=1';
+					}
+
+					return 'u.user_id = ' . (int)$viewer_id;
 				}
-
-				$l1 = $this->get_config_groups('booskit_icdisciplinary_access_l1');
-				$l2 = $this->get_config_groups('booskit_icdisciplinary_access_l2');
-				$full = $this->get_config_groups('booskit_icdisciplinary_access_full');
-
-				$viewer_level = 0;
-				if (array_intersect($user_groups, $full)) $viewer_level = 4;
-				else if (array_intersect($user_groups, $l2)) $viewer_level = 2;
-				else if (array_intersect($user_groups, $l1)) $viewer_level = 1;
-
-				if ($viewer_level == 4) return '1=1';
-				if ($viewer_level == 0) return false;
-
-				$protected_groups = $full;
-				if ($viewer_level <= 2) $protected_groups = array_merge($protected_groups, $l2);
-				if ($viewer_level <= 1) $protected_groups = array_merge($protected_groups, $l1);
-
-				return '(u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $protected_groups) . '))';
 		}
 
 		return '1=1';
 	}
 
-	protected function get_groups_perm_where_clause($module, $viewer_id, $user_groups)
+	protected function get_groups_module_where_clause($module, $viewer_id, $viewer_groups)
 	{
-		$table = '';
-		$type_column = '';
-
-		switch ($module)
-		{
-			case 'awards':
-				$table = $this->table_prefix . 'booskit_awards_perm_groups';
-				break;
-			case 'career':
-				$table = $this->table_prefix . 'booskit_career_perm_groups';
-				break;
-			case 'commendations':
-				$table = $this->table_prefix . 'booskit_commendations_perm_groups';
-				break;
-			case 'disciplinary':
-				$table = $this->table_prefix . 'booskit_disciplinary_perm_groups';
-				$type_column = 'd.disciplinary_type_id';
-				break;
-			case 'ic_disciplinary':
-				$table = $this->table_prefix . 'booskit_icdisciplinary_perm_groups';
-				$type_column = 'r.disciplinary_type_id';
-				break;
-		}
-
-		if (empty($table))
-		{
-			return '1=1';
-		}
+		$table = ($module === 'disciplinary') ? $this->table_prefix . 'booskit_disciplinary_perm_groups' : $this->table_prefix . 'booskit_icdisciplinary_perm_groups';
+		$type_column = ($module === 'disciplinary') ? 'd.disciplinary_type_id' : 'r.disciplinary_type_id';
 
 		$sql = 'SELECT * FROM ' . $table . ' ORDER BY perm_group_id ASC';
 		$result = @$this->db->sql_query($sql);
@@ -1346,57 +2300,47 @@ class dashboard_manager
 		while ($pg = $this->db->sql_fetchrow($result))
 		{
 			$applies_to = !empty($pg['applies_to']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['applies_to'])))) : [];
-			if (empty($applies_to) || !array_intersect($user_groups, $applies_to))
+			if (empty($applies_to) || !array_intersect($viewer_groups, $applies_to))
 			{
 				continue;
 			}
 
 			$perms = !empty($pg['permissions']) ? json_decode($pg['permissions'], true) : [];
+			$types = isset($perms['types']) ? $perms['types'] : $perms;
 
 			$allowed_types = [];
 			$allowed_types_archived = [];
-			if ($module === 'disciplinary' || $module === 'ic_disciplinary')
+			if (is_array($types))
 			{
-				if (empty($perms['types']) || !is_array($perms['types']))
+				foreach ($types as $def_id => $p)
 				{
-					continue;
-				}
-
-				foreach ($perms['types'] as $def_id => $type_perms)
-				{
-					if (!empty($type_perms['view']))
+					if (!empty($p['view']))
 					{
 						$allowed_types[] = $def_id;
 					}
-					if (!empty($type_perms['view_archived']))
+					if (!empty($p['view_archived']))
 					{
 						$allowed_types_archived[] = $def_id;
 					}
 				}
-
-				if (empty($allowed_types) && empty($allowed_types_archived))
-				{
-					continue;
-				}
 			}
-			else
+
+			if (empty($allowed_types) && empty($allowed_types_archived))
 			{
-				if (empty($perms['view']))
-				{
-					continue;
-				}
+				continue;
 			}
 
 			$exclude_groups = !empty($pg['exclude_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $pg['exclude_groups'])))) : [];
-			
 			$power_parts = [];
+
 			if (!empty($pg['power_over_all']))
 			{
 				$power_parts[] = '1=1';
 			}
 			if (!empty($pg['power_over_self']))
 			{
-				if ($module === 'awards')
+				$user_groups = $this->get_user_groups($viewer_id);
+				if (!empty($user_groups))
 				{
 					$power_parts[] = '(u.user_id = ' . (int)$viewer_id . ' OR u.user_id IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $user_groups) . '))';
 				}
@@ -1426,23 +2370,20 @@ class dashboard_manager
 				$pg_clause .= ' AND u.user_id NOT IN (SELECT user_id FROM ' . USER_GROUP_TABLE . ' WHERE ' . $this->db->sql_in_set('group_id', $exclude_groups) . ')';
 			}
 
-			if (!empty($type_column))
+			$arch_column = ($module === 'disciplinary') ? 'd.is_archived' : 'r.is_archived';
+			$type_conds = [];
+			if (!empty($allowed_types))
 			{
-				$arch_column = ($module === 'disciplinary') ? 'd.is_archived' : 'r.is_archived';
-				$type_conds = [];
-				if (!empty($allowed_types))
-				{
-					$type_conds[] = '(' . $arch_column . ' = 0 AND ' . $this->db->sql_in_set($type_column, $allowed_types) . ')';
-				}
-				if (!empty($allowed_types_archived))
-				{
-					$type_conds[] = '(' . $arch_column . ' = 1 AND ' . $this->db->sql_in_set($type_column, $allowed_types_archived) . ')';
-				}
+				$type_conds[] = '(' . $arch_column . ' = 0 AND ' . $this->db->sql_in_set($type_column, $allowed_types) . ')';
+			}
+			if (!empty($allowed_types_archived))
+			{
+				$type_conds[] = '(' . $arch_column . ' = 1 AND ' . $this->db->sql_in_set($type_column, $allowed_types_archived) . ')';
+			}
 
-				if (!empty($type_conds))
-				{
-					$pg_clause .= ' AND (' . implode(' OR ', $type_conds) . ')';
-				}
+			if (!empty($type_conds))
+			{
+				$pg_clause .= ' AND (' . implode(' OR ', $type_conds) . ')';
 			}
 
 			$where_clauses[] = '(' . $pg_clause . ')';

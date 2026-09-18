@@ -27,11 +27,21 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_USER_NOT_FOUND'      => 'User was not found. Please verify the username and try again.',
 	'DASHBOARD_BACK'                => 'Back to Dashboard',
 	'DASHBOARD_VIEW_PROFILE'        => 'Open Profile',
+	'DASHBOARD_OPEN_PROFILE'        => 'Open Dashboard Profile',
+	'DASHBOARD_PROFILE'             => 'Dashboard Profile',
 	'DASHBOARD_MEMBERLIST_PROFILE'  => 'Standard Profile',
 	'DASHBOARD_SEND_PM'             => 'Send Message',
+	'DASHBOARD_ACTIONS'             => 'Actions',
+	'DASHBOARD_ISSUE_ACTION'        => 'Issue Action',
+	'DASHBOARD_ISSUE_DISCIPLINARY'  => 'Issue Disciplinary',
+	'DASHBOARD_ISSUE_IC_DISCIPLINARY'=> 'Issue IC Record',
+	'DASHBOARD_ISSUE_AWARD'         => 'Give Award',
+	'DASHBOARD_ISSUE_CAREER'        => 'Add Career Note',
+	'DASHBOARD_ISSUE_COMMENDATION'  => 'Give Commendation',
 
 	// Statistics
 	'DASHBOARD_STAT_TOTAL_MEMBERS'  => 'Total Members',
+	'DASHBOARD_STAT_TOTAL_ACTIONS'  => 'Total Actions',
 	'DASHBOARD_STAT_ONLINE_NOW'     => 'Online Now',
 	'DASHBOARD_STAT_ACTIVE_TODAY'   => 'Active Today',
 	'DASHBOARD_STAT_TOPICS_POSTS'   => 'Topics & Posts',
@@ -64,7 +74,10 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_TAB_COMMENDATIONS'   => 'Commendations',
 	'DASHBOARD_TAB_GTAW'            => 'GTAW Characters',
 	'DASHBOARD_TAB_ISSUED'          => 'Actions Issued',
-	'DASHBOARD_TAB_RECENT_TOPICS'   => 'Recent Topics Visited',
+	'DASHBOARD_TAB_RECENT_TOPICS'   => 'Topics Visited',
+	'DASHBOARD_TAB_VISITED_FORUMS'  => 'Forums Visited',
+	'DASHBOARD_TAB_VISITED_USERS'   => 'Users Visited',
+	'DASHBOARD_TAB_VISITED_PROFILES'=> 'Profiles Visited',
 
 	// Profile Labels & Details
 	'DASHBOARD_MEMBER_SINCE'        => 'Joined',
@@ -88,9 +101,14 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_ISSUED_COMM_TITLE'   => 'Commendations Issued',
 	'DASHBOARD_ISSUED_AWARDS_TITLE' => 'Awards Issued',
 
-	// Recent topics visited
-	'DASHBOARD_VISITED_AT'          => 'Visited',
+	// Visited tracking
+	'DASHBOARD_VISITED_AT'          => 'Last Visited',
+	'DASHBOARD_VISIT_COUNT'         => 'Visits',
 	'DASHBOARD_IN_FORUM'            => 'in',
+	'DASHBOARD_FORUM'               => 'Forum',
+	'DASHBOARD_USER'                => 'User',
+	'DASHBOARD_VIEWED_PROFILE'      => 'Dashboard Profile',
+	'DASHBOARD_PROFILES_VISITED_TITLE' => 'Recently Visited Dashboard Profiles',
 
 	// Module Feeds
 	'DASHBOARD_AWARDS_TITLE'        => 'Recent Awards',
