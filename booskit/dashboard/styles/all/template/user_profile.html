@@ -55,11 +55,6 @@
 						<i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_ISSUE_DISCIPLINARY') }}
 					</a>
 					{% endif %}
-					{% if S_CAN_ISSUE_IC_DISCIPLINARY and U_ISSUE_IC_DISCIPLINARY %}
-					<a href="{{ U_ISSUE_IC_DISCIPLINARY }}" class="dash-dropdown-item">
-						<i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_ISSUE_IC_DISCIPLINARY') }}
-					</a>
-					{% endif %}
 					{% if S_CAN_ISSUE_AWARD and U_ISSUE_AWARD %}
 					<a href="{{ U_ISSUE_AWARD }}" class="dash-dropdown-item">
 						<i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_ISSUE_AWARD') }}
@@ -210,13 +205,8 @@
 	{% if S_CAN_VIEW_IC_DISCIPLINARY %}
 	<div id="tab-ic-disciplinary" class="profile-tab-content">
 		<div class="dash-card">
-			<div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+			<div class="dash-card-header">
 				<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_TAB_IC_DISCIPLINARY') }}</h3>
-				{% if S_CAN_ISSUE_IC_DISCIPLINARY and U_ISSUE_IC_DISCIPLINARY %}
-				<a href="{{ U_ISSUE_IC_DISCIPLINARY }}" class="dash-btn dash-btn-primary dash-btn-sm">
-					<i class="icon fa-plus fa-fw"></i> {{ lang('DASHBOARD_ISSUE_IC_DISCIPLINARY') }}
-				</a>
-				{% endif %}
 			</div>
 			<div class="dash-card-body no-padding">
 				{% for item in profile_ic_disciplinary %}

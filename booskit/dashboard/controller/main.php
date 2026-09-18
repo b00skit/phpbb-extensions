@@ -379,13 +379,11 @@ class main
 
 		// Permissions to issue cross-extension actions
 		$can_issue_disc = $this->dashboard_manager->can_issue_disciplinary($viewer_id, $user_id);
-		$can_issue_ic = $this->dashboard_manager->can_issue_ic_disciplinary($viewer_id, $user_id);
 		$can_issue_award = $this->dashboard_manager->can_issue_award($viewer_id, $user_id);
 		$can_issue_career = $this->dashboard_manager->can_issue_career($viewer_id, $user_id);
 		$can_issue_comm = $this->dashboard_manager->can_issue_commendation($viewer_id, $user_id);
 
 		$u_issue_disc = $can_issue_disc ? $this->get_safe_route('booskit_disciplinary_add_record', ['user_id' => $user_id]) : '';
-		$u_issue_ic = $can_issue_ic ? $this->get_safe_route('booskit_icdisciplinary_add_character', ['user_id' => $user_id]) : '';
 		$u_issue_award = $can_issue_award ? $this->get_safe_route('booskit_awards_add_award', ['user_id' => $user_id]) : '';
 		$u_issue_career = $can_issue_career ? $this->get_safe_route('booskit_usercareer_add_note', ['user_id' => $user_id]) : '';
 		$u_issue_comm = $can_issue_comm ? $this->get_safe_route('booskit_commendations_add', ['user_id' => $user_id]) : '';
@@ -523,15 +521,13 @@ class main
 
 			'S_CAN_ISSUE_DISCIPLINARY'   => $can_issue_disc,
 			'U_ISSUE_DISCIPLINARY'       => $u_issue_disc,
-			'S_CAN_ISSUE_IC_DISCIPLINARY'=> $can_issue_ic,
-			'U_ISSUE_IC_DISCIPLINARY'    => $u_issue_ic,
 			'S_CAN_ISSUE_AWARD'          => $can_issue_award,
 			'U_ISSUE_AWARD'              => $u_issue_award,
 			'S_CAN_ISSUE_CAREER'         => $can_issue_career,
 			'U_ISSUE_CAREER'             => $u_issue_career,
 			'S_CAN_ISSUE_COMMENDATION'   => $can_issue_comm,
 			'U_ISSUE_COMMENDATION'       => $u_issue_comm,
-			'S_CAN_ISSUE_ANY'            => ($can_issue_disc || $can_issue_ic || $can_issue_award || $can_issue_career || $can_issue_comm),
+			'S_CAN_ISSUE_ANY'            => ($can_issue_disc || $can_issue_award || $can_issue_career || $can_issue_comm),
 
 			'COUNT_AWARDS'               => count($profile['awards']),
 			'COUNT_CAREER'               => count($profile['career']),

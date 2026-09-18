@@ -412,26 +412,6 @@ class dashboard_manager
 		return $this->is_admin($viewer_id);
 	}
 
-	public function can_issue_ic_disciplinary($viewer_id, $target_user_id)
-	{
-		global $phpbb_container;
-		if (!$this->is_ext_enabled('booskit/icdisciplinary'))
-		{
-			return false;
-		}
-		if ($phpbb_container !== null && $phpbb_container->has('booskit.icdisciplinary.service.ic_manager'))
-		{
-			try {
-				$ic_mgr = $phpbb_container->get('booskit.icdisciplinary.service.ic_manager');
-				$can_create = method_exists($ic_mgr, 'can_create_character') && $ic_mgr->can_create_character($viewer_id, $target_user_id);
-				$can_add = method_exists($ic_mgr, 'can_add_record') && $ic_mgr->can_add_record($viewer_id, $target_user_id);
-				return (bool) ($can_create || $can_add);
-			} catch (\Throwable $e) {
-				// fallback
-			}
-		}
-		return $this->is_admin($viewer_id);
-	}
 
 	public function can_issue_award($viewer_id, $target_user_id)
 	{
