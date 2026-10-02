@@ -30,6 +30,130 @@ class main_module
 		$dashboard_manager = $phpbb_container->get('booskit.dashboard.manager');
 		$action = $request->variable('action', '');
 
+		if ($mode === 'statistics')
+		{
+			$this->tpl_name = 'acp_dashboard_statistics';
+			$this->page_title = 'ACP_BOOSKIT_DASHBOARD_STATISTICS';
+
+			// Delete category
+			if ($action === 'delete_cat')
+			{
+				$cat_id = $request->variable('cat_id', 0);
+				if ($cat_id > 0)
+				{
+					$dashboard_manager->delete_stat_category($cat_id);
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+			}
+
+			// Delete stat definition
+			if ($action === 'delete_stat')
+			{
+				$stat_id = $request->variable('stat_id', 0);
+				if ($stat_id > 0)
+				{
+					$dashboard_manager->delete_stat_definition($stat_id);
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+			}
+
+			if ($request->is_set_post('submit'))
+			{
+				if (!check_form_key($form_key))
+				{
+					trigger_error('FORM_INVALID');
+				}
+
+				if ($action === 'add_cat')
+				{
+					$cat_name = $request->variable('new_cat_name', '', true);
+					$cat_desc = $request->variable('new_cat_desc', '', true);
+					$cat_order = $request->variable('new_cat_order', 0);
+					$allowed_groups = $request->variable('new_cat_allowed_groups', [0]);
+					$use_allowed_groups = $request->variable('new_cat_use_allowed_groups', [0]);
+
+					if (!empty($cat_name))
+					{
+						$dashboard_manager->add_stat_category($cat_name, $cat_desc, $cat_order, $allowed_groups, $use_allowed_groups);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+
+				if ($action === 'update_cat')
+				{
+					$cat_id = $request->variable('cat_id', 0);
+					$cat_name = $request->variable('cat_name', '', true);
+					$cat_desc = $request->variable('cat_desc', '', true);
+					$cat_order = $request->variable('cat_order', 0);
+					$allowed_groups = $request->variable('allowed_groups', [0]);
+					$use_allowed_groups = $request->variable('use_allowed_groups', [0]);
+
+					if ($cat_id > 0 && !empty($cat_name))
+					{
+						$dashboard_manager->update_stat_category($cat_id, $cat_name, $cat_desc, $cat_order, $allowed_groups, $use_allowed_groups);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+
+				if ($action === 'add_stat')
+				{
+					$stat_tag = $request->variable('new_stat_tag', '', true);
+					$stat_title = $request->variable('new_stat_title', '', true);
+					$cat_id = $request->variable('new_cat_id', 0);
+					$stat_color = $request->variable('new_stat_color', '#2563eb', true);
+					$stat_desc = $request->variable('new_stat_desc', '', true);
+					$stat_order = $request->variable('new_stat_order', 0);
+					$allowed_groups = $request->variable('new_stat_allowed_groups', [0]);
+					$use_allowed_groups = $request->variable('new_stat_use_allowed_groups', [0]);
+
+					if (!empty($stat_tag) && !empty($stat_title))
+					{
+						$dashboard_manager->add_stat_definition($stat_tag, $stat_title, $cat_id, $stat_color, $stat_desc, $stat_order, $allowed_groups, $use_allowed_groups);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+
+				if ($action === 'update_stat')
+				{
+					$stat_id = $request->variable('stat_id', 0);
+					$stat_tag = $request->variable('stat_tag', '', true);
+					$stat_title = $request->variable('stat_title', '', true);
+					$cat_id = $request->variable('cat_id', 0);
+					$stat_color = $request->variable('stat_color', '#2563eb', true);
+					$stat_desc = $request->variable('stat_desc', '', true);
+					$stat_order = $request->variable('stat_order', 0);
+					$allowed_groups = $request->variable('allowed_groups', [0]);
+					$use_allowed_groups = $request->variable('use_allowed_groups', [0]);
+
+					if ($stat_id > 0 && !empty($stat_tag) && !empty($stat_title))
+					{
+						$dashboard_manager->update_stat_definition($stat_id, $stat_tag, $stat_title, $cat_id, $stat_color, $stat_desc, $stat_order, $allowed_groups, $use_allowed_groups);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+
+				if ($action === 'resync_stats')
+				{
+					$count = $dashboard_manager->resync_all_stat_posts();
+					trigger_error(sprintf($user->lang['DASHBOARD_RESYNC_SUCCESS'], $count) . adm_back_link($this->u_action));
+				}
+			}
+
+			$phpbb_groups = $dashboard_manager->get_phpbb_groups();
+			$categories = $dashboard_manager->get_stat_categories();
+			$definitions = $dashboard_manager->get_stat_definitions();
+
+			$template->assign_vars([
+				'STAT_CATEGORIES'  => $categories,
+				'STAT_DEFINITIONS' => $definitions,
+				'PHPBB_GROUPS'     => $phpbb_groups,
+				'U_ACTION'         => $this->u_action,
+			]);
+
+			return;
+		}
+
+		// Mode: settings (Default)
 		// Handle permission group deletion
 		if ($action === 'delete_perm_group')
 		{
@@ -125,6 +249,7 @@ class main_module
 				$config->set('booskit_dashboard_group_metric_group', $request->variable('booskit_dashboard_group_metric_group', 0));
 				$config->set('booskit_dashboard_group_metric_label', $request->variable('booskit_dashboard_group_metric_label', '', true));
 
+				$config->set('booskit_dashboard_include_stats_tab', $request->variable('booskit_dashboard_include_stats_tab', 0));
 				$config->set('booskit_dashboard_allowed_groups', $request->variable('booskit_dashboard_allowed_groups', ''));
 				$config->set('booskit_dashboard_include_awards', $request->variable('booskit_dashboard_include_awards', 0));
 				$config->set('booskit_dashboard_include_career', $request->variable('booskit_dashboard_include_career', 0));
@@ -154,6 +279,7 @@ class main_module
 			'BOOSKIT_DASHBOARD_GROUP_METRIC_GROUP'       => (int) (isset($config['booskit_dashboard_group_metric_group']) ? $config['booskit_dashboard_group_metric_group'] : 0),
 			'BOOSKIT_DASHBOARD_GROUP_METRIC_LABEL'       => isset($config['booskit_dashboard_group_metric_label']) ? $config['booskit_dashboard_group_metric_label'] : '',
 
+			'BOOSKIT_DASHBOARD_INCLUDE_STATS_TAB'        => (int) (isset($config['booskit_dashboard_include_stats_tab']) ? $config['booskit_dashboard_include_stats_tab'] : 1),
 			'BOOSKIT_DASHBOARD_ALLOWED_GROUPS'           => isset($config['booskit_dashboard_allowed_groups']) ? $config['booskit_dashboard_allowed_groups'] : '',
 			'BOOSKIT_DASHBOARD_INCLUDE_AWARDS'           => (int) (isset($config['booskit_dashboard_include_awards']) ? $config['booskit_dashboard_include_awards'] : 1),
 			'BOOSKIT_DASHBOARD_INCLUDE_CAREER'           => (int) (isset($config['booskit_dashboard_include_career']) ? $config['booskit_dashboard_include_career'] : 1),

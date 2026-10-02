@@ -86,6 +86,12 @@
 
 	<!-- Profile Navigation Tabs -->
 	<div class="profile-tabs-nav">
+		{% if S_CAN_VIEW_STATISTICS %}
+		<button type="button" class="profile-tab-btn" data-tab="tab-statistics">
+			<i class="icon fa-bar-chart fa-fw"></i> {{ lang('DASHBOARD_TAB_STATISTICS') }}
+			<span class="profile-tab-badge">{{ COUNT_MONTHLY_STATS }}</span>
+		</button>
+		{% endif %}
 		{% if S_CAN_VIEW_DISCIPLINARY %}
 		<button type="button" class="profile-tab-btn" data-tab="tab-disciplinary">
 			<i class="icon fa-gavel fa-fw"></i> {{ lang('DASHBOARD_TAB_DISCIPLINARY') }}
@@ -153,6 +159,144 @@
 		</button>
 		{% endif %}
 	</div>
+
+	<!-- TAB: Statistics -->
+	{% if S_CAN_VIEW_STATISTICS %}
+	<div id="tab-statistics" class="profile-tab-content">
+
+		<!-- Month / Year Roll-back Navigation Bar -->
+		<div class="dash-month-picker-card">
+			<div class="dash-month-picker-inner">
+				<a href="{{ U_STAT_PREV_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm" title="{{ lang('DASHBOARD_PREV_MONTH') }}">
+					<i class="icon fa-chevron-left fa-fw"></i> {{ lang('DASHBOARD_PREV_MONTH') }}
+				</a>
+
+				<form method="get" action="{{ U_STAT_PROFILE_BASE }}" class="dash-month-select-form">
+					<select name="stat_month" class="dash-select" onchange="this.form.submit();">
+						{% for m in stat_month_options %}
+							<option value="{{ m.VALUE }}" {% if m.SELECTED %}selected="selected"{% endif %}>{{ m.LABEL }}</option>
+						{% endfor %}
+					</select>
+					<select name="stat_year" class="dash-select" onchange="this.form.submit();">
+						{% for y in stat_year_options %}
+							<option value="{{ y.VALUE }}" {% if y.SELECTED %}selected="selected"{% endif %}>{{ y.LABEL }}</option>
+						{% endfor %}
+					</select>
+					<button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">{{ lang('GO') }}</button>
+				</form>
+
+				<div style="display: flex; gap: 8px;">
+					<a href="{{ U_STAT_CUR_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm">
+						<i class="icon fa-calendar-check-o fa-fw"></i> {{ lang('DASHBOARD_CURRENT_MONTH') }}
+					</a>
+					<a href="{{ U_STAT_NEXT_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm" title="{{ lang('DASHBOARD_NEXT_MONTH') }}">
+						{{ lang('DASHBOARD_NEXT_MONTH') }} <i class="icon fa-chevron-right fa-fw"></i>
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<!-- Category Cards with Stats Loop -->
+		{% for cat in profile_stat_categories %}
+		<div class="dash-card" style="margin-bottom: 20px;">
+			<div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+				<div>
+					<h3 class="dash-card-title">
+						<i class="icon fa-folder fa-fw" style="color: #2563eb;"></i> {{ cat.CAT_NAME }}
+					</h3>
+					{% if cat.CAT_DESC %}
+					<p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">{{ cat.CAT_DESC }}</p>
+					{% endif %}
+				</div>
+				<div style="margin-top: 4px;">
+					<span class="badge" style="background: #eff6ff; color: #1e40af; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem;">
+						{{ cat.CAT_TOTAL|number_format }} {{ lang('DASHBOARD_POSTS_LOWER') }}
+					</span>
+				</div>
+			</div>
+			<div class="dash-card-body no-padding">
+				{% for stat in cat.statistics %}
+				<div class="dash-stat-row">
+					<div class="dash-stat-main">
+						<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+							<span class="dashboard-stat-badge" style="background-color: {{ stat.STAT_COLOR }}; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; display: inline-block;">
+								<i class="icon fa-tag fa-fw"></i> {{ stat.STAT_TITLE }}
+							</span>
+							<code style="font-size: 0.8rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569;">[stat={{ stat.STAT_TAG }}]</code>
+						</div>
+						{% if stat.STAT_DESC %}
+						<div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">{{ stat.STAT_DESC }}</div>
+						{% endif %}
+					</div>
+
+					<div class="dash-stat-count-box">
+						<span class="dash-stat-number" style="color: {{ stat.STAT_COLOR }};">{{ stat.POST_COUNT }}</span>
+						<span class="dash-stat-label-month">{{ lang('DASHBOARD_POSTS_THIS_MONTH') }}</span>
+						{% if stat.HAS_POSTS %}
+						<button type="button" class="dash-btn dash-btn-secondary dash-btn-xs dash-toggle-details-btn" onclick="toggleDetails('user_stat_posts_{{ stat.STAT_ID }}', this)" style="margin-top: 6px;">
+							<i class="icon fa-list fa-fw"></i> {{ lang('DASHBOARD_VIEW_DETAILS') }}
+						</button>
+						{% endif %}
+					</div>
+				</div>
+
+				<!-- Collapsible Post Breakdown Details -->
+				{% if stat.HAS_POSTS %}
+				<div id="user_stat_posts_{{ stat.STAT_ID }}" class="dash-stat-posts-drawer" style="display: none;">
+					<div style="padding: 12px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+						<h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #334155;">
+							<i class="icon fa-bars fa-fw"></i> {{ lang('DASHBOARD_POSTS_BREAKDOWN') }}: <strong>{{ stat.STAT_TITLE }}</strong> ({{ stat.POST_COUNT }})
+						</h4>
+						<div class="dash-table-responsive">
+							<table class="table1 zebra-table" style="margin: 0; background: #ffffff;">
+								<thead>
+									<tr>
+										<th>{{ lang('TOPIC') }}</th>
+										<th style="width: 25%;">{{ lang('FORUM') }}</th>
+										<th style="width: 20%;">{{ lang('DATE') }}</th>
+										<th style="width: 10%; text-align: center;">{{ lang('LINK') }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for post in stat.posts %}
+									<tr>
+										<td>
+											<a href="{{ post.U_POST }}" class="topic-title-link" target="_blank">{{ post.TOPIC_TITLE }}</a>
+										</td>
+										<td>
+											<a href="{{ post.U_FORUM }}" class="topic-forum-badge" target="_blank">{{ post.FORUM_NAME }}</a>
+										</td>
+										<td style="color: #64748b; font-size: 0.85rem;">{{ post.POST_TIME }}</td>
+										<td style="text-align: center;">
+											<a href="{{ post.U_POST }}" class="dash-btn dash-btn-secondary dash-btn-xs" target="_blank" title="{{ lang('DASHBOARD_VIEW_POST') }}">
+												<i class="icon fa-external-link fa-fw"></i>
+											</a>
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				{% endif %}
+
+				{% else %}
+				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_STATS_IN_CAT') }}</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% else %}
+		<div class="dash-card">
+			<div class="dash-empty-state" style="padding: 40px;">
+				<i class="icon fa-bar-chart fa-fw" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px;"></i>
+				<p>{{ lang('DASHBOARD_NO_STATISTICS_DEFINED') }}</p>
+			</div>
+		</div>
+		{% endfor %}
+
+	</div>
+	{% endif %}
 
 	<!-- TAB 1: Disciplinary (OOC) -->
 	{% if S_CAN_VIEW_DISCIPLINARY %}
@@ -756,6 +900,19 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	});
 });
+
+function toggleDetails(elementId, btn) {
+	var el = document.getElementById(elementId);
+	if (el) {
+		if (el.style.display === 'none' || el.style.display === '') {
+			el.style.display = 'block';
+			if (btn) btn.innerHTML = '<i class="icon fa-chevron-up fa-fw"></i> {{ lang('DASHBOARD_HIDE_DETAILS') }}';
+		} else {
+			el.style.display = 'none';
+			if (btn) btn.innerHTML = '<i class="icon fa-list fa-fw"></i> {{ lang('DASHBOARD_VIEW_DETAILS') }}';
+		}
+	}
+}
 </script>
 
 {% INCLUDE 'overall_footer.html' %}

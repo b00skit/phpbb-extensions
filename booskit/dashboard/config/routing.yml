@@ -26,3 +26,9 @@ booskit_dashboard_view_list:
     path: /dashboard/view/all/{module}
     defaults:
         _controller: 'booskit.dashboard.controller.main:view_all'
+
+booskit_dashboard_combined_statistics:
+    path: /dashboard/statistics
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:combined_statistics'
+

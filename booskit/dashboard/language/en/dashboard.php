@@ -67,6 +67,7 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_LAST_POST'           => 'Last Post',
 
 	// Profile Tabs
+	'DASHBOARD_TAB_STATISTICS'      => 'Statistics',
 	'DASHBOARD_TAB_DISCIPLINARY'    => 'Disciplinary (OOC)',
 	'DASHBOARD_TAB_IC_DISCIPLINARY' => 'IC Disciplinary',
 	'DASHBOARD_TAB_AWARDS'          => 'Awards & Badges',
@@ -78,6 +79,26 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_TAB_VISITED_FORUMS'  => 'Forums Visited',
 	'DASHBOARD_TAB_VISITED_USERS'   => 'Users Visited',
 	'DASHBOARD_TAB_VISITED_PROFILES'=> 'Profiles Visited',
+
+	// Statistics Module
+	'DASHBOARD_COMBINED_STATS_TITLE'     => 'Global Board Statistics',
+	'DASHBOARD_COMBINED_STATS_SUBTITLE'  => 'Aggregated monthly statistic tag counts and activity across the board.',
+	'DASHBOARD_COMBINED_STATS_BUTTON'    => 'Board Statistics',
+	'DASHBOARD_PREV_MONTH'               => 'Previous Month',
+	'DASHBOARD_NEXT_MONTH'               => 'Next Month',
+	'DASHBOARD_CURRENT_MONTH'            => 'Current Month',
+	'DASHBOARD_TOTAL_TAGGED_POSTS'       => 'Total Tagged Posts',
+	'DASHBOARD_ACTIVE_CATEGORIES'        => 'Active Categories',
+	'DASHBOARD_TOP_CONTRIBUTORS_MONTH'   => 'Top Contributors This Month',
+	'DASHBOARD_TOP_POSTERS'              => 'Top Posters',
+	'DASHBOARD_POSTS_THIS_MONTH'         => 'posts this month',
+	'DASHBOARD_POSTS_LOWER'              => 'posts',
+	'DASHBOARD_VIEW_DETAILS'             => 'Details',
+	'DASHBOARD_HIDE_DETAILS'             => 'Hide Details',
+	'DASHBOARD_POSTS_BREAKDOWN'          => 'Post Breakdown',
+	'DASHBOARD_VIEW_POST'                => 'View Post',
+	'DASHBOARD_NO_STATS_IN_CAT'          => 'No statistics defined in this category.',
+	'DASHBOARD_NO_STATISTICS_DEFINED'    => 'No statistics have been defined or recorded for this period.',
 
 	// Profile Labels & Details
 	'DASHBOARD_MEMBER_SINCE'        => 'Joined',

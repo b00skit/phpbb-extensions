@@ -17,6 +17,9 @@ class dashboard_manager
 	protected $auth;
 	protected $table_prefix;
 	protected $table_perm_groups;
+	protected $table_stat_cats;
+	protected $table_stat_defs;
+	protected $table_stat_posts;
 	protected $group_avatars_cache = null;
 
 	public function __construct(
@@ -34,6 +37,9 @@ class dashboard_manager
 		$this->auth = is_object($auth) ? $auth : null;
 		$this->table_prefix = (string) $table_prefix;
 		$this->table_perm_groups = $this->table_prefix . 'booskit_dashboard_perm_groups';
+		$this->table_stat_cats = $this->table_prefix . 'booskit_dashboard_stat_cats';
+		$this->table_stat_defs = $this->table_prefix . 'booskit_dashboard_stat_defs';
+		$this->table_stat_posts = $this->table_prefix . 'booskit_dashboard_stat_posts';
 	}
 
 	public function is_ext_enabled($ext_name)
@@ -209,6 +215,9 @@ class dashboard_manager
 		$default_perms = [
 			'view_dashboard'           => false,
 			'view_stats'               => false,
+			'view_statistics'          => false,
+			'view_board_statistics'    => false,
+			'view_profile_statistics'  => false,
 			'view_active_users'        => false,
 			'view_hot_topics'          => false,
 			'view_feeds'               => false,
@@ -250,6 +259,9 @@ class dashboard_manager
 			return [
 				'view_dashboard'           => $can_dash,
 				'view_stats'               => $can_dash,
+				'view_statistics'          => $can_dash,
+				'view_board_statistics'    => $can_dash,
+				'view_profile_statistics'  => $can_dash && $can_prof,
 				'view_active_users'        => $can_dash,
 				'view_hot_topics'          => $can_dash,
 				'view_feeds'               => $can_dash,
@@ -297,7 +309,7 @@ class dashboard_manager
 			$perms = !empty($pg['permissions_array']) ? $pg['permissions_array'] : [];
 
 			// Dashboard General permissions (not target dependent)
-			foreach (['view_dashboard', 'view_stats', 'view_active_users', 'view_hot_topics', 'view_feeds', 'search_users'] as $k)
+			foreach (['view_dashboard', 'view_stats', 'view_statistics', 'view_board_statistics', 'view_active_users', 'view_hot_topics', 'view_feeds', 'search_users'] as $k)
 			{
 				if (!empty($perms[$k]))
 				{
@@ -342,7 +354,7 @@ class dashboard_manager
 
 				if ($has_power)
 				{
-					foreach (['view_profile', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
+					foreach (['view_profile', 'view_statistics', 'view_profile_statistics', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
 					{
 						if (!empty($perms[$k]))
 						{
@@ -354,7 +366,7 @@ class dashboard_manager
 			else
 			{
 				// Grant capability flags in general scope if enabled
-				foreach (['view_profile', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
+				foreach (['view_profile', 'view_statistics', 'view_profile_statistics', 'view_issued', 'view_visited_topics', 'view_visited_forums', 'view_visited_users', 'view_visited_profiles', 'view_disciplinary', 'view_ic_disciplinary', 'view_awards', 'view_career', 'view_commendations', 'view_gtaw'] as $k)
 				{
 					if (!empty($perms[$k]))
 					{
@@ -362,6 +374,11 @@ class dashboard_manager
 					}
 				}
 			}
+		}
+
+		if (!empty($effective['view_board_statistics']) || !empty($effective['view_profile_statistics']))
+		{
+			$effective['view_statistics'] = true;
 		}
 
 		return $effective;
@@ -2660,5 +2677,904 @@ class dashboard_manager
 		}
 		$days = (int) round($diff / 86400);
 		return $days . 'd ago';
+	}
+
+	/* =========================================================================
+	 * STAT & STATISTICS MODULE MANAGEMENT
+	 * ========================================================================= */
+
+	public function get_stat_categories($only_visible = false, $viewer_id = 0)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_stat_cats . ' ORDER BY cat_order ASC, cat_name ASC';
+		$result = @$this->db->sql_query($sql);
+		$cats = [];
+		if ($result)
+		{
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['allowed_groups'])))) : [];
+				$row['use_allowed_groups_array'] = !empty($row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['use_allowed_groups'])))) : [];
+				if ($only_visible && !$this->can_view_stat_category($viewer_id, $row))
+				{
+					continue;
+				}
+				$cats[] = $row;
+			}
+			$this->db->sql_freeresult($result);
+		}
+		return $cats;
+	}
+
+	public function get_stat_category($cat_id)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_stat_cats . ' WHERE cat_id = ' . (int) $cat_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		if ($row)
+		{
+			$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['allowed_groups'])))) : [];
+			$row['use_allowed_groups_array'] = !empty($row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['use_allowed_groups'])))) : [];
+		}
+		return $row;
+	}
+
+	public function add_stat_category($cat_name, $cat_desc = '', $cat_order = 0, $allowed_groups = [], $use_allowed_groups = [])
+	{
+		$allowed_str = is_array($allowed_groups) ? implode(',', array_map('intval', $allowed_groups)) : (string) $allowed_groups;
+		$use_allowed_str = is_array($use_allowed_groups) ? implode(',', array_map('intval', $use_allowed_groups)) : (string) $use_allowed_groups;
+		$sql_ary = [
+			'cat_name'           => (string) $cat_name,
+			'cat_desc'           => (string) $cat_desc,
+			'cat_order'          => (int) $cat_order,
+			'allowed_groups'     => $allowed_str,
+			'use_allowed_groups' => $use_allowed_str,
+		];
+		$sql = 'INSERT INTO ' . $this->table_stat_cats . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+		return (int) $this->db->sql_nextid();
+	}
+
+	public function update_stat_category($cat_id, $cat_name, $cat_desc = '', $cat_order = 0, $allowed_groups = [], $use_allowed_groups = [])
+	{
+		$allowed_str = is_array($allowed_groups) ? implode(',', array_map('intval', $allowed_groups)) : (string) $allowed_groups;
+		$use_allowed_str = is_array($use_allowed_groups) ? implode(',', array_map('intval', $use_allowed_groups)) : (string) $use_allowed_groups;
+		$sql_ary = [
+			'cat_name'           => (string) $cat_name,
+			'cat_desc'           => (string) $cat_desc,
+			'cat_order'          => (int) $cat_order,
+			'allowed_groups'     => $allowed_str,
+			'use_allowed_groups' => $use_allowed_str,
+		];
+		$sql = 'UPDATE ' . $this->table_stat_cats . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE cat_id = ' . (int) $cat_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_stat_category($cat_id)
+	{
+		$cat_id = (int) $cat_id;
+		if ($cat_id <= 0)
+		{
+			return;
+		}
+		// Delete category
+		$sql = 'DELETE FROM ' . $this->table_stat_cats . ' WHERE cat_id = ' . $cat_id;
+		$this->db->sql_query($sql);
+
+		// Reassign or delete definitions under this category
+		$sql = 'UPDATE ' . $this->table_stat_defs . ' SET cat_id = 0 WHERE cat_id = ' . $cat_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function get_stat_definitions($cat_id = 0, $only_visible = false, $viewer_id = 0)
+	{
+		$where = '';
+		if ($cat_id > 0)
+		{
+			$where = ' WHERE d.cat_id = ' . (int) $cat_id;
+		}
+
+		$sql = 'SELECT d.*, c.cat_name, c.allowed_groups AS cat_allowed_groups, c.use_allowed_groups AS cat_use_allowed_groups 
+				FROM ' . $this->table_stat_defs . ' d 
+				LEFT JOIN ' . $this->table_stat_cats . ' c ON d.cat_id = c.cat_id ' .
+				$where . ' 
+				ORDER BY d.cat_id ASC, d.stat_order ASC, d.stat_title ASC';
+		$result = @$this->db->sql_query($sql);
+		$defs = [];
+		if ($result)
+		{
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['allowed_groups'])))) : [];
+				$row['use_allowed_groups_array'] = !empty($row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['use_allowed_groups'])))) : [];
+				$row['cat_allowed_groups_array'] = !empty($row['cat_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_allowed_groups'])))) : [];
+				$row['cat_use_allowed_groups_array'] = !empty($row['cat_use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_use_allowed_groups'])))) : [];
+				if ($only_visible && !$this->can_view_stat_definition($viewer_id, $row))
+				{
+					continue;
+				}
+				$defs[] = $row;
+			}
+			$this->db->sql_freeresult($result);
+		}
+		return $defs;
+	}
+
+	public function get_stat_definition($stat_id)
+	{
+		$sql = 'SELECT d.*, c.cat_name, c.allowed_groups AS cat_allowed_groups, c.use_allowed_groups AS cat_use_allowed_groups 
+				FROM ' . $this->table_stat_defs . ' d 
+				LEFT JOIN ' . $this->table_stat_cats . ' c ON d.cat_id = c.cat_id 
+				WHERE d.stat_id = ' . (int) $stat_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		if ($row)
+		{
+			$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['allowed_groups'])))) : [];
+			$row['use_allowed_groups_array'] = !empty($row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['use_allowed_groups'])))) : [];
+			$row['cat_allowed_groups_array'] = !empty($row['cat_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_allowed_groups'])))) : [];
+			$row['cat_use_allowed_groups_array'] = !empty($row['cat_use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_use_allowed_groups'])))) : [];
+		}
+		return $row;
+	}
+
+	public function get_stat_definition_by_tag($stat_tag)
+	{
+		$stat_tag = strtolower(trim((string) $stat_tag));
+		if ($stat_tag === '')
+		{
+			return null;
+		}
+
+		$sql = 'SELECT d.*, c.cat_name, c.allowed_groups AS cat_allowed_groups, c.use_allowed_groups AS cat_use_allowed_groups 
+				FROM ' . $this->table_stat_defs . ' d 
+				LEFT JOIN ' . $this->table_stat_cats . ' c ON d.cat_id = c.cat_id 
+				WHERE LOWER(d.stat_tag) = \'' . $this->db->sql_escape($stat_tag) . '\'';
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		if ($row)
+		{
+			$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['allowed_groups'])))) : [];
+			$row['use_allowed_groups_array'] = !empty($row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['use_allowed_groups'])))) : [];
+			$row['cat_allowed_groups_array'] = !empty($row['cat_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_allowed_groups'])))) : [];
+			$row['cat_use_allowed_groups_array'] = !empty($row['cat_use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['cat_use_allowed_groups'])))) : [];
+		}
+		return $row;
+	}
+
+	public function add_stat_definition($stat_tag, $stat_title, $cat_id, $stat_color = '#2563eb', $stat_desc = '', $stat_order = 0, $allowed_groups = [], $use_allowed_groups = [])
+	{
+		$stat_tag = strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]/', '_', (string) $stat_tag)));
+		$allowed_str = is_array($allowed_groups) ? implode(',', array_map('intval', $allowed_groups)) : (string) $allowed_groups;
+		$use_allowed_str = is_array($use_allowed_groups) ? implode(',', array_map('intval', $use_allowed_groups)) : (string) $use_allowed_groups;
+
+		$sql_ary = [
+			'stat_tag'           => $stat_tag,
+			'stat_title'         => (string) $stat_title,
+			'cat_id'             => (int) $cat_id,
+			'stat_color'         => !empty($stat_color) ? (string) $stat_color : '#2563eb',
+			'stat_desc'          => (string) $stat_desc,
+			'stat_order'         => (int) $stat_order,
+			'allowed_groups'     => $allowed_str,
+			'use_allowed_groups' => $use_allowed_str,
+		];
+		$sql = 'INSERT INTO ' . $this->table_stat_defs . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+		$this->db->sql_query($sql);
+		return (int) $this->db->sql_nextid();
+	}
+
+	public function update_stat_definition($stat_id, $stat_tag, $stat_title, $cat_id, $stat_color = '#2563eb', $stat_desc = '', $stat_order = 0, $allowed_groups = [], $use_allowed_groups = [])
+	{
+		$stat_tag = strtolower(trim(preg_replace('/[^a-zA-Z0-9_\-]/', '_', (string) $stat_tag)));
+		$allowed_str = is_array($allowed_groups) ? implode(',', array_map('intval', $allowed_groups)) : (string) $allowed_groups;
+		$use_allowed_str = is_array($use_allowed_groups) ? implode(',', array_map('intval', $use_allowed_groups)) : (string) $use_allowed_groups;
+
+		$sql_ary = [
+			'stat_tag'           => $stat_tag,
+			'stat_title'         => (string) $stat_title,
+			'cat_id'             => (int) $cat_id,
+			'stat_color'         => !empty($stat_color) ? (string) $stat_color : '#2563eb',
+			'stat_desc'          => (string) $stat_desc,
+			'stat_order'         => (int) $stat_order,
+			'allowed_groups'     => $allowed_str,
+			'use_allowed_groups' => $use_allowed_str,
+		];
+		$sql = 'UPDATE ' . $this->table_stat_defs . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE stat_id = ' . (int) $stat_id;
+		$this->db->sql_query($sql);
+	}
+
+	public function delete_stat_definition($stat_id)
+	{
+		$stat_id = (int) $stat_id;
+		if ($stat_id <= 0)
+		{
+			return;
+		}
+		$def = $this->get_stat_definition($stat_id);
+		if ($def && !empty($def['stat_tag']))
+		{
+			// Clean up logged post stats for this tag
+			$sql = 'DELETE FROM ' . $this->table_stat_posts . ' WHERE stat_tag = \'' . $this->db->sql_escape($def['stat_tag']) . '\'';
+			$this->db->sql_query($sql);
+		}
+
+		$sql = 'DELETE FROM ' . $this->table_stat_defs . ' WHERE stat_id = ' . $stat_id;
+		$this->db->sql_query($sql);
+	}
+
+	/* =========================================================================
+	 * PERMISSIONS FOR STATS & CATEGORIES
+	 * ========================================================================= */
+
+	public function can_view_stat_category($viewer_id, array $cat_row)
+	{
+		$viewer_id = (int) $viewer_id;
+		if ($this->is_admin($viewer_id))
+		{
+			return true;
+		}
+
+		$allowed = isset($cat_row['allowed_groups_array']) ? $cat_row['allowed_groups_array'] : (!empty($cat_row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $cat_row['allowed_groups'])))) : []);
+
+		if (empty($allowed))
+		{
+			return true; // No permission bound = visible to all who have stats access
+		}
+
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		return (bool) array_intersect($viewer_groups, $allowed);
+	}
+
+	public function can_view_stat_definition($viewer_id, array $stat_row)
+	{
+		$viewer_id = (int) $viewer_id;
+		if ($this->is_admin($viewer_id))
+		{
+			return true;
+		}
+
+		// Check parent category permissions if category info is attached
+		if (!empty($stat_row['cat_allowed_groups']))
+		{
+			$cat_allowed = isset($stat_row['cat_allowed_groups_array']) ? $stat_row['cat_allowed_groups_array'] : array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['cat_allowed_groups']))));
+			if (!empty($cat_allowed))
+			{
+				$viewer_groups = $this->get_user_groups($viewer_id);
+				if (!array_intersect($viewer_groups, $cat_allowed))
+				{
+					return false;
+				}
+			}
+		}
+
+		$allowed = isset($stat_row['allowed_groups_array']) ? $stat_row['allowed_groups_array'] : (!empty($stat_row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['allowed_groups'])))) : []);
+
+		if (empty($allowed))
+		{
+			return true; // No permission bound = visible to all who have stats access
+		}
+
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		return (bool) array_intersect($viewer_groups, $allowed);
+	}
+
+	public function can_use_stat_definition($poster_id, array $stat_row)
+	{
+		$poster_id = (int) $poster_id;
+		if ($poster_id <= 0 || $poster_id === ANONYMOUS)
+		{
+			return false;
+		}
+
+		if ($this->is_admin($poster_id))
+		{
+			return true;
+		}
+
+		// Check parent category use permissions if present
+		if (!empty($stat_row['cat_use_allowed_groups']))
+		{
+			$cat_use_allowed = isset($stat_row['cat_use_allowed_groups_array']) ? $stat_row['cat_use_allowed_groups_array'] : array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['cat_use_allowed_groups']))));
+			if (!empty($cat_use_allowed))
+			{
+				$poster_groups = $this->get_user_groups($poster_id);
+				if (!array_intersect($poster_groups, $cat_use_allowed))
+				{
+					return false;
+				}
+			}
+		}
+
+		$allowed = isset($stat_row['use_allowed_groups_array']) ? $stat_row['use_allowed_groups_array'] : (!empty($stat_row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['use_allowed_groups'])))) : []);
+
+		if (empty($allowed))
+		{
+			return true; // No permission bound = any registered user can use
+		}
+
+		$poster_groups = $this->get_user_groups($poster_id);
+		return (bool) array_intersect($poster_groups, $allowed);
+	}
+
+	/* =========================================================================
+	 * POST TAG PARSING & INDEXING
+	 * ========================================================================= */
+
+	public function parse_post_stat_tags($post_text)
+	{
+		if (empty($post_text))
+		{
+			return [];
+		}
+
+		$tags = [];
+
+		// Match [stat=tag] or [stat=tag]...[/stat]
+		if (preg_match_all('#\[stat=([a-zA-Z0-9_\-]+)\]#is', $post_text, $matches))
+		{
+			foreach ($matches[1] as $tag)
+			{
+				$clean = strtolower(trim($tag));
+				if ($clean !== '')
+				{
+					$tags[$clean] = $clean;
+				}
+			}
+		}
+
+		// Match [visiblestat=tag] or [visiblestat=tag]...[/visiblestat]
+		if (preg_match_all('#\[visiblestat=([a-zA-Z0-9_\-]+)\]#is', $post_text, $matches))
+		{
+			foreach ($matches[1] as $tag)
+			{
+				$clean = strtolower(trim($tag));
+				if ($clean !== '')
+				{
+					$tags[$clean] = $clean;
+				}
+			}
+		}
+
+		// Match s9e TextFormatter XML format: <STAT stat="tag"> or <VISIBLESTAT stat="tag">
+		if (preg_match_all('#<(?:STAT|VISIBLESTAT)\s+[^>]*?stat="([a-zA-Z0-9_\-]+)"#is', $post_text, $matches))
+		{
+			foreach ($matches[1] as $tag)
+			{
+				$clean = strtolower(trim($tag));
+				if ($clean !== '')
+				{
+					$tags[$clean] = $clean;
+				}
+			}
+		}
+
+		return array_values($tags);
+	}
+
+	public function sync_post_stats($post_id, $post_text, $topic_id, $forum_id, $poster_id, $post_time)
+	{
+		$post_id = (int) $post_id;
+		$poster_id = (int) $poster_id;
+		if ($post_id <= 0 || $poster_id <= 0)
+		{
+			return;
+		}
+
+		// Delete existing entries for this post
+		$this->delete_post_stats($post_id);
+
+		$tags = $this->parse_post_stat_tags($post_text);
+		if (empty($tags))
+		{
+			return;
+		}
+
+		foreach ($tags as $tag)
+		{
+			$def = $this->get_stat_definition_by_tag($tag);
+			if (!$def)
+			{
+				continue;
+			}
+
+			// Verify if the author has permission to use this tag
+			if (!$this->can_use_stat_definition($poster_id, $def))
+			{
+				continue; // Not allowed: do not count towards statistics
+			}
+
+			$sql_ary = [
+				'stat_tag'   => $tag,
+				'post_id'    => $post_id,
+				'topic_id'   => (int) $topic_id,
+				'forum_id'   => (int) $forum_id,
+				'poster_id'  => $poster_id,
+				'post_time'  => (int) $post_time,
+			];
+			$sql = 'INSERT INTO ' . $this->table_stat_posts . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+			$this->db->sql_query($sql);
+		}
+	}
+
+	public function delete_post_stats($post_id)
+	{
+		if (is_array($post_id))
+		{
+			$ids = array_map('intval', $post_id);
+			if (!empty($ids))
+			{
+				$sql = 'DELETE FROM ' . $this->table_stat_posts . ' WHERE ' . $this->db->sql_in_set('post_id', $ids);
+				$this->db->sql_query($sql);
+			}
+		}
+		else
+		{
+			$post_id = (int) $post_id;
+			if ($post_id > 0)
+			{
+				$sql = 'DELETE FROM ' . $this->table_stat_posts . ' WHERE post_id = ' . $post_id;
+				$this->db->sql_query($sql);
+			}
+		}
+	}
+
+	public function resync_all_stat_posts()
+	{
+		// Empty table
+		$sql = 'DELETE FROM ' . $this->table_stat_posts;
+		$this->db->sql_query($sql);
+
+		// Scan posts table for stat tags
+		$sql = 'SELECT post_id, topic_id, forum_id, poster_id, post_time, post_text 
+				FROM ' . POSTS_TABLE . ' 
+				WHERE post_text ' . $this->db->sql_like_expression($this->db->get_any_char() . '[stat=' . $this->db->get_any_char()) . ' 
+				   OR post_text ' . $this->db->sql_like_expression($this->db->get_any_char() . '[visiblestat=' . $this->db->get_any_char()) . ' 
+				   OR post_text ' . $this->db->sql_like_expression($this->db->get_any_char() . '<STAT' . $this->db->get_any_char()) . ' 
+				   OR post_text ' . $this->db->sql_like_expression($this->db->get_any_char() . '<VISIBLESTAT' . $this->db->get_any_char());
+		$result = $this->db->sql_query($sql);
+		$count = 0;
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$poster_id = (int) $row['poster_id'];
+			$tags = $this->parse_post_stat_tags($row['post_text']);
+			foreach ($tags as $tag)
+			{
+				$def = $this->get_stat_definition_by_tag($tag);
+				if (!$def)
+				{
+					continue;
+				}
+
+				if (!$this->can_use_stat_definition($poster_id, $def))
+				{
+					continue;
+				}
+
+				$sql_ary = [
+					'stat_tag'   => $tag,
+					'post_id'    => (int) $row['post_id'],
+					'topic_id'   => (int) $row['topic_id'],
+					'forum_id'   => (int) $row['forum_id'],
+					'poster_id'  => $poster_id,
+					'post_time'  => (int) $row['post_time'],
+				];
+				$sql_ins = 'INSERT INTO ' . $this->table_stat_posts . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+				$this->db->sql_query($sql_ins);
+				$count++;
+			}
+		}
+		$this->db->sql_freeresult($result);
+		return $count;
+	}
+
+	/* =========================================================================
+	 * MONTHLY STATISTICS REPORTING (USER & GLOBAL)
+	 * ========================================================================= */
+
+	public function get_user_monthly_statistics($viewer_id, $target_user_id, $year, $month)
+	{
+		$viewer_id = (int) $viewer_id;
+		$target_user_id = (int) $target_user_id;
+		$year = (int) $year;
+		$month = (int) $month;
+
+		if ($year < 2000 || $year > 2100)
+		{
+			$year = (int) date('Y');
+		}
+		if ($month < 1 || $month > 12)
+		{
+			$month = (int) date('n');
+		}
+
+		$start_ts = mktime(0, 0, 0, $month, 1, $year);
+		$end_ts = mktime(23, 59, 59, $month + 1, 0, $year);
+
+		// Get all categories and definitions visible to viewer
+		$categories = $this->get_stat_categories(true, $viewer_id);
+		$definitions = $this->get_stat_definitions(0, true, $viewer_id);
+
+		// Map definitions by tag
+		$defs_by_tag = [];
+		$cat_stats_map = [];
+
+		foreach ($definitions as $def)
+		{
+			$defs_by_tag[$def['stat_tag']] = $def;
+			$cid = (int) $def['cat_id'];
+			if (!isset($cat_stats_map[$cid]))
+			{
+				$cat_stats_map[$cid] = [];
+			}
+			$cat_stats_map[$cid][$def['stat_tag']] = [
+				'stat_id'      => $def['stat_id'],
+				'stat_tag'     => $def['stat_tag'],
+				'stat_title'   => $def['stat_title'],
+				'stat_color'   => $def['stat_color'],
+				'stat_desc'    => $def['stat_desc'],
+				'post_count'   => 0,
+				'posts'        => [],
+			];
+		}
+
+		// Query posts for this user in month range
+		$sql = 'SELECT sp.id, sp.stat_tag, sp.post_id, sp.topic_id, sp.forum_id, sp.post_time,
+					   t.topic_title, f.forum_name 
+				FROM ' . $this->table_stat_posts . ' sp 
+				LEFT JOIN ' . TOPICS_TABLE . ' t ON sp.topic_id = t.topic_id 
+				LEFT JOIN ' . FORUMS_TABLE . ' f ON sp.forum_id = f.forum_id 
+				WHERE sp.poster_id = ' . $target_user_id . ' 
+				  AND sp.post_time >= ' . $start_ts . ' 
+				  AND sp.post_time <= ' . $end_ts . ' 
+				ORDER BY sp.post_time DESC';
+		$result = @$this->db->sql_query($sql);
+
+		$total_posts_in_month = 0;
+
+		if ($result)
+		{
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$tag = strtolower($row['stat_tag']);
+				if (isset($defs_by_tag[$tag]))
+				{
+					$cid = (int) $defs_by_tag[$tag]['cat_id'];
+					if (isset($cat_stats_map[$cid][$tag]))
+					{
+						$cat_stats_map[$cid][$tag]['post_count']++;
+						$cat_stats_map[$cid][$tag]['posts'][] = [
+							'post_id'     => (int) $row['post_id'],
+							'topic_id'    => (int) $row['topic_id'],
+							'topic_title' => $row['topic_title'] ? $row['topic_title'] : 'Topic #' . $row['topic_id'],
+							'forum_id'    => (int) $row['forum_id'],
+							'forum_name'  => $row['forum_name'] ? $row['forum_name'] : 'Forum #' . $row['forum_id'],
+							'post_time'   => (int) $row['post_time'],
+						];
+						$total_posts_in_month++;
+					}
+				}
+			}
+			$this->db->sql_freeresult($result);
+		}
+
+		// Assemble hierarchical result
+		$structured_categories = [];
+
+		// Add "Uncategorized" category container if any defs have cat_id = 0
+		$all_cats = $categories;
+		if (isset($cat_stats_map[0]) && !empty($cat_stats_map[0]))
+		{
+			$all_cats[] = [
+				'cat_id'    => 0,
+				'cat_name'  => 'General / Other',
+				'cat_desc'  => '',
+				'cat_order' => 9999,
+			];
+		}
+
+		foreach ($all_cats as $cat)
+		{
+			$cid = (int) $cat['cat_id'];
+			$stats_list = isset($cat_stats_map[$cid]) ? array_values($cat_stats_map[$cid]) : [];
+			if (empty($stats_list))
+			{
+				continue;
+			}
+
+			$cat_total = 0;
+			foreach ($stats_list as $s)
+			{
+				$cat_total += $s['post_count'];
+			}
+
+			$structured_categories[] = [
+				'cat_id'     => $cid,
+				'cat_name'   => $cat['cat_name'],
+				'cat_desc'   => !empty($cat['cat_desc']) ? $cat['cat_desc'] : '',
+				'cat_total'  => $cat_total,
+				'statistics' => $stats_list,
+			];
+		}
+
+		return [
+			'year'                 => $year,
+			'month'                => $month,
+			'start_ts'             => $start_ts,
+			'end_ts'               => $end_ts,
+			'total_posts_in_month' => $total_posts_in_month,
+			'categories'           => $structured_categories,
+		];
+	}
+
+	public function get_global_monthly_statistics($viewer_id, $year, $month)
+	{
+		$viewer_id = (int) $viewer_id;
+		$year = (int) $year;
+		$month = (int) $month;
+
+		if ($year < 2000 || $year > 2100)
+		{
+			$year = (int) date('Y');
+		}
+		if ($month < 1 || $month > 12)
+		{
+			$month = (int) date('n');
+		}
+
+		$start_ts = mktime(0, 0, 0, $month, 1, $year);
+		$end_ts = mktime(23, 59, 59, $month + 1, 0, $year);
+
+		// Get all categories and definitions visible to viewer
+		$categories = $this->get_stat_categories(true, $viewer_id);
+		$definitions = $this->get_stat_definitions(0, true, $viewer_id);
+
+		// Map definitions by tag
+		$defs_by_tag = [];
+		$cat_stats_map = [];
+
+		foreach ($definitions as $def)
+		{
+			$defs_by_tag[$def['stat_tag']] = $def;
+			$cid = (int) $def['cat_id'];
+			if (!isset($cat_stats_map[$cid]))
+			{
+				$cat_stats_map[$cid] = [];
+			}
+			$cat_stats_map[$cid][$def['stat_tag']] = [
+				'stat_id'          => $def['stat_id'],
+				'stat_tag'         => $def['stat_tag'],
+				'stat_title'       => $def['stat_title'],
+				'stat_color'       => $def['stat_color'],
+				'stat_desc'        => $def['stat_desc'],
+				'post_count'       => 0,
+				'posts'            => [],
+				'top_contributors' => [],
+				'posters_count'    => [],
+			];
+		}
+
+		// Query posts for all users in month range
+		$sql = 'SELECT sp.id, sp.stat_tag, sp.post_id, sp.topic_id, sp.forum_id, sp.poster_id, sp.post_time,
+					   t.topic_title, f.forum_name, u.username, u.user_colour 
+				FROM ' . $this->table_stat_posts . ' sp 
+				LEFT JOIN ' . TOPICS_TABLE . ' t ON sp.topic_id = t.topic_id 
+				LEFT JOIN ' . FORUMS_TABLE . ' f ON sp.forum_id = f.forum_id 
+				LEFT JOIN ' . USERS_TABLE . ' u ON sp.poster_id = u.user_id 
+				WHERE sp.post_time >= ' . $start_ts . ' 
+				  AND sp.post_time <= ' . $end_ts . ' 
+				ORDER BY sp.post_time DESC';
+		$result = @$this->db->sql_query($sql);
+
+		$total_posts_in_month = 0;
+		$board_top_posters = [];
+
+		if ($result)
+		{
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$tag = strtolower($row['stat_tag']);
+				if (isset($defs_by_tag[$tag]))
+				{
+					$cid = (int) $defs_by_tag[$tag]['cat_id'];
+					if (isset($cat_stats_map[$cid][$tag]))
+					{
+						$cat_stats_map[$cid][$tag]['post_count']++;
+						$cat_stats_map[$cid][$tag]['posts'][] = [
+							'post_id'     => (int) $row['post_id'],
+							'topic_id'    => (int) $row['topic_id'],
+							'topic_title' => $row['topic_title'] ? $row['topic_title'] : 'Topic #' . $row['topic_id'],
+							'forum_id'    => (int) $row['forum_id'],
+							'forum_name'  => $row['forum_name'] ? $row['forum_name'] : 'Forum #' . $row['forum_id'],
+							'poster_id'   => (int) $row['poster_id'],
+							'username'    => $row['username'] ? $row['username'] : 'Anonymous',
+							'user_colour' => $row['user_colour'],
+							'post_time'   => (int) $row['post_time'],
+						];
+
+						$uid = (int) $row['poster_id'];
+						if (!isset($cat_stats_map[$cid][$tag]['posters_count'][$uid]))
+						{
+							$cat_stats_map[$cid][$tag]['posters_count'][$uid] = [
+								'user_id'     => $uid,
+								'username'    => $row['username'],
+								'user_colour' => $row['user_colour'],
+								'count'       => 0,
+							];
+						}
+						$cat_stats_map[$cid][$tag]['posters_count'][$uid]['count']++;
+
+						if (!isset($board_top_posters[$uid]))
+						{
+							$board_top_posters[$uid] = [
+								'user_id'     => $uid,
+								'username'    => $row['username'],
+								'user_colour' => $row['user_colour'],
+								'count'       => 0,
+							];
+						}
+						$board_top_posters[$uid]['count']++;
+
+						$total_posts_in_month++;
+					}
+				}
+			}
+			$this->db->sql_freeresult($result);
+		}
+
+		// Sort top contributors for each stat
+		foreach ($cat_stats_map as $cid => $stats)
+		{
+			foreach ($stats as $tag => $sdata)
+			{
+				$posters = array_values($sdata['posters_count']);
+				usort($posters, function($a, $b) {
+					return $b['count'] - $a['count'];
+				});
+				$cat_stats_map[$cid][$tag]['top_contributors'] = array_slice($posters, 0, 5);
+				unset($cat_stats_map[$cid][$tag]['posters_count']);
+			}
+		}
+
+		// Sort board-wide top posters
+		$board_posters_list = array_values($board_top_posters);
+		usort($board_posters_list, function($a, $b) {
+			return $b['count'] - $a['count'];
+		});
+
+		// Assemble hierarchical result
+		$structured_categories = [];
+
+		$all_cats = $categories;
+		if (isset($cat_stats_map[0]) && !empty($cat_stats_map[0]))
+		{
+			$all_cats[] = [
+				'cat_id'    => 0,
+				'cat_name'  => 'General / Other',
+				'cat_desc'  => '',
+				'cat_order' => 9999,
+			];
+		}
+
+		foreach ($all_cats as $cat)
+		{
+			$cid = (int) $cat['cat_id'];
+			$stats_list = isset($cat_stats_map[$cid]) ? array_values($cat_stats_map[$cid]) : [];
+			if (empty($stats_list))
+			{
+				continue;
+			}
+
+			$cat_total = 0;
+			foreach ($stats_list as $s)
+			{
+				$cat_total += $s['post_count'];
+			}
+
+			$structured_categories[] = [
+				'cat_id'     => $cid,
+				'cat_name'   => $cat['cat_name'],
+				'cat_desc'   => !empty($cat['cat_desc']) ? $cat['cat_desc'] : '',
+				'cat_total'  => $cat_total,
+				'statistics' => $stats_list,
+			];
+		}
+
+		return [
+			'year'                 => $year,
+			'month'                => $month,
+			'start_ts'             => $start_ts,
+			'end_ts'               => $end_ts,
+			'total_posts_in_month' => $total_posts_in_month,
+			'top_posters'          => array_slice($board_posters_list, 0, 10),
+			'categories'           => $structured_categories,
+		];
+	}
+
+	public function get_available_months_years($current_year, $current_month)
+	{
+		global $user;
+
+		$months = [
+			1  => isset($user->lang['datetime']['January']) ? $user->lang['datetime']['January'] : 'January',
+			2  => isset($user->lang['datetime']['February']) ? $user->lang['datetime']['February'] : 'February',
+			3  => isset($user->lang['datetime']['March']) ? $user->lang['datetime']['March'] : 'March',
+			4  => isset($user->lang['datetime']['April']) ? $user->lang['datetime']['April'] : 'April',
+			5  => isset($user->lang['datetime']['May']) ? $user->lang['datetime']['May'] : 'May',
+			6  => isset($user->lang['datetime']['June']) ? $user->lang['datetime']['June'] : 'June',
+			7  => isset($user->lang['datetime']['July']) ? $user->lang['datetime']['July'] : 'July',
+			8  => isset($user->lang['datetime']['August']) ? $user->lang['datetime']['August'] : 'August',
+			9  => isset($user->lang['datetime']['September']) ? $user->lang['datetime']['September'] : 'September',
+			10 => isset($user->lang['datetime']['October']) ? $user->lang['datetime']['October'] : 'October',
+			11 => isset($user->lang['datetime']['November']) ? $user->lang['datetime']['November'] : 'November',
+			12 => isset($user->lang['datetime']['December']) ? $user->lang['datetime']['December'] : 'December',
+		];
+
+		// Determine years range
+		$cur_y = (int) date('Y');
+		$min_y = $cur_y - 5;
+
+		$sql = 'SELECT MIN(post_time) AS min_time FROM ' . $this->table_stat_posts;
+		$result = @$this->db->sql_query($sql);
+		$min_ts = $result ? (int) $this->db->sql_fetchfield('min_time') : 0;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		if ($min_ts > 0)
+		{
+			$data_min_y = (int) date('Y', $min_ts);
+			if ($data_min_y < $min_y)
+			{
+				$min_y = $data_min_y;
+			}
+		}
+
+		$years = [];
+		for ($y = $cur_y; $y >= $min_y; $y--)
+		{
+			$years[] = $y;
+		}
+
+		// Calculate previous and next month
+		$prev_m = $current_month - 1;
+		$prev_y = $current_year;
+		if ($prev_m < 1)
+		{
+			$prev_m = 12;
+			$prev_y--;
+		}
+
+		$next_m = $current_month + 1;
+		$next_y = $current_year;
+		if ($next_m > 12)
+		{
+			$next_m = 1;
+			$next_y++;
+		}
+
+		return [
+			'months'         => $months,
+			'years'          => $years,
+			'current_month'  => (int) $current_month,
+			'current_year'   => (int) $current_year,
+			'prev_month'     => $prev_m,
+			'prev_year'      => $prev_y,
+			'next_month'     => $next_m,
+			'next_year'      => $next_y,
+			'now_month'      => (int) date('n'),
+			'now_year'       => (int) date('Y'),
+			'month_name'     => isset($months[$current_month]) ? $months[$current_month] : 'Month ' . $current_month,
+		];
 	}
 }

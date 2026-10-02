@@ -1,0 +1,221 @@
+{% INCLUDE 'overall_header.html' %}
+
+<div class="dashboard-container">
+
+	<div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+		<a href="{{ U_BACK_DASHBOARD }}" class="dash-btn dash-btn-secondary">
+			<i class="icon fa-arrow-left fa-fw"></i> {{ lang('DASHBOARD_BACK') }}
+		</a>
+	</div>
+
+	<!-- Hero Header -->
+	<div class="dashboard-hero">
+		<div class="dashboard-hero-content">
+			<h1><i class="icon fa-bar-chart fa-fw" aria-hidden="true"></i> {{ lang('DASHBOARD_COMBINED_STATS_TITLE') }}</h1>
+			<p>{{ lang('DASHBOARD_COMBINED_STATS_SUBTITLE') }} &bull; <strong>{{ STAT_SELECTED_MONTH_NAME }} {{ STAT_SELECTED_YEAR }}</strong></p>
+		</div>
+	</div>
+
+	<!-- Month / Year Roll-back Navigation Bar -->
+	<div class="dash-month-picker-card">
+		<div class="dash-month-picker-inner">
+			<a href="{{ U_STAT_PREV_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm" title="{{ lang('DASHBOARD_PREV_MONTH') }}">
+				<i class="icon fa-chevron-left fa-fw"></i> {{ lang('DASHBOARD_PREV_MONTH') }}
+			</a>
+
+			<form method="get" action="{{ U_STAT_BASE }}" class="dash-month-select-form">
+				<select name="stat_month" class="dash-select" onchange="this.form.submit();">
+					{% for m in stat_month_options %}
+						<option value="{{ m.VALUE }}" {% if m.SELECTED %}selected="selected"{% endif %}>{{ m.LABEL }}</option>
+					{% endfor %}
+				</select>
+				<select name="stat_year" class="dash-select" onchange="this.form.submit();">
+					{% for y in stat_year_options %}
+						<option value="{{ y.VALUE }}" {% if y.SELECTED %}selected="selected"{% endif %}>{{ y.LABEL }}</option>
+					{% endfor %}
+				</select>
+				<button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">{{ lang('GO') }}</button>
+			</form>
+
+			<div style="display: flex; gap: 8px;">
+				<a href="{{ U_STAT_CUR_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm">
+					<i class="icon fa-calendar-check-o fa-fw"></i> {{ lang('DASHBOARD_CURRENT_MONTH') }}
+				</a>
+				<a href="{{ U_STAT_NEXT_MONTH }}" class="dash-btn dash-btn-secondary dash-btn-sm" title="{{ lang('DASHBOARD_NEXT_MONTH') }}">
+					{{ lang('DASHBOARD_NEXT_MONTH') }} <i class="icon fa-chevron-right fa-fw"></i>
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<!-- Monthly Summary Metrics -->
+	<div class="dashboard-stats-grid" style="margin-top: 20px;">
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon content">
+				<i class="icon fa-tags fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ TOTAL_MONTHLY_TAGS|number_format }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_TOTAL_TAGGED_POSTS') }} ({{ STAT_SELECTED_MONTH_NAME }} {{ STAT_SELECTED_YEAR }})</span>
+			</div>
+		</div>
+
+		<div class="dashboard-stat-card">
+			<div class="dashboard-stat-icon activity">
+				<i class="icon fa-folder-open-o fa-fw"></i>
+			</div>
+			<div class="dashboard-stat-details">
+				<span class="dashboard-stat-value">{{ stat_categories|length }}</span>
+				<span class="dashboard-stat-label">{{ lang('DASHBOARD_ACTIVE_CATEGORIES') }}</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Board-Wide Top Posters / Contributors in Month -->
+	{% if global_top_posters|length %}
+	<div class="dash-card" style="margin-bottom: 24px;">
+		<div class="dash-card-header">
+			<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_TOP_CONTRIBUTORS_MONTH') }}</h3>
+		</div>
+		<div class="dash-card-body" style="padding: 16px;">
+			<div style="display: flex; flex-wrap: wrap; gap: 12px;">
+				{% for tp in global_top_posters %}
+				<div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+					<a href="{{ tp.U_PROFILE }}" style="font-weight: 600;">{{ tp.USERNAME|raw }}</a>
+					<span class="badge" style="background: #eff6ff; color: #1d4ed8; font-weight: 700; padding: 3px 8px; border-radius: 6px;">{{ tp.COUNT }} {{ lang('DASHBOARD_POSTS_LOWER') }}</span>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% endif %}
+
+	<!-- Categories & Statistics Loop -->
+	{% for cat in stat_categories %}
+	<div class="dash-card" style="margin-bottom: 24px;">
+		<div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+			<div>
+				<h3 class="dash-card-title">
+					<i class="icon fa-folder fa-fw" style="color: #2563eb;"></i> {{ cat.CAT_NAME }}
+				</h3>
+				{% if cat.CAT_DESC %}
+				<p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">{{ cat.CAT_DESC }}</p>
+				{% endif %}
+			</div>
+			<div style="margin-top: 4px;">
+				<span class="badge" style="background: #eff6ff; color: #1e40af; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem;">
+					{{ cat.CAT_TOTAL|number_format }} {{ lang('DASHBOARD_POSTS_LOWER') }}
+				</span>
+			</div>
+		</div>
+		<div class="dash-card-body no-padding">
+			{% for stat in cat.statistics %}
+			<div class="dash-stat-row">
+				<div class="dash-stat-main">
+					<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+						<span class="dashboard-stat-badge" style="background-color: {{ stat.STAT_COLOR }}; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; display: inline-block;">
+							<i class="icon fa-tag fa-fw"></i> {{ stat.STAT_TITLE }}
+						</span>
+						<code style="font-size: 0.8rem; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569;">[stat={{ stat.STAT_TAG }}]</code>
+					</div>
+					{% if stat.STAT_DESC %}
+					<div style="font-size: 0.85rem; color: #64748b; margin-top: 6px;">{{ stat.STAT_DESC }}</div>
+					{% endif %}
+
+					<!-- Top contributors for this specific stat -->
+					{% if stat.top_contributors|length %}
+					<div style="margin-top: 8px; font-size: 0.82rem; color: #64748b; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+						<span style="font-weight: 600;">{{ lang('DASHBOARD_TOP_POSTERS') }}:</span>
+						{% for tc in stat.top_contributors %}
+							<a href="{{ tc.U_PROFILE }}">{{ tc.USERNAME|raw }}</a> <span style="color: #94a3b8;">({{ tc.COUNT }})</span>{% if not loop.last %}&bull;{% endif %}
+						{% endfor %}
+					</div>
+					{% endif %}
+				</div>
+
+				<div class="dash-stat-count-box">
+					<span class="dash-stat-number" style="color: {{ stat.STAT_COLOR }};">{{ stat.POST_COUNT }}</span>
+					<span class="dash-stat-label-month">{{ lang('DASHBOARD_POSTS_THIS_MONTH') }}</span>
+					{% if stat.HAS_POSTS %}
+					<button type="button" class="dash-btn dash-btn-secondary dash-btn-xs dash-toggle-details-btn" onclick="toggleDetails('global_stat_posts_{{ stat.STAT_ID }}', this)" style="margin-top: 6px;">
+						<i class="icon fa-list fa-fw"></i> {{ lang('DASHBOARD_VIEW_DETAILS') }}
+					</button>
+					{% endif %}
+				</div>
+			</div>
+
+			<!-- Collapsible Post Breakdown Details -->
+			{% if stat.HAS_POSTS %}
+			<div id="global_stat_posts_{{ stat.STAT_ID }}" class="dash-stat-posts-drawer" style="display: none;">
+				<div style="padding: 12px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+					<h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: #334155;">
+						<i class="icon fa-bars fa-fw"></i> {{ lang('DASHBOARD_POSTS_BREAKDOWN') }}: <strong>{{ stat.STAT_TITLE }}</strong> ({{ stat.POST_COUNT }})
+					</h4>
+					<div class="dash-table-responsive">
+						<table class="table1 zebra-table" style="margin: 0; background: #ffffff;">
+							<thead>
+								<tr>
+									<th>{{ lang('TOPIC') }}</th>
+									<th style="width: 20%;">{{ lang('FORUM') }}</th>
+									<th style="width: 18%;">{{ lang('AUTHOR') }}</th>
+									<th style="width: 18%;">{{ lang('DATE') }}</th>
+									<th style="width: 8%; text-align: center;">{{ lang('LINK') }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for post in stat.posts %}
+								<tr>
+									<td>
+										<a href="{{ post.U_POST }}" class="topic-title-link" target="_blank">{{ post.TOPIC_TITLE }}</a>
+									</td>
+									<td>
+										<a href="{{ post.U_FORUM }}" class="topic-forum-badge" target="_blank">{{ post.FORUM_NAME }}</a>
+									</td>
+									<td>{{ post.POSTER_NAME|raw }}</td>
+									<td style="color: #64748b; font-size: 0.85rem;">{{ post.POST_TIME }}</td>
+									<td style="text-align: center;">
+										<a href="{{ post.U_POST }}" class="dash-btn dash-btn-secondary dash-btn-xs" target="_blank" title="{{ lang('DASHBOARD_VIEW_POST') }}">
+											<i class="icon fa-external-link fa-fw"></i>
+										</a>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+			{% endif %}
+
+			{% else %}
+			<div class="dash-empty-state">{{ lang('DASHBOARD_NO_STATS_IN_CAT') }}</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% else %}
+	<div class="dash-card">
+		<div class="dash-empty-state" style="padding: 40px;">
+			<i class="icon fa-bar-chart fa-fw" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px;"></i>
+			<p>{{ lang('DASHBOARD_NO_STATISTICS_DEFINED') }}</p>
+		</div>
+	</div>
+	{% endfor %}
+
+</div>
+
+<script>
+function toggleDetails(elementId, btn) {
+	var el = document.getElementById(elementId);
+	if (el) {
+		if (el.style.display === 'none' || el.style.display === '') {
+			el.style.display = 'block';
+			if (btn) btn.innerHTML = '<i class="icon fa-chevron-up fa-fw"></i> {{ lang('DASHBOARD_HIDE_DETAILS') }}';
+		} else {
+			el.style.display = 'none';
+			if (btn) btn.innerHTML = '<i class="icon fa-list fa-fw"></i> {{ lang('DASHBOARD_VIEW_DETAILS') }}';
+		}
+	}
+}
+</script>
+
+{% INCLUDE 'overall_footer.html' %}

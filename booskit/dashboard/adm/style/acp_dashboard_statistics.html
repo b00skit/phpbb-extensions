@@ -1,0 +1,355 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_DASHBOARD_STATISTICS') }}</h1>
+<p>{{ lang('ACP_DASHBOARD_STATS_EXPLAIN') }}</p>
+
+<!-- STATISTIC CATEGORIES SECTION -->
+<fieldset>
+	<legend>{{ lang('DASHBOARD_STATS_CATEGORIES_TITLE') }}</legend>
+	<p>{{ lang('DASHBOARD_STATS_CATEGORIES_DESC') }}</p>
+
+	{% if STAT_CATEGORIES|length %}
+	<table class="table1 zebra-table">
+		<thead>
+			<tr>
+				<th style="width: 20%;">{{ lang('DASHBOARD_CAT_NAME') }}</th>
+				<th>{{ lang('DASHBOARD_CAT_DESC') }}</th>
+				<th style="width: 8%; text-align: center;">{{ lang('DASHBOARD_ORDER') }}</th>
+				<th style="width: 20%;">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}</th>
+				<th style="width: 20%;">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}</th>
+				<th style="width: 14%; text-align: center;">{{ lang('ACTION') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for cat in STAT_CATEGORIES %}
+			<tr>
+				<td><strong>{{ cat.cat_name }}</strong></td>
+				<td>{{ cat.cat_desc|default('-') }}</td>
+				<td style="text-align: center;">{{ cat.cat_order }}</td>
+				<td>
+					{% if cat.allowed_groups_array|length %}
+						{% for gid in cat.allowed_groups_array %}
+							{% for g in PHPBB_GROUPS %}
+								{% if g.group_id == gid %}<span class="badge" style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
+							{% endfor %}
+						{% endfor %}
+					{% else %}
+						<em>{{ lang('DASHBOARD_NO_PERMISSION_BOUND') }}</em>
+					{% endif %}
+				</td>
+				<td>
+					{% if cat.use_allowed_groups_array|length %}
+						{% for gid in cat.use_allowed_groups_array %}
+							{% for g in PHPBB_GROUPS %}
+								{% if g.group_id == gid %}<span class="badge" style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
+							{% endfor %}
+						{% endfor %}
+					{% else %}
+						<em>{{ lang('DASHBOARD_NO_USE_PERMISSION_BOUND') }}</em>
+					{% endif %}
+				</td>
+				<td style="text-align: center;">
+					<button type="button" class="button2" onclick="document.getElementById('edit_cat_{{ cat.cat_id }}').style.display = document.getElementById('edit_cat_{{ cat.cat_id }}').style.display === 'none' ? 'table-row' : 'none';">{{ lang('EDIT') }}</button>
+					<a href="{{ U_ACTION }}&amp;action=delete_cat&amp;cat_id={{ cat.cat_id }}" class="button2" style="color: #dc2626;" onclick="return confirm('{{ lang('CONFIRM_DELETE_CAT') }}');">{{ lang('DELETE') }}</a>
+				</td>
+			</tr>
+			<!-- Inline Edit Category Row -->
+			<tr id="edit_cat_{{ cat.cat_id }}" style="display: none; background: #f8fafc;">
+				<td colspan="6">
+					<form method="post" action="{{ U_ACTION }}&amp;action=update_cat&amp;cat_id={{ cat.cat_id }}">
+						<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 10px;">
+							<div>
+								<label><strong>{{ lang('DASHBOARD_CAT_NAME') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="text" name="cat_name" value="{{ cat.cat_name }}" size="30" required />
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_CAT_DESC') }}{{ lang('COLON') }}</strong></label><br>
+								<textarea name="cat_desc" rows="2" cols="30" style="width: 95%;">{{ cat.cat_desc }}</textarea>
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="number" name="cat_order" value="{{ cat.cat_order }}" style="width: 80px;" />
+							</div>
+							<div>
+								<label><strong>{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
+								<select name="allowed_groups[]" multiple="multiple" size="5" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in cat.allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+							<div>
+								<label><strong>{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
+								<select name="use_allowed_groups[]" multiple="multiple" size="5" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in cat.use_allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div style="padding: 10px; border-top: 1px solid #e2e8f0; text-align: right;">
+							<button type="submit" name="submit" class="button1">{{ lang('UPDATE') }}</button>
+							<button type="button" class="button2" onclick="document.getElementById('edit_cat_{{ cat.cat_id }}').style.display = 'none';">{{ lang('CANCEL') }}</button>
+						</div>
+						{{ S_FORM_TOKEN }}
+					</form>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p><em>{{ lang('DASHBOARD_NO_CATEGORIES') }}</em></p>
+	{% endif %}
+
+	<br>
+	<!-- Add Category Sub-Form -->
+	<h3>{{ lang('DASHBOARD_ADD_CATEGORY') }}</h3>
+	<form method="post" action="{{ U_ACTION }}&amp;action=add_cat">
+		<dl>
+			<dt><label for="new_cat_name">{{ lang('DASHBOARD_CAT_NAME') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_CAT_NAME_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="new_cat_name" name="new_cat_name" size="40" placeholder="e.g. FTP / Training / Patrols" required /></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_cat_desc">{{ lang('DASHBOARD_CAT_DESC') }}{{ lang('COLON') }}</label></dt>
+			<dd><textarea id="new_cat_desc" name="new_cat_desc" rows="2" cols="40" style="width: 60%;"></textarea></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_cat_order">{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="number" id="new_cat_order" name="new_cat_order" value="0" style="width: 80px;" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_cat_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="new_cat_allowed_groups" name="new_cat_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="new_cat_use_allowed_groups">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="new_cat_use_allowed_groups" name="new_cat_use_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('DASHBOARD_ADD_CATEGORY') }}" />
+		</p>
+		{{ S_FORM_TOKEN }}
+	</form>
+</fieldset>
+
+<br>
+
+<!-- STATISTIC DEFINITIONS SECTION -->
+<fieldset>
+	<legend>{{ lang('DASHBOARD_STAT_DEFS_TITLE') }}</legend>
+	<p>{{ lang('DASHBOARD_STAT_DEFS_DESC') }}</p>
+
+	{% if STAT_DEFINITIONS|length %}
+	<table class="table1 zebra-table">
+		<thead>
+			<tr>
+				<th style="width: 22%;">{{ lang('DASHBOARD_STAT_TAG') }}</th>
+				<th style="width: 18%;">{{ lang('DASHBOARD_STAT_TITLE') }}</th>
+				<th style="width: 12%;">{{ lang('DASHBOARD_CATEGORY') }}</th>
+				<th style="width: 8%; text-align: center;">{{ lang('DASHBOARD_COLOR') }}</th>
+				<th style="width: 15%;">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}</th>
+				<th style="width: 15%;">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}</th>
+				<th style="width: 10%; text-align: center;">{{ lang('ACTION') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for def in STAT_DEFINITIONS %}
+			<tr>
+				<td>
+					<code>[stat={{ def.stat_tag }}][/stat]</code> <small style="color: #64748b;">(Silent)</small><br>
+					<code>[visiblestat={{ def.stat_tag }}][/visiblestat]</code> <small style="color: #64748b;">(Badge)</small>
+				</td>
+				<td>
+					<strong>{{ def.stat_title }}</strong>
+					{% if def.stat_desc %}<br><small style="color: #64748b;">{{ def.stat_desc }}</small>{% endif %}
+				</td>
+				<td>{{ def.cat_name|default('<em>Uncategorized</em>')|raw }}</td>
+				<td style="text-align: center;">
+					<span class="badge" style="background: {{ def.stat_color }}; color: #ffffff; padding: 3px 8px; border-radius: 4px; font-weight: bold;">
+						{{ def.stat_color }}
+					</span>
+				</td>
+				<td>
+					{% if def.allowed_groups_array|length %}
+						{% for gid in def.allowed_groups_array %}
+							{% for g in PHPBB_GROUPS %}
+								{% if g.group_id == gid %}<span class="badge" style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
+							{% endfor %}
+						{% endfor %}
+					{% else %}
+						<em>{{ lang('DASHBOARD_NO_PERMISSION_BOUND') }}</em>
+					{% endif %}
+				</td>
+				<td>
+					{% if def.use_allowed_groups_array|length %}
+						{% for gid in def.use_allowed_groups_array %}
+							{% for g in PHPBB_GROUPS %}
+								{% if g.group_id == gid %}<span class="badge" style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
+							{% endfor %}
+						{% endfor %}
+					{% else %}
+						<em>{{ lang('DASHBOARD_NO_USE_PERMISSION_BOUND') }}</em>
+					{% endif %}
+				</td>
+				<td style="text-align: center;">
+					<button type="button" class="button2" onclick="document.getElementById('edit_stat_{{ def.stat_id }}').style.display = document.getElementById('edit_stat_{{ def.stat_id }}').style.display === 'none' ? 'table-row' : 'none';">{{ lang('EDIT') }}</button>
+					<a href="{{ U_ACTION }}&amp;action=delete_stat&amp;stat_id={{ def.stat_id }}" class="button2" style="color: #dc2626;" onclick="return confirm('{{ lang('CONFIRM_DELETE_STAT') }}');">{{ lang('DELETE') }}</a>
+				</td>
+			</tr>
+			<!-- Inline Edit Stat Row -->
+			<tr id="edit_stat_{{ def.stat_id }}" style="display: none; background: #f8fafc;">
+				<td colspan="7">
+					<form method="post" action="{{ U_ACTION }}&amp;action=update_stat&amp;stat_id={{ def.stat_id }}">
+						<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 10px;">
+							<div>
+								<label><strong>{{ lang('DASHBOARD_STAT_TAG') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="text" name="stat_tag" value="{{ def.stat_tag }}" size="30" required pattern="[a-zA-Z0-9_\-]+" />
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_STAT_TITLE') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="text" name="stat_title" value="{{ def.stat_title }}" size="35" required />
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_CATEGORY') }}{{ lang('COLON') }}</strong></label><br>
+								<select name="cat_id" style="width: 260px;">
+									<option value="0" {% if def.cat_id == 0 %}selected="selected"{% endif %}>-- Uncategorized --</option>
+									{% for cat in STAT_CATEGORIES %}
+										<option value="{{ cat.cat_id }}" {% if cat.cat_id == def.cat_id %}selected="selected"{% endif %}>{{ cat.cat_name }}</option>
+									{% endfor %}
+								</select>
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_COLOR') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="color" name="stat_color" value="{{ def.stat_color }}" style="vertical-align: middle; height: 32px; width: 60px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px;" />
+								<input type="text" value="{{ def.stat_color }}" size="10" style="vertical-align: middle;" oninput="this.previousElementSibling.value = this.value;" />
+							</div>
+							<div>
+								<label><strong>{{ lang('DASHBOARD_STAT_DESC') }}{{ lang('COLON') }}</strong></label><br>
+								<textarea name="stat_desc" rows="2" cols="35" style="width: 95%;">{{ def.stat_desc }}</textarea>
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="number" name="stat_order" value="{{ def.stat_order }}" style="width: 80px;" />
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
+								<select name="allowed_groups[]" multiple="multiple" size="4" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in def.allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+							<div>
+								<label><strong>{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
+								<select name="use_allowed_groups[]" multiple="multiple" size="5" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in def.use_allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div style="padding: 10px; border-top: 1px solid #e2e8f0; text-align: right;">
+							<button type="submit" name="submit" class="button1">{{ lang('UPDATE') }}</button>
+							<button type="button" class="button2" onclick="document.getElementById('edit_stat_{{ def.stat_id }}').style.display = 'none';">{{ lang('CANCEL') }}</button>
+						</div>
+						{{ S_FORM_TOKEN }}
+					</form>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p><em>{{ lang('DASHBOARD_NO_STAT_DEFS') }}</em></p>
+	{% endif %}
+
+	<br>
+	<!-- Add Stat Definition Sub-Form -->
+	<h3>{{ lang('DASHBOARD_ADD_STAT_DEF') }}</h3>
+	<form method="post" action="{{ U_ACTION }}&amp;action=add_stat">
+		<dl>
+			<dt><label for="new_stat_tag">{{ lang('DASHBOARD_STAT_TAG') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_STAT_TAG_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="new_stat_tag" name="new_stat_tag" size="30" placeholder="e.g. ftp_phase1" required pattern="[a-zA-Z0-9_\-]+" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_title">{{ lang('DASHBOARD_STAT_TITLE') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_STAT_TITLE_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="new_stat_title" name="new_stat_title" size="40" placeholder="e.g. FTP Phase 1" required /></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_cat_id">{{ lang('DASHBOARD_CATEGORY') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_CATEGORY_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="new_cat_id" name="new_cat_id" style="width: 280px;">
+					<option value="0">-- Uncategorized --</option>
+					{% for cat in STAT_CATEGORIES %}
+						<option value="{{ cat.cat_id }}">{{ cat.cat_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_color">{{ lang('DASHBOARD_COLOR') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_COLOR_EXPLAIN') }}</span></dt>
+			<dd>
+				<input type="color" id="new_stat_color" name="new_stat_color" value="#2563eb" style="vertical-align: middle; height: 32px; width: 60px; padding: 0; border: 1px solid #cbd5e1; border-radius: 4px;" />
+				<input type="text" value="#2563eb" size="10" style="vertical-align: middle;" oninput="document.getElementById('new_stat_color').value = this.value;" />
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_desc">{{ lang('DASHBOARD_STAT_DESC') }}{{ lang('COLON') }}</label></dt>
+			<dd><textarea id="new_stat_desc" name="new_stat_desc" rows="2" cols="40" style="width: 60%;"></textarea></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_order">{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="number" id="new_stat_order" name="new_stat_order" value="0" style="width: 80px;" /></dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="new_stat_allowed_groups" name="new_stat_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label for="new_stat_use_allowed_groups">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
+			<dd>
+				<select id="new_stat_use_allowed_groups" name="new_stat_use_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('DASHBOARD_ADD_STAT_DEF') }}" />
+		</p>
+		{{ S_FORM_TOKEN }}
+	</form>
+</fieldset>
+
+<br>
+
+<!-- POST SYNCHRONIZATION TOOL -->
+<fieldset>
+	<legend>{{ lang('DASHBOARD_RESYNC_TITLE') }}</legend>
+	<p>{{ lang('DASHBOARD_RESYNC_EXPLAIN') }}</p>
+	<form method="post" action="{{ U_ACTION }}&amp;action=resync_stats">
+		<p class="submit-buttons">
+			<input class="button2" type="submit" name="submit" value="{{ lang('DASHBOARD_RESYNC_BUTTON') }}" onclick="return confirm('{{ lang('CONFIRM_RESYNC_STATS') }}');" />
+		</p>
+		{{ S_FORM_TOKEN }}
+	</form>
+</fieldset>
+
+{% INCLUDE 'overall_footer.html' %}

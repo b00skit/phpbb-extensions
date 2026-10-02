@@ -8,12 +8,19 @@
 			<h1><i class="icon fa-tachometer fa-fw" aria-hidden="true"></i> {{ lang('DASHBOARD_TITLE') }}</h1>
 			<p>{{ lang('DASHBOARD_PAGE_SUBTITLE') }}</p>
 		</div>
-		{% if S_PERM_SEARCH_USERS %}
-		<form method="get" action="{{ U_BOOSKIT_DASHBOARD }}" class="dashboard-search-form">
-			<input type="text" name="search_user" placeholder="{{ lang('DASHBOARD_SEARCH_USER') }}" required />
-			<button type="submit"><i class="icon fa-search fa-fw" aria-hidden="true"></i></button>
-		</form>
-		{% endif %}
+		<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+			{% if S_PERM_VIEW_STATISTICS and U_COMBINED_STATISTICS %}
+			<a href="{{ U_COMBINED_STATISTICS }}" class="dash-btn" style="background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 600;">
+				<i class="icon fa-bar-chart fa-fw"></i> {{ lang('DASHBOARD_COMBINED_STATS_BUTTON') }}
+			</a>
+			{% endif %}
+			{% if S_PERM_SEARCH_USERS %}
+			<form method="get" action="{{ U_BOOSKIT_DASHBOARD }}" class="dashboard-search-form">
+				<input type="text" name="search_user" placeholder="{{ lang('DASHBOARD_SEARCH_USER') }}" required />
+				<button type="submit"><i class="icon fa-search fa-fw" aria-hidden="true"></i></button>
+			</form>
+			{% endif %}
+		</div>
 	</div>
 
 	{% if S_SEARCH_USER_NOT_FOUND %}

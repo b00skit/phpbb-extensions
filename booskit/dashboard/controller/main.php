@@ -111,10 +111,12 @@ class main
 			'STATS_NEWEST_USER'        => $newest_user_string,
 
 			'S_PERM_VIEW_STATS'        => !empty($perms['view_stats']),
+			'S_PERM_VIEW_STATISTICS'   => (!empty($perms['view_board_statistics']) || !empty($perms['view_statistics'])),
 			'S_PERM_VIEW_ACTIVE_USERS' => !empty($perms['view_active_users']),
 			'S_PERM_VIEW_HOT_TOPICS'   => !empty($perms['view_hot_topics']),
 			'S_PERM_VIEW_FEEDS'        => !empty($perms['view_feeds']),
 			'S_PERM_SEARCH_USERS'      => !empty($perms['search_users']),
+			'U_COMBINED_STATISTICS'    => $this->get_safe_route('booskit_dashboard_combined_statistics'),
 		]);
 
 		// Active users currently browsing
@@ -491,6 +493,89 @@ class main
 			$this->pagination->generate_template_pagination($base_url_prof, 'pagination_profiles', 'start_profiles', $count_visited_profiles, $limit, $start_profiles);
 		}
 
+		$can_view_stats_tab = (!empty($perms['view_profile_statistics']) || !empty($perms['view_statistics'])) && !empty($this->config['booskit_dashboard_include_stats_tab']);
+		$stat_total_count = 0;
+		$stat_month = (int) date('n');
+		$stat_year = (int) date('Y');
+
+		if ($can_view_stats_tab)
+		{
+			$stat_month = $this->request->variable('stat_month', (int) date('n'));
+			$stat_year = $this->request->variable('stat_year', (int) date('Y'));
+			if ($stat_month < 1 || $stat_month > 12) { $stat_month = (int) date('n'); }
+			if ($stat_year < 2000 || $stat_year > 2100) { $stat_year = (int) date('Y'); }
+
+			$monthly_stats = $this->dashboard_manager->get_user_monthly_statistics($viewer_id, $user_id, $stat_year, $stat_month);
+			$stat_total_count = $monthly_stats['total_posts_in_month'];
+			$month_year_info = $this->dashboard_manager->get_available_months_years($stat_year, $stat_month);
+
+			foreach ($monthly_stats['categories'] as $cat)
+			{
+				$this->template->assign_block_vars('profile_stat_categories', [
+					'CAT_ID'    => $cat['cat_id'],
+					'CAT_NAME'  => $cat['cat_name'],
+					'CAT_DESC'  => $cat['cat_desc'],
+					'CAT_TOTAL' => $cat['cat_total'],
+				]);
+
+				foreach ($cat['statistics'] as $s)
+				{
+					$this->template->assign_block_vars('profile_stat_categories.statistics', [
+						'STAT_ID'    => $s['stat_id'],
+						'STAT_TAG'   => $s['stat_tag'],
+						'STAT_TITLE' => $s['stat_title'],
+						'STAT_COLOR' => $s['stat_color'],
+						'STAT_DESC'  => $s['stat_desc'],
+						'POST_COUNT' => $s['post_count'],
+						'HAS_POSTS'  => !empty($s['posts']),
+					]);
+
+					foreach ($s['posts'] as $p)
+					{
+						$this->template->assign_block_vars('profile_stat_categories.statistics.posts', [
+							'POST_ID'     => $p['post_id'],
+							'TOPIC_ID'    => $p['topic_id'],
+							'TOPIC_TITLE' => $p['topic_title'],
+							'FORUM_ID'    => $p['forum_id'],
+							'FORUM_NAME'  => $p['forum_name'],
+							'POST_TIME'   => $this->user->format_date($p['post_time']),
+							'U_POST'      => append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 'p=' . $p['post_id'] . '#p' . $p['post_id']),
+							'U_TOPIC'     => append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . $p['topic_id']),
+							'U_FORUM'     => append_sid($this->root_path . 'viewforum.' . $this->php_ext, 'f=' . $p['forum_id']),
+						]);
+					}
+				}
+			}
+
+			foreach ($month_year_info['months'] as $m_val => $m_lbl)
+			{
+				$this->template->assign_block_vars('stat_month_options', [
+					'VALUE'    => $m_val,
+					'LABEL'    => $m_lbl,
+					'SELECTED' => ($m_val === $stat_month),
+				]);
+			}
+
+			foreach ($month_year_info['years'] as $y_val)
+			{
+				$this->template->assign_block_vars('stat_year_options', [
+					'VALUE'    => $y_val,
+					'LABEL'    => $y_val,
+					'SELECTED' => ($y_val === $stat_year),
+				]);
+			}
+
+			$this->template->assign_vars([
+				'STAT_SELECTED_MONTH'      => $stat_month,
+				'STAT_SELECTED_YEAR'       => $stat_year,
+				'STAT_SELECTED_MONTH_NAME' => $month_year_info['month_name'],
+				'U_STAT_PREV_MONTH'        => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id, 'stat_month' => $month_year_info['prev_month'], 'stat_year' => $month_year_info['prev_year']]) . '#tab-statistics',
+				'U_STAT_NEXT_MONTH'        => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id, 'stat_month' => $month_year_info['next_month'], 'stat_year' => $month_year_info['next_year']]) . '#tab-statistics',
+				'U_STAT_CUR_MONTH'         => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id, 'stat_month' => $month_year_info['now_month'], 'stat_year' => $month_year_info['now_year']]) . '#tab-statistics',
+				'U_STAT_PROFILE_BASE'      => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]),
+			]);
+		}
+
 		$issued_total = count($profile['issued']['disciplinary']) + count($profile['issued']['ic_disciplinary']) + count($profile['issued']['commendations']) + count($profile['issued']['awards']);
 
 		$this->template->assign_vars([
@@ -506,6 +591,7 @@ class main
 			'U_PM'                       => append_sid($this->root_path . 'ucp.' . $this->php_ext, 'i=pm&mode=compose&action=post&u=' . $user_id),
 			'U_BACK_DASHBOARD'           => $this->helper->route('booskit_dashboard_home'),
 
+			'S_CAN_VIEW_STATISTICS'      => $can_view_stats_tab,
 			'S_CAN_VIEW_DISCIPLINARY'    => $can_view_disc,
 			'S_CAN_VIEW_IC_DISCIPLINARY' => $can_view_ic,
 			'S_CAN_VIEW_AWARDS'          => $can_view_awards,
@@ -529,6 +615,7 @@ class main
 			'U_ISSUE_COMMENDATION'       => $u_issue_comm,
 			'S_CAN_ISSUE_ANY'            => ($can_issue_disc || $can_issue_award || $can_issue_career || $can_issue_comm),
 
+			'COUNT_MONTHLY_STATS'        => $stat_total_count,
 			'COUNT_AWARDS'               => count($profile['awards']),
 			'COUNT_CAREER'               => count($profile['career']),
 			'COUNT_COMMENDATIONS'        => count($profile['commendations']),
@@ -822,6 +909,118 @@ class main
 		]);
 
 		return $this->helper->render('view_all.html', $title);
+	}
+
+	public function combined_statistics()
+	{
+		$this->check_access();
+		$this->user->add_lang_ext('booskit/dashboard', 'dashboard');
+
+		$viewer_id = (int) $this->user->data['user_id'];
+		$perms = $this->dashboard_manager->get_effective_permissions($viewer_id);
+
+		if (empty($perms['view_board_statistics']) && empty($perms['view_statistics']))
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$stat_month = $this->request->variable('stat_month', (int) date('n'));
+		$stat_year = $this->request->variable('stat_year', (int) date('Y'));
+		if ($stat_month < 1 || $stat_month > 12) { $stat_month = (int) date('n'); }
+		if ($stat_year < 2000 || $stat_year > 2100) { $stat_year = (int) date('Y'); }
+
+		$global_stats = $this->dashboard_manager->get_global_monthly_statistics($viewer_id, $stat_year, $stat_month);
+		$month_year_info = $this->dashboard_manager->get_available_months_years($stat_year, $stat_month);
+
+		foreach ($global_stats['categories'] as $cat)
+		{
+			$this->template->assign_block_vars('stat_categories', [
+				'CAT_ID'    => $cat['cat_id'],
+				'CAT_NAME'  => $cat['cat_name'],
+				'CAT_DESC'  => $cat['cat_desc'],
+				'CAT_TOTAL' => $cat['cat_total'],
+			]);
+
+			foreach ($cat['statistics'] as $s)
+			{
+				$this->template->assign_block_vars('stat_categories.statistics', [
+					'STAT_ID'          => $s['stat_id'],
+					'STAT_TAG'         => $s['stat_tag'],
+					'STAT_TITLE'       => $s['stat_title'],
+					'STAT_COLOR'       => $s['stat_color'],
+					'STAT_DESC'        => $s['stat_desc'],
+					'POST_COUNT'       => $s['post_count'],
+					'HAS_POSTS'        => !empty($s['posts']),
+					'TOP_CONTRIBUTORS' => $s['top_contributors'],
+				]);
+
+				foreach ($s['top_contributors'] as $tc)
+				{
+					$this->template->assign_block_vars('stat_categories.statistics.top_contributors', [
+						'USERNAME'   => get_username_string('full', $tc['user_id'], $tc['username'], $tc['user_colour']),
+						'COUNT'      => $tc['count'],
+						'U_PROFILE'  => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $tc['user_id']]),
+					]);
+				}
+
+				foreach ($s['posts'] as $p)
+				{
+					$this->template->assign_block_vars('stat_categories.statistics.posts', [
+						'POST_ID'     => $p['post_id'],
+						'TOPIC_ID'    => $p['topic_id'],
+						'TOPIC_TITLE' => $p['topic_title'],
+						'FORUM_ID'    => $p['forum_id'],
+						'FORUM_NAME'  => $p['forum_name'],
+						'POSTER_NAME' => get_username_string('full', $p['poster_id'], $p['username'], $p['user_colour']),
+						'POST_TIME'   => $this->user->format_date($p['post_time']),
+						'U_POST'      => append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 'p=' . $p['post_id'] . '#p' . $p['post_id']),
+						'U_TOPIC'     => append_sid($this->root_path . 'viewtopic.' . $this->php_ext, 't=' . $p['topic_id']),
+						'U_FORUM'     => append_sid($this->root_path . 'viewforum.' . $this->php_ext, 'f=' . $p['forum_id']),
+					]);
+				}
+			}
+		}
+
+		foreach ($global_stats['top_posters'] as $tp)
+		{
+			$this->template->assign_block_vars('global_top_posters', [
+				'USERNAME'  => get_username_string('full', $tp['user_id'], $tp['username'], $tp['user_colour']),
+				'COUNT'     => $tp['count'],
+				'U_PROFILE' => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $tp['user_id']]),
+			]);
+		}
+
+		foreach ($month_year_info['months'] as $m_val => $m_lbl)
+		{
+			$this->template->assign_block_vars('stat_month_options', [
+				'VALUE'    => $m_val,
+				'LABEL'    => $m_lbl,
+				'SELECTED' => ($m_val === $stat_month),
+			]);
+		}
+
+		foreach ($month_year_info['years'] as $y_val)
+		{
+			$this->template->assign_block_vars('stat_year_options', [
+				'VALUE'    => $y_val,
+				'LABEL'    => $y_val,
+				'SELECTED' => ($y_val === $stat_year),
+			]);
+		}
+
+		$this->template->assign_vars([
+			'STAT_SELECTED_MONTH'      => $stat_month,
+			'STAT_SELECTED_YEAR'       => $stat_year,
+			'STAT_SELECTED_MONTH_NAME' => $month_year_info['month_name'],
+			'TOTAL_MONTHLY_TAGS'       => $global_stats['total_posts_in_month'],
+			'U_STAT_PREV_MONTH'        => $this->helper->route('booskit_dashboard_combined_statistics', ['stat_month' => $month_year_info['prev_month'], 'stat_year' => $month_year_info['prev_year']]),
+			'U_STAT_NEXT_MONTH'        => $this->helper->route('booskit_dashboard_combined_statistics', ['stat_month' => $month_year_info['next_month'], 'stat_year' => $month_year_info['next_year']]),
+			'U_STAT_CUR_MONTH'         => $this->helper->route('booskit_dashboard_combined_statistics', ['stat_month' => $month_year_info['now_month'], 'stat_year' => $month_year_info['now_year']]),
+			'U_STAT_BASE'              => $this->helper->route('booskit_dashboard_combined_statistics'),
+			'U_BACK_DASHBOARD'         => $this->helper->route('booskit_dashboard_home'),
+		]);
+
+		return $this->helper->render('combined_statistics.html', $this->user->lang['DASHBOARD_COMBINED_STATS_TITLE']);
 	}
 
 	protected function truncate($text, $length = 120)
