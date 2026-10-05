@@ -175,14 +175,19 @@ class listener implements EventSubscriberInterface
 			// Render styled badge for [visiblestat] tags
 			if (strpos($html, 'dashboard-visiblestat-tag') !== false)
 			{
+				$viewer_id = (int) $this->user->data['user_id'];
 				$html = preg_replace_callback(
 					'#<span class="dashboard-visiblestat-tag" data-stat="([a-zA-Z0-9_\-]+)">(.*?)</span>#is',
-					function($matches) {
+					function($matches) use ($viewer_id) {
 						$tag = strtolower($matches[1]);
 						$text = trim($matches[2]);
 						$def = $this->dashboard_manager->get_stat_definition_by_tag($tag);
-						$color = $def && !empty($def['stat_color']) ? $def['stat_color'] : '#2563eb';
-						$title = $def && !empty($def['stat_title']) ? $def['stat_title'] : $tag;
+						if (!$def || !$this->dashboard_manager->can_view_stat_definition($viewer_id, $def))
+						{
+							return '';
+						}
+						$color = !empty($def['stat_color']) ? $def['stat_color'] : '#2563eb';
+						$title = !empty($def['stat_title']) ? $def['stat_title'] : $tag;
 						$display = !empty($text) ? $text : $title;
 						return '<span class="dashboard-stat-badge" style="background-color: ' . htmlspecialchars($color, ENT_QUOTES, 'UTF-8') . '; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-weight: 600; display: inline-block; vertical-align: middle;" title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"><i class="icon fa-tag fa-fw"></i> ' . htmlspecialchars($display, ENT_QUOTES, 'UTF-8') . '</span>';
 					},
@@ -212,7 +217,8 @@ class listener implements EventSubscriberInterface
 
 		if ($post_id > 0)
 		{
-			$this->dashboard_manager->sync_post_stats($post_id, $message, $topic_id, $forum_id, $poster_id, $post_time);
+			$current_groups = $this->dashboard_manager->get_user_groups($poster_id);
+			$this->dashboard_manager->sync_post_stats($post_id, $message, $topic_id, $forum_id, $poster_id, $post_time, $current_groups);
 		}
 	}
 
@@ -221,7 +227,7 @@ class listener implements EventSubscriberInterface
 		$post_ids = isset($event['post_ids']) ? $event['post_ids'] : [];
 		if (!empty($post_ids))
 		{
-			$this->dashboard_manager->delete_post_stats($post_ids);
+			$this->dashboard_manager->delete_post_stats($post_ids, true);
 		}
 	}
 
@@ -239,7 +245,8 @@ class listener implements EventSubscriberInterface
 
 			if ($post_id > 0)
 			{
-				$this->dashboard_manager->sync_post_stats($post_id, $message, $topic_id, $forum_id, $poster_id, $post_time);
+				$current_groups = $this->dashboard_manager->get_user_groups($poster_id);
+				$this->dashboard_manager->sync_post_stats($post_id, $message, $topic_id, $forum_id, $poster_id, $post_time, $current_groups);
 			}
 		}
 	}

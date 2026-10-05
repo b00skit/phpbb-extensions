@@ -657,6 +657,177 @@
 	to { opacity: 1; transform: translateY(0); }
 }
 
+/* Profile Search & Limit Toolbar */
+.profile-toolbar-card {
+	background: var(--dash-bg-card);
+	border: 1px solid var(--dash-border);
+	border-radius: 10px;
+	padding: 12px 18px;
+	margin-bottom: 20px;
+	box-shadow: var(--dash-card-shadow);
+}
+
+.profile-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.profile-search-form {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1;
+	max-width: 480px;
+}
+
+.profile-search-input-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 1;
+}
+
+.profile-search-icon {
+	position: absolute;
+	left: 10px;
+	color: #94a3b8;
+	pointer-events: none;
+	font-size: 0.85rem;
+}
+
+.profile-search-input {
+	width: 100%;
+	padding: 7px 30px 7px 32px;
+	border: 1px solid var(--dash-border);
+	border-radius: 6px;
+	font-size: 0.9rem;
+	color: var(--dash-text-main);
+	background: #ffffff;
+	outline: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-search-input:focus {
+	border-color: var(--dash-primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.profile-search-clear-btn {
+	position: absolute;
+	right: 8px;
+	color: #94a3b8;
+	font-size: 0.85rem;
+	text-decoration: none;
+	padding: 2px 4px;
+	border-radius: 4px;
+}
+
+.profile-search-clear-btn:hover {
+	color: #ef4444;
+}
+
+.profile-per-page-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.profile-per-page-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--dash-text-muted);
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.profile-limit-select {
+	padding: 6px 12px;
+	font-size: 0.85rem;
+	border: 1px solid var(--dash-border);
+	border-radius: 6px;
+	background: #ffffff;
+	color: var(--dash-text-main);
+	cursor: pointer;
+	outline: none;
+}
+
+.profile-active-filter-badge {
+	display: inline-flex;
+	align-items: center;
+	margin-top: 10px;
+	padding: 5px 12px;
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	color: #1e40af;
+}
+
+/* Sub-tabs Navigation (e.g. Actions Issued) */
+.profile-subtabs-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	background: #f1f5f9;
+	padding: 4px;
+	border-radius: 8px;
+	margin-bottom: 16px;
+}
+
+.profile-subtab-btn {
+	background: transparent;
+	border: none;
+	padding: 6px 14px;
+	font-size: 0.88rem;
+	font-weight: 600;
+	color: var(--dash-text-muted);
+	cursor: pointer;
+	border-radius: 6px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	transition: all 0.15s ease;
+}
+
+.profile-subtab-btn:hover {
+	color: var(--dash-text-main);
+	background: rgba(255, 255, 255, 0.7);
+}
+
+.profile-subtab-btn.active {
+	color: var(--dash-primary);
+	background: #ffffff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.profile-subtab-badge {
+	background: #e2e8f0;
+	color: #475569;
+	font-size: 0.72rem;
+	padding: 1px 6px;
+	border-radius: 9999px;
+	font-weight: 700;
+}
+
+.profile-subtab-btn.active .profile-subtab-badge {
+	background: #eff6ff;
+	color: var(--dash-primary);
+}
+
+.profile-subtab-content {
+	display: none;
+}
+
+.profile-subtab-content.active {
+	display: block;
+	animation: fadeIn 0.15s ease-in-out;
+}
+
 /* Item styling inside profiles & feeds */
 .dash-item {
 	padding: 14px 18px;

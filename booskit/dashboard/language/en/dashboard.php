@@ -139,6 +139,17 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_IC_DISCIPLINARY_TITLE'=> 'Recent IC Disciplinary Actions',
 	'DASHBOARD_NO_DATA'             => 'No recent items to display.',
 
+	// Profile Filtering & Sub-tabs
+	'DASHBOARD_PER_PAGE'                    => 'Show',
+	'DASHBOARD_ENTRIES'                     => 'entries',
+	'DASHBOARD_SEARCH_PROFILE_PLACEHOLDER'  => 'Search in this profile...',
+	'DASHBOARD_FILTER_ACTIVE'               => 'Filtered by:',
+	'DASHBOARD_CLEAR_FILTER'                => 'Clear search',
+	'DASHBOARD_SUBTAB_DISCIPLINARY'         => 'Disciplinary (OOC)',
+	'DASHBOARD_SUBTAB_IC_DISCIPLINARY'      => 'IC Disciplinary',
+	'DASHBOARD_SUBTAB_COMMENDATIONS'        => 'Commendations',
+	'DASHBOARD_SUBTAB_AWARDS'               => 'Awards',
+
 	// Logs
 	'LOG_DASHBOARD_VIEWED'          => '<strong>Viewed Command Center Dashboard</strong>',
 ));

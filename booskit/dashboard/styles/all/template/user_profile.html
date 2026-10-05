@@ -160,6 +160,46 @@
 		{% endif %}
 	</div>
 
+	<!-- Profile Search & Limit Toolbar -->
+	<div class="profile-toolbar-card">
+		<div class="profile-toolbar">
+			<form method="get" action="{{ U_PROFILE_SEARCH }}" class="profile-search-form" id="profileSearchForm">
+				<input type="hidden" name="limit" id="searchFormLimit" value="{{ ENTRIES_PER_PAGE }}">
+				<div class="profile-search-input-wrapper">
+					<i class="icon fa-search fa-fw profile-search-icon"></i>
+					<input type="text" name="q" id="profileSearchInput" value="{{ SEARCH_QUERY }}" placeholder="{{ lang('DASHBOARD_SEARCH_PROFILE_PLACEHOLDER') }}" class="profile-search-input" autocomplete="off">
+					{% if S_SEARCH_ACTIVE %}
+					<a href="{{ U_CLEAR_SEARCH }}" class="profile-search-clear-btn" title="{{ lang('DASHBOARD_CLEAR_FILTER') }}">
+						<i class="icon fa-times fa-fw"></i>
+					</a>
+					{% endif %}
+				</div>
+				<button type="submit" class="dash-btn dash-btn-primary dash-btn-sm">{{ lang('DASHBOARD_SEARCH_BUTTON') }}</button>
+			</form>
+
+			<div class="profile-per-page-container">
+				<label for="profileLimitSelect" class="profile-per-page-label">
+					<i class="icon fa-list-ol fa-fw"></i> {{ lang('DASHBOARD_PER_PAGE') }}:
+				</label>
+				<select id="profileLimitSelect" class="dash-select profile-limit-select">
+					<option value="20" {% if ENTRIES_PER_PAGE == 20 %}selected="selected"{% endif %}>20 {{ lang('DASHBOARD_ENTRIES') }}</option>
+					<option value="50" {% if ENTRIES_PER_PAGE == 50 %}selected="selected"{% endif %}>50 {{ lang('DASHBOARD_ENTRIES') }}</option>
+					<option value="100" {% if ENTRIES_PER_PAGE == 100 %}selected="selected"{% endif %}>100 {{ lang('DASHBOARD_ENTRIES') }}</option>
+				</select>
+			</div>
+		</div>
+
+		{% if S_SEARCH_ACTIVE %}
+		<div class="profile-active-filter-badge">
+			<i class="icon fa-filter fa-fw"></i>
+			<span>{{ lang('DASHBOARD_FILTER_ACTIVE') }} <strong>&ldquo;{{ SEARCH_QUERY }}&rdquo;</strong></span>
+			<a href="{{ U_CLEAR_SEARCH }}" class="dash-btn dash-btn-secondary dash-btn-xs" style="margin-left: 8px;">
+				<i class="icon fa-times fa-fw"></i> {{ lang('DASHBOARD_CLEAR_FILTER') }}
+			</a>
+		</div>
+		{% endif %}
+	</div>
+
 	<!-- TAB: Statistics -->
 	{% if S_CAN_VIEW_STATISTICS %}
 	<div id="tab-statistics" class="profile-tab-content">
@@ -172,6 +212,8 @@
 				</a>
 
 				<form method="get" action="{{ U_STAT_PROFILE_BASE }}" class="dash-month-select-form">
+					{% if ENTRIES_PER_PAGE != 20 %}<input type="hidden" name="limit" value="{{ ENTRIES_PER_PAGE }}">{% endif %}
+					{% if SEARCH_QUERY %}<input type="hidden" name="q" value="{{ SEARCH_QUERY }}">{% endif %}
 					<select name="stat_month" class="dash-select" onchange="this.form.submit();">
 						{% for m in stat_month_options %}
 							<option value="{{ m.VALUE }}" {% if m.SELECTED %}selected="selected"{% endif %}>{{ m.LABEL }}</option>
@@ -341,6 +383,27 @@
 				</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_disc|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_disc %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -383,6 +446,27 @@
 				</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_ic|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_ic %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -415,6 +499,27 @@
 				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_awards|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_awards %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -447,6 +552,27 @@
 				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_career|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_career %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -479,6 +605,27 @@
 				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_comm|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_comm %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
@@ -502,110 +649,243 @@
 				</div>
 				{% endfor %}
 			</div>
+			{% if loops.pagination_gtaw|length %}
+			<div class="dash-pagination-wrapper">
+				<div class="pagination">
+					<ul>
+					{% for p in loops.pagination_gtaw %}
+						{% if p.S_IS_PREV %}
+						<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+						{% elseif p.S_IS_CURRENT %}
+						<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+						{% elseif p.S_IS_ELLIPSIS %}
+						<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+						{% elseif p.S_IS_NEXT %}
+						<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+						{% else %}
+						<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+						{% endif %}
+					{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 	{% endif %}
 
-	<!-- TAB 7: Issued Actions -->
+	<!-- TAB 7: Issued Actions (with Sub-tabs) -->
 	{% if S_CAN_VIEW_ISSUED %}
 	<div id="tab-issued" class="profile-tab-content">
 
-		<!-- Disciplinary Issued (OOC) -->
-		<div class="dash-card" style="margin-bottom: 20px;">
-			<div class="dash-card-header">
-				<h3 class="dash-card-title"><i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_ISSUED_OOC_TITLE') }}</h3>
-			</div>
-			<div class="dash-card-body no-padding">
-				{% for item in issued_disciplinary %}
-				<div class="dash-item">
-					<div class="dash-item-main">
-						<span class="dash-item-badge" style="background: #fee2e2; color: #991b1b;">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.REASON|raw }}</div>
+		<!-- Sub-tabs Navigation Bar -->
+		<div class="profile-subtabs-nav">
+			<button type="button" class="profile-subtab-btn active" data-subtab="subtab-issued-disc">
+				<i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_SUBTAB_DISCIPLINARY') }}
+				<span class="profile-subtab-badge">{{ COUNT_ISSUED_DISCIPLINARY }}</span>
+			</button>
+			<button type="button" class="profile-subtab-btn" data-subtab="subtab-issued-ic">
+				<i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_SUBTAB_IC_DISCIPLINARY') }}
+				<span class="profile-subtab-badge">{{ COUNT_ISSUED_IC_DISCIPLINARY }}</span>
+			</button>
+			<button type="button" class="profile-subtab-btn" data-subtab="subtab-issued-comm">
+				<i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_SUBTAB_COMMENDATIONS') }}
+				<span class="profile-subtab-badge">{{ COUNT_ISSUED_COMMENDATIONS }}</span>
+			</button>
+			<button type="button" class="profile-subtab-btn" data-subtab="subtab-issued-awards">
+				<i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_SUBTAB_AWARDS') }}
+				<span class="profile-subtab-badge">{{ COUNT_ISSUED_AWARDS }}</span>
+			</button>
+		</div>
+
+		<!-- Subtab 1: Disciplinary Issued (OOC) -->
+		<div id="subtab-issued-disc" class="profile-subtab-content active">
+			<div class="dash-card">
+				<div class="dash-card-header">
+					<h3 class="dash-card-title"><i class="icon fa-gavel fa-fw" style="color: #dc2626;"></i> {{ lang('DASHBOARD_ISSUED_OOC_TITLE') }}</h3>
+				</div>
+				<div class="dash-card-body no-padding">
+					{% for item in issued_disciplinary %}
+					<div class="dash-item">
+						<div class="dash-item-main">
+							<span class="dash-item-badge" style="background: #fee2e2; color: #991b1b;">{{ item.TYPE }}</span>
+							<div class="dash-item-content">{{ item.REASON|raw }}</div>
+						</div>
+						<div class="dash-item-meta">
+							<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+							<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+						</div>
 					</div>
-					<div class="dash-item-meta">
-						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
-						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					{% else %}
+					<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+					{% endfor %}
+				</div>
+				{% if loops.pagination_issued_disc|length %}
+				<div class="dash-pagination-wrapper">
+					<div class="pagination">
+						<ul>
+						{% for p in loops.pagination_issued_disc %}
+							{% if p.S_IS_PREV %}
+							<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+							{% elseif p.S_IS_CURRENT %}
+							<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+							{% elseif p.S_IS_ELLIPSIS %}
+							<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+							{% elseif p.S_IS_NEXT %}
+							<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+							{% else %}
+							<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+							{% endif %}
+						{% endfor %}
+						</ul>
 					</div>
 				</div>
-				{% else %}
-				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
-				{% endfor %}
+				{% endif %}
 			</div>
 		</div>
 
-		<!-- IC Disciplinary Issued -->
-		<div class="dash-card" style="margin-bottom: 20px;">
-			<div class="dash-card-header">
-				<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_ISSUED_IC_TITLE') }}</h3>
-			</div>
-			<div class="dash-card-body no-padding">
-				{% for item in issued_ic_disciplinary %}
-				<div class="dash-item">
-					<div class="dash-item-main">
-						<span class="dash-item-badge" style="background: #ffedd5; color: #9a3412;">{{ item.TYPE }} ({{ item.CHARACTER }})</span>
-						<div class="dash-item-content">{{ item.REASON|raw }}</div>
+		<!-- Subtab 2: IC Disciplinary Issued -->
+		<div id="subtab-issued-ic" class="profile-subtab-content">
+			<div class="dash-card">
+				<div class="dash-card-header">
+					<h3 class="dash-card-title"><i class="icon fa-shield fa-fw" style="color: #ea580c;"></i> {{ lang('DASHBOARD_ISSUED_IC_TITLE') }}</h3>
+				</div>
+				<div class="dash-card-body no-padding">
+					{% for item in issued_ic_disciplinary %}
+					<div class="dash-item">
+						<div class="dash-item-main">
+							<span class="dash-item-badge" style="background: #ffedd5; color: #9a3412;">{{ item.TYPE }} ({{ item.CHARACTER }})</span>
+							<div class="dash-item-content">{{ item.REASON|raw }}</div>
+						</div>
+						<div class="dash-item-meta">
+							<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+							<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+						</div>
 					</div>
-					<div class="dash-item-meta">
-						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
-						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					{% else %}
+					<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+					{% endfor %}
+				</div>
+				{% if loops.pagination_issued_ic|length %}
+				<div class="dash-pagination-wrapper">
+					<div class="pagination">
+						<ul>
+						{% for p in loops.pagination_issued_ic %}
+							{% if p.S_IS_PREV %}
+							<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+							{% elseif p.S_IS_CURRENT %}
+							<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+							{% elseif p.S_IS_ELLIPSIS %}
+							<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+							{% elseif p.S_IS_NEXT %}
+							<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+							{% else %}
+							<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+							{% endif %}
+						{% endfor %}
+						</ul>
 					</div>
 				</div>
-				{% else %}
-				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
-				{% endfor %}
+				{% endif %}
 			</div>
 		</div>
 
-		<!-- Commendations Issued -->
-		<div class="dash-card" style="margin-bottom: 20px;">
-			<div class="dash-card-header">
-				<h3 class="dash-card-title"><i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_ISSUED_COMM_TITLE') }}</h3>
-			</div>
-			<div class="dash-card-body no-padding">
-				{% for item in issued_commendations %}
-				<div class="dash-item">
-					<div class="dash-item-main">
-						<span class="dash-item-badge" style="background: #dcfce7; color: #166534;">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.REASON|raw }}</div>
+		<!-- Subtab 3: Commendations Issued -->
+		<div id="subtab-issued-comm" class="profile-subtab-content">
+			<div class="dash-card">
+				<div class="dash-card-header">
+					<h3 class="dash-card-title"><i class="icon fa-star fa-fw" style="color: #10b981;"></i> {{ lang('DASHBOARD_ISSUED_COMM_TITLE') }}</h3>
+				</div>
+				<div class="dash-card-body no-padding">
+					{% for item in issued_commendations %}
+					<div class="dash-item">
+						<div class="dash-item-main">
+							<span class="dash-item-badge" style="background: #dcfce7; color: #166534;">{{ item.TYPE }}</span>
+							<div class="dash-item-content">{{ item.REASON|raw }}</div>
+						</div>
+						<div class="dash-item-meta">
+							<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+							<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+						</div>
 					</div>
-					<div class="dash-item-meta">
-						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
-						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					{% else %}
+					<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+					{% endfor %}
+				</div>
+				{% if loops.pagination_issued_comm|length %}
+				<div class="dash-pagination-wrapper">
+					<div class="pagination">
+						<ul>
+						{% for p in loops.pagination_issued_comm %}
+							{% if p.S_IS_PREV %}
+							<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+							{% elseif p.S_IS_CURRENT %}
+							<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+							{% elseif p.S_IS_ELLIPSIS %}
+							<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+							{% elseif p.S_IS_NEXT %}
+							<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+							{% else %}
+							<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+							{% endif %}
+						{% endfor %}
+						</ul>
 					</div>
 				</div>
-				{% else %}
-				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
-				{% endfor %}
+				{% endif %}
 			</div>
 		</div>
 
-		<!-- Awards Issued -->
-		<div class="dash-card">
-			<div class="dash-card-header">
-				<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_ISSUED_AWARDS_TITLE') }}</h3>
-			</div>
-			<div class="dash-card-body no-padding">
-				{% for item in issued_awards %}
-				<div class="dash-item">
-					<div class="dash-item-main">
-						<span class="dash-item-badge" style="background: #fef9c3; color: #854d0e;">{{ item.TYPE }}</span>
-						<div class="dash-item-content">{{ item.COMMENT|raw }}</div>
+		<!-- Subtab 4: Awards Issued -->
+		<div id="subtab-issued-awards" class="profile-subtab-content">
+			<div class="dash-card">
+				<div class="dash-card-header">
+					<h3 class="dash-card-title"><i class="icon fa-trophy fa-fw" style="color: #eab308;"></i> {{ lang('DASHBOARD_ISSUED_AWARDS_TITLE') }}</h3>
+				</div>
+				<div class="dash-card-body no-padding">
+					{% for item in issued_awards %}
+					<div class="dash-item">
+						<div class="dash-item-main">
+							<span class="dash-item-badge" style="background: #fef9c3; color: #854d0e;">{{ item.TYPE }}</span>
+							<div class="dash-item-content">{{ item.COMMENT|raw }}</div>
+						</div>
+						<div class="dash-item-meta">
+							<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
+							<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+						</div>
 					</div>
-					<div class="dash-item-meta">
-						<div>{{ lang('DASHBOARD_RECIPIENT') }}: {{ item.RECIPIENT|raw }}</div>
-						<div style="margin-top: 4px; color: #94a3b8;">{{ item.DATE }}</div>
+					{% else %}
+					<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
+					{% endfor %}
+				</div>
+				{% if loops.pagination_issued_awards|length %}
+				<div class="dash-pagination-wrapper">
+					<div class="pagination">
+						<ul>
+						{% for p in loops.pagination_issued_awards %}
+							{% if p.S_IS_PREV %}
+							<li class="previous"><a href="{{ p.PAGE_URL }}" rel="prev" role="button">{{ lang('PREVIOUS') }}</a></li>
+							{% elseif p.S_IS_CURRENT %}
+							<li class="active"><span>{{ p.PAGE_NUMBER }}</span></li>
+							{% elseif p.S_IS_ELLIPSIS %}
+							<li class="ellipsis" role="separator"><span>{{ lang('ELLIPSIS') }}</span></li>
+							{% elseif p.S_IS_NEXT %}
+							<li class="next"><a href="{{ p.PAGE_URL }}" rel="next" role="button">{{ lang('NEXT') }}</a></li>
+							{% else %}
+							<li><a href="{{ p.PAGE_URL }}" role="button">{{ p.PAGE_NUMBER }}</a></li>
+							{% endif %}
+						{% endfor %}
+						</ul>
 					</div>
 				</div>
-				{% else %}
-				<div class="dash-empty-state">{{ lang('DASHBOARD_NO_RECORDS') }}</div>
-				{% endfor %}
+				{% endif %}
 			</div>
 		</div>
 
 	</div>
 	{% endif %}
 
-	<!-- TAB 8: Topics Visited (Paginated 30/page) -->
+	<!-- TAB 8: Topics Visited (Paginated) -->
 	{% if S_CAN_VIEW_TOPICS %}
 	<div id="tab-topics" class="profile-tab-content">
 		<div class="dash-card">
@@ -655,7 +935,7 @@
 	</div>
 	{% endif %}
 
-	<!-- TAB 9: Forums Visited (Paginated 30/page) -->
+	<!-- TAB 9: Forums Visited (Paginated) -->
 	{% if S_CAN_VIEW_VISITED_FORUMS %}
 	<div id="tab-forums" class="profile-tab-content">
 		<div class="dash-card">
@@ -706,7 +986,7 @@
 	</div>
 	{% endif %}
 
-	<!-- TAB 10: Users Visited (Paginated 30/page) -->
+	<!-- TAB 10: Users Visited (Paginated) -->
 	{% if S_CAN_VIEW_VISITED_USERS %}
 	<div id="tab-users" class="profile-tab-content">
 		<div class="dash-card">
@@ -767,7 +1047,7 @@
 	</div>
 	{% endif %}
 
-	<!-- TAB 11: Dashboard Profiles Visited (Paginated 30/page) -->
+	<!-- TAB 11: Dashboard Profiles Visited (Paginated) -->
 	{% if S_CAN_VIEW_VISITED_PROFILES %}
 	<div id="tab-profiles" class="profile-tab-content">
 		<div class="dash-card">
@@ -833,14 +1113,33 @@
 document.addEventListener('DOMContentLoaded', function() {
 	var tabs = document.querySelectorAll('.profile-tab-btn');
 	var contents = document.querySelectorAll('.profile-tab-content');
+	var subtabBtns = document.querySelectorAll('.profile-subtab-btn');
+	var subtabContents = document.querySelectorAll('.profile-subtab-content');
 
-	// Check if URL hash specifies a tab (e.g. #tab-topics)
+	// Determine active tab from URL query params or URL hash
+	var urlParams = new URLSearchParams(window.location.search);
 	var initialTab = window.location.hash ? window.location.hash.substring(1) : null;
-	var targetFound = false;
+	var initialSubtab = null;
 
-	if (initialTab && document.getElementById(initialTab)) {
+	if (urlParams.has('start_topics')) { initialTab = 'tab-topics'; }
+	else if (urlParams.has('start_forums')) { initialTab = 'tab-forums'; }
+	else if (urlParams.has('start_users')) { initialTab = 'tab-users'; }
+	else if (urlParams.has('start_profiles')) { initialTab = 'tab-profiles'; }
+	else if (urlParams.has('start_disc')) { initialTab = 'tab-disciplinary'; }
+	else if (urlParams.has('start_ic')) { initialTab = 'tab-ic-disciplinary'; }
+	else if (urlParams.has('start_awards')) { initialTab = 'tab-awards'; }
+	else if (urlParams.has('start_career')) { initialTab = 'tab-career'; }
+	else if (urlParams.has('start_comm')) { initialTab = 'tab-commendations'; }
+	else if (urlParams.has('start_gtaw')) { initialTab = 'tab-gtaw'; }
+	else if (urlParams.has('start_issued_disc')) { initialTab = 'tab-issued'; initialSubtab = 'subtab-issued-disc'; }
+	else if (urlParams.has('start_issued_ic')) { initialTab = 'tab-issued'; initialSubtab = 'subtab-issued-ic'; }
+	else if (urlParams.has('start_issued_comm')) { initialTab = 'tab-issued'; initialSubtab = 'subtab-issued-comm'; }
+	else if (urlParams.has('start_issued_awards')) { initialTab = 'tab-issued'; initialSubtab = 'subtab-issued-awards'; }
+
+	function activateTab(targetId) {
+		var targetFound = false;
 		tabs.forEach(function(t) {
-			if (t.getAttribute('data-tab') === initialTab) {
+			if (t.getAttribute('data-tab') === targetId) {
 				t.classList.add('active');
 				targetFound = true;
 			} else {
@@ -848,7 +1147,25 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		});
 		contents.forEach(function(c) {
-			if (c.id === initialTab) {
+			if (c.id === targetId) {
+				c.classList.add('active');
+			} else {
+				c.classList.remove('active');
+			}
+		});
+		return targetFound;
+	}
+
+	function activateSubtab(subtabId) {
+		subtabBtns.forEach(function(btn) {
+			if (btn.getAttribute('data-subtab') === subtabId) {
+				btn.classList.add('active');
+			} else {
+				btn.classList.remove('active');
+			}
+		});
+		subtabContents.forEach(function(c) {
+			if (c.id === subtabId) {
 				c.classList.add('active');
 			} else {
 				c.classList.remove('active');
@@ -856,31 +1173,95 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	}
 
-	// If no valid tab from hash, activate the first available tab
-	if (!targetFound && tabs.length > 0) {
-		tabs[0].classList.add('active');
+	var found = false;
+	if (initialTab && document.getElementById(initialTab)) {
+		found = activateTab(initialTab);
+	}
+	if (!found && tabs.length > 0) {
 		var firstId = tabs[0].getAttribute('data-tab');
-		var firstContent = document.getElementById(firstId);
-		if (firstContent) {
-			firstContent.classList.add('active');
-		}
+		activateTab(firstId);
+	}
+
+	if (initialSubtab && document.getElementById(initialSubtab)) {
+		activateSubtab(initialSubtab);
 	}
 
 	tabs.forEach(function(btn) {
 		btn.addEventListener('click', function() {
 			var targetId = this.getAttribute('data-tab');
-
-			tabs.forEach(function(t) { t.classList.remove('active'); });
-			contents.forEach(function(c) { c.classList.remove('active'); });
-
-			this.classList.add('active');
-			var activeContent = document.getElementById(targetId);
-			if (activeContent) {
-				activeContent.classList.add('active');
+			activateTab(targetId);
+			if (history.replaceState) {
+				history.replaceState(null, null, '#' + targetId);
+			} else {
 				window.location.hash = targetId;
 			}
+			filterCurrentTab();
 		});
 	});
+
+	subtabBtns.forEach(function(btn) {
+		btn.addEventListener('click', function() {
+			var targetSubtab = this.getAttribute('data-subtab');
+			activateSubtab(targetSubtab);
+			filterCurrentTab();
+		});
+	});
+
+	// Entries per page dropdown change handler
+	var limitSelect = document.getElementById('profileLimitSelect');
+	if (limitSelect) {
+		limitSelect.addEventListener('change', function() {
+			var newLimit = this.value;
+			var currentTab = document.querySelector('.profile-tab-btn.active');
+			var hash = currentTab ? '#' + currentTab.getAttribute('data-tab') : '';
+			var url = new URL(window.location.href);
+			url.searchParams.set('limit', newLimit);
+			// Reset pagination offsets on limit change
+			['start_topics', 'start_forums', 'start_users', 'start_profiles', 'start_disc', 'start_ic', 'start_awards', 'start_career', 'start_comm', 'start_gtaw', 'start_issued_disc', 'start_issued_ic', 'start_issued_comm', 'start_issued_awards'].forEach(function(param) {
+				url.searchParams.delete(param);
+			});
+			window.location.href = url.pathname + url.search + hash;
+		});
+	}
+
+	// Search form submission handler to preserve active tab in hash
+	var searchForm = document.getElementById('profileSearchForm');
+	if (searchForm) {
+		searchForm.addEventListener('submit', function() {
+			var currentTab = document.querySelector('.profile-tab-btn.active');
+			if (currentTab) {
+				searchForm.action = searchForm.action.split('#')[0] + '#' + currentTab.getAttribute('data-tab');
+			}
+		});
+	}
+
+	// Client-side live search filtering as user types
+	var searchInput = document.getElementById('profileSearchInput');
+	function filterCurrentTab() {
+		if (!searchInput) return;
+		var query = searchInput.value.trim().toLowerCase();
+		var activeContent = document.querySelector('.profile-tab-content.active');
+		if (!activeContent) return;
+
+		// Filter list items
+		var items = activeContent.querySelectorAll('.dash-item, .dash-stat-row, tbody tr');
+		if (items.length === 0) return;
+
+		items.forEach(function(item) {
+			if (query === '') {
+				item.style.display = '';
+			} else {
+				var text = item.textContent.toLowerCase();
+				item.style.display = text.indexOf(query) !== -1 ? '' : 'none';
+			}
+		});
+	}
+
+	if (searchInput) {
+		searchInput.addEventListener('input', function() {
+			filterCurrentTab();
+		});
+	}
 
 	// Dropdown menu toggle
 	var dropdowns = document.querySelectorAll('.dash-dropdown');

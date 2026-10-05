@@ -12,12 +12,10 @@
 	<table class="table1 zebra-table">
 		<thead>
 			<tr>
-				<th style="width: 20%;">{{ lang('DASHBOARD_CAT_NAME') }}</th>
+				<th style="width: 25%;">{{ lang('DASHBOARD_CAT_NAME') }}</th>
 				<th>{{ lang('DASHBOARD_CAT_DESC') }}</th>
-				<th style="width: 8%; text-align: center;">{{ lang('DASHBOARD_ORDER') }}</th>
-				<th style="width: 20%;">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}</th>
-				<th style="width: 20%;">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}</th>
-				<th style="width: 14%; text-align: center;">{{ lang('ACTION') }}</th>
+				<th style="width: 10%; text-align: center;">{{ lang('DASHBOARD_ORDER') }}</th>
+				<th style="width: 16%; text-align: center;">{{ lang('ACTION') }}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -26,28 +24,6 @@
 				<td><strong>{{ cat.cat_name }}</strong></td>
 				<td>{{ cat.cat_desc|default('-') }}</td>
 				<td style="text-align: center;">{{ cat.cat_order }}</td>
-				<td>
-					{% if cat.allowed_groups_array|length %}
-						{% for gid in cat.allowed_groups_array %}
-							{% for g in PHPBB_GROUPS %}
-								{% if g.group_id == gid %}<span class="badge" style="background:#e2e8f0; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
-							{% endfor %}
-						{% endfor %}
-					{% else %}
-						<em>{{ lang('DASHBOARD_NO_PERMISSION_BOUND') }}</em>
-					{% endif %}
-				</td>
-				<td>
-					{% if cat.use_allowed_groups_array|length %}
-						{% for gid in cat.use_allowed_groups_array %}
-							{% for g in PHPBB_GROUPS %}
-								{% if g.group_id == gid %}<span class="badge" style="background:#fef3c7; color:#92400e; padding:2px 6px; border-radius:3px; font-size:0.85em; margin:1px; display:inline-block;">{{ g.group_name }}</span>{% endif %}
-							{% endfor %}
-						{% endfor %}
-					{% else %}
-						<em>{{ lang('DASHBOARD_NO_USE_PERMISSION_BOUND') }}</em>
-					{% endif %}
-				</td>
 				<td style="text-align: center;">
 					<button type="button" class="button2" onclick="document.getElementById('edit_cat_{{ cat.cat_id }}').style.display = document.getElementById('edit_cat_{{ cat.cat_id }}').style.display === 'none' ? 'table-row' : 'none';">{{ lang('EDIT') }}</button>
 					<a href="{{ U_ACTION }}&amp;action=delete_cat&amp;cat_id={{ cat.cat_id }}" class="button2" style="color: #dc2626;" onclick="return confirm('{{ lang('CONFIRM_DELETE_CAT') }}');">{{ lang('DELETE') }}</a>
@@ -55,36 +31,20 @@
 			</tr>
 			<!-- Inline Edit Category Row -->
 			<tr id="edit_cat_{{ cat.cat_id }}" style="display: none; background: #f8fafc;">
-				<td colspan="6">
+				<td colspan="4">
 					<form method="post" action="{{ U_ACTION }}&amp;action=update_cat&amp;cat_id={{ cat.cat_id }}">
-						<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 10px;">
+						<div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 12px; padding: 10px; align-items: start;">
 							<div>
 								<label><strong>{{ lang('DASHBOARD_CAT_NAME') }}{{ lang('COLON') }}</strong></label><br>
 								<input type="text" name="cat_name" value="{{ cat.cat_name }}" size="30" required />
-								<br><br>
+							</div>
+							<div>
 								<label><strong>{{ lang('DASHBOARD_CAT_DESC') }}{{ lang('COLON') }}</strong></label><br>
 								<textarea name="cat_desc" rows="2" cols="30" style="width: 95%;">{{ cat.cat_desc }}</textarea>
-								<br><br>
+							</div>
+							<div>
 								<label><strong>{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</strong></label><br>
 								<input type="number" name="cat_order" value="{{ cat.cat_order }}" style="width: 80px;" />
-							</div>
-							<div>
-								<label><strong>{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
-								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
-								<select name="allowed_groups[]" multiple="multiple" size="5" style="width: 95%; margin-top: 4px;">
-									{% for g in PHPBB_GROUPS %}
-										<option value="{{ g.group_id }}" {% if g.group_id in cat.allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
-									{% endfor %}
-								</select>
-							</div>
-							<div>
-								<label><strong>{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
-								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span><br>
-								<select name="use_allowed_groups[]" multiple="multiple" size="5" style="width: 95%; margin-top: 4px;">
-									{% for g in PHPBB_GROUPS %}
-										<option value="{{ g.group_id }}" {% if g.group_id in cat.use_allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
-									{% endfor %}
-								</select>
 							</div>
 						</div>
 						<div style="padding: 10px; border-top: 1px solid #e2e8f0; text-align: right;">
@@ -117,26 +77,6 @@
 		<dl>
 			<dt><label for="new_cat_order">{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</label></dt>
 			<dd><input type="number" id="new_cat_order" name="new_cat_order" value="0" style="width: 80px;" /></dd>
-		</dl>
-		<dl>
-			<dt><label for="new_cat_allowed_groups">{{ lang('DASHBOARD_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
-			<dd>
-				<select id="new_cat_allowed_groups" name="new_cat_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
-					{% for g in PHPBB_GROUPS %}
-						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
-					{% endfor %}
-				</select>
-			</dd>
-		</dl>
-		<dl>
-			<dt><label for="new_cat_use_allowed_groups">{{ lang('DASHBOARD_USE_ALLOWED_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_USE_GROUPS_RESTRICT_EXPLAIN') }}</span></dt>
-			<dd>
-				<select id="new_cat_use_allowed_groups" name="new_cat_use_allowed_groups[]" multiple="multiple" size="4" style="width: 280px;">
-					{% for g in PHPBB_GROUPS %}
-						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
-					{% endfor %}
-				</select>
-			</dd>
 		</dl>
 		<p class="submit-buttons">
 			<input class="button1" type="submit" name="submit" value="{{ lang('DASHBOARD_ADD_CATEGORY') }}" />

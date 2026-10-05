@@ -369,7 +369,50 @@ class main
 			$this->dashboard_manager->log_dashboard_profile_view($viewer_id, $user_id);
 		}
 
-		$profile = $this->dashboard_manager->get_user_profile_data($viewer_id, $user_id);
+		// Configurable entries per page (default 20, options 20, 50, 100)
+		$limit = $this->request->variable('limit', 20);
+		if (!in_array($limit, [20, 50, 100], true))
+		{
+			$limit = 20;
+		}
+
+		// Profile search query
+		$search_query = trim($this->request->variable('q', '', true));
+
+		// Pagination offsets for all tabs & sub-tabs
+		$start_topics = $this->request->variable('start_topics', 0);
+		$start_forums = $this->request->variable('start_forums', 0);
+		$start_users = $this->request->variable('start_users', 0);
+		$start_profiles = $this->request->variable('start_profiles', 0);
+		$start_disc = $this->request->variable('start_disc', 0);
+		$start_ic = $this->request->variable('start_ic', 0);
+		$start_awards = $this->request->variable('start_awards', 0);
+		$start_career = $this->request->variable('start_career', 0);
+		$start_comm = $this->request->variable('start_comm', 0);
+		$start_gtaw = $this->request->variable('start_gtaw', 0);
+		$start_issued_disc = $this->request->variable('start_issued_disc', 0);
+		$start_issued_ic = $this->request->variable('start_issued_ic', 0);
+		$start_issued_comm = $this->request->variable('start_issued_comm', 0);
+		$start_issued_awards = $this->request->variable('start_issued_awards', 0);
+
+		$starts = [
+			'topics'        => $start_topics,
+			'forums'        => $start_forums,
+			'users'         => $start_users,
+			'profiles'      => $start_profiles,
+			'disc'          => $start_disc,
+			'ic'            => $start_ic,
+			'awards'        => $start_awards,
+			'career'        => $start_career,
+			'comm'          => $start_comm,
+			'gtaw'          => $start_gtaw,
+			'issued_disc'   => $start_issued_disc,
+			'issued_ic'     => $start_issued_ic,
+			'issued_comm'   => $start_issued_comm,
+			'issued_awards' => $start_issued_awards,
+		];
+
+		$profile = $this->dashboard_manager->get_user_profile_data($viewer_id, $user_id, $search_query, $limit, $starts);
 		if (!$profile)
 		{
 			trigger_error('DASHBOARD_USER_NOT_FOUND');
@@ -397,19 +440,24 @@ class main
 		$can_view_comm = !empty($perms['view_commendations']) && $this->dashboard_manager->is_ext_enabled('booskit/commendations') && !empty($this->config['booskit_dashboard_include_commendations']);
 		$can_view_gtaw = !empty($perms['view_gtaw']) && $this->dashboard_manager->is_ext_enabled('booskit/gtawtracker');
 
-		// Pagination parameters for visited sections (30 per page)
-		$limit = 30;
-		$start_topics = $this->request->variable('start_topics', 0);
-		$start_forums = $this->request->variable('start_forums', 0);
-		$start_users = $this->request->variable('start_users', 0);
-		$start_profiles = $this->request->variable('start_profiles', 0);
+		// Base pagination URL maintaining limit & search query
+		$base_params = ['user_id' => $user_id];
+		if ($limit !== 20)
+		{
+			$base_params['limit'] = $limit;
+		}
+		if ($search_query !== '')
+		{
+			$base_params['q'] = $search_query;
+		}
+		$base_url = $this->helper->route('booskit_dashboard_user_profile', $base_params);
 
 		// Visited Topics (paginated)
 		$count_visited_topics = 0;
 		if (!empty($profile['can_view_topics']))
 		{
-			$count_visited_topics = $this->dashboard_manager->get_user_visited_topics_count($viewer_id, $user_id);
-			$visited_topics = $this->dashboard_manager->get_user_visited_topics($viewer_id, $user_id, $start_topics, $limit);
+			$count_visited_topics = $this->dashboard_manager->get_user_visited_topics_count($viewer_id, $user_id, $search_query);
+			$visited_topics = $this->dashboard_manager->get_user_visited_topics($viewer_id, $user_id, $start_topics, $limit, $search_query);
 
 			foreach ($visited_topics as $top)
 			{
@@ -422,16 +470,15 @@ class main
 				]);
 			}
 
-			$base_url_topics = $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]);
-			$this->pagination->generate_template_pagination($base_url_topics, 'pagination_topics', 'start_topics', $count_visited_topics, $limit, $start_topics);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_topics', 'start_topics', $count_visited_topics, $limit, $start_topics);
 		}
 
 		// Visited Forums (paginated)
 		$count_visited_forums = 0;
 		if (!empty($profile['can_view_visited_forums']))
 		{
-			$count_visited_forums = $this->dashboard_manager->get_user_visited_forums_count($viewer_id, $user_id);
-			$visited_forums = $this->dashboard_manager->get_user_visited_forums($viewer_id, $user_id, $start_forums, $limit);
+			$count_visited_forums = $this->dashboard_manager->get_user_visited_forums_count($viewer_id, $user_id, $search_query);
+			$visited_forums = $this->dashboard_manager->get_user_visited_forums($viewer_id, $user_id, $start_forums, $limit, $search_query);
 
 			foreach ($visited_forums as $forum)
 			{
@@ -444,16 +491,15 @@ class main
 				]);
 			}
 
-			$base_url_forums = $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]);
-			$this->pagination->generate_template_pagination($base_url_forums, 'pagination_forums', 'start_forums', $count_visited_forums, $limit, $start_forums);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_forums', 'start_forums', $count_visited_forums, $limit, $start_forums);
 		}
 
 		// Visited Users (paginated)
 		$count_visited_users = 0;
 		if (!empty($profile['can_view_visited_users']))
 		{
-			$count_visited_users = $this->dashboard_manager->get_user_visited_users_count($viewer_id, $user_id);
-			$visited_users = $this->dashboard_manager->get_user_visited_users($viewer_id, $user_id, $start_users, $limit);
+			$count_visited_users = $this->dashboard_manager->get_user_visited_users_count($viewer_id, $user_id, $search_query);
+			$visited_users = $this->dashboard_manager->get_user_visited_users($viewer_id, $user_id, $start_users, $limit, $search_query);
 
 			foreach ($visited_users as $vu)
 			{
@@ -467,16 +513,15 @@ class main
 				]);
 			}
 
-			$base_url_users = $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]);
-			$this->pagination->generate_template_pagination($base_url_users, 'pagination_users', 'start_users', $count_visited_users, $limit, $start_users);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_users', 'start_users', $count_visited_users, $limit, $start_users);
 		}
 
 		// Visited Dashboard Profiles (paginated)
 		$count_visited_profiles = 0;
 		if (!empty($profile['can_view_visited_profiles']))
 		{
-			$count_visited_profiles = $this->dashboard_manager->get_user_visited_profiles_count($viewer_id, $user_id);
-			$visited_profiles = $this->dashboard_manager->get_user_visited_profiles($viewer_id, $user_id, $start_profiles, $limit);
+			$count_visited_profiles = $this->dashboard_manager->get_user_visited_profiles_count($viewer_id, $user_id, $search_query);
+			$visited_profiles = $this->dashboard_manager->get_user_visited_profiles($viewer_id, $user_id, $start_profiles, $limit, $search_query);
 
 			foreach ($visited_profiles as $vp)
 			{
@@ -489,8 +534,40 @@ class main
 				]);
 			}
 
-			$base_url_prof = $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]);
-			$this->pagination->generate_template_pagination($base_url_prof, 'pagination_profiles', 'start_profiles', $count_visited_profiles, $limit, $start_profiles);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_profiles', 'start_profiles', $count_visited_profiles, $limit, $start_profiles);
+		}
+
+		// Tab pagination for other modules
+		if ($can_view_disc)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_disc', 'start_disc', $profile['count_disciplinary'], $limit, $start_disc);
+		}
+		if ($can_view_ic)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_ic', 'start_ic', $profile['count_ic_disciplinary'], $limit, $start_ic);
+		}
+		if ($can_view_awards)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_awards', 'start_awards', $profile['count_awards'], $limit, $start_awards);
+		}
+		if ($can_view_career)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_career', 'start_career', $profile['count_career'], $limit, $start_career);
+		}
+		if ($can_view_comm)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_comm', 'start_comm', $profile['count_commendations'], $limit, $start_comm);
+		}
+		if ($can_view_gtaw)
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_gtaw', 'start_gtaw', $profile['count_gtaw'], $limit, $start_gtaw);
+		}
+		if (!empty($profile['can_view_issued']))
+		{
+			$this->pagination->generate_template_pagination($base_url, 'pagination_issued_disc', 'start_issued_disc', $profile['issued']['count_disciplinary'], $limit, $start_issued_disc);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_issued_ic', 'start_issued_ic', $profile['issued']['count_ic_disciplinary'], $limit, $start_issued_ic);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_issued_comm', 'start_issued_comm', $profile['issued']['count_commendations'], $limit, $start_issued_comm);
+			$this->pagination->generate_template_pagination($base_url, 'pagination_issued_awards', 'start_issued_awards', $profile['issued']['count_awards'], $limit, $start_issued_awards);
 		}
 
 		$can_view_stats_tab = (!empty($perms['view_profile_statistics']) || !empty($perms['view_statistics'])) && !empty($this->config['booskit_dashboard_include_stats_tab']);
@@ -576,57 +653,67 @@ class main
 			]);
 		}
 
-		$issued_total = count($profile['issued']['disciplinary']) + count($profile['issued']['ic_disciplinary']) + count($profile['issued']['commendations']) + count($profile['issued']['awards']);
+		$issued_total = $profile['issued']['total_count'];
 
 		$this->template->assign_vars([
-			'PROFILE_USER_ID'            => $user_id,
-			'PROFILE_USERNAME'           => get_username_string('full', $user_id, $u['username'], $u['user_colour']),
-			'PROFILE_AVATAR'             => $profile['avatar_html'],
-			'PROFILE_GROUP_NAME'         => !empty($u['group_name']) ? $u['group_name'] : '',
-			'PROFILE_JOINED'             => $this->user->format_date($u['user_regdate']),
-			'PROFILE_LAST_ACTIVE'        => !empty($u['user_lastvisit']) ? $this->user->format_date($u['user_lastvisit']) : 'Never',
-			'PROFILE_POSTS'              => (int) $u['user_posts'],
-			'PROFILE_IS_ONLINE'          => $is_online,
-			'U_MEMBERLIST_PROFILE'       => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
-			'U_PM'                       => append_sid($this->root_path . 'ucp.' . $this->php_ext, 'i=pm&mode=compose&action=post&u=' . $user_id),
-			'U_BACK_DASHBOARD'           => $this->helper->route('booskit_dashboard_home'),
+			'PROFILE_USER_ID'              => $user_id,
+			'PROFILE_USERNAME'             => get_username_string('full', $user_id, $u['username'], $u['user_colour']),
+			'PROFILE_AVATAR'               => $profile['avatar_html'],
+			'PROFILE_GROUP_NAME'           => !empty($u['group_name']) ? $u['group_name'] : '',
+			'PROFILE_JOINED'               => $this->user->format_date($u['user_regdate']),
+			'PROFILE_LAST_ACTIVE'          => !empty($u['user_lastvisit']) ? $this->user->format_date($u['user_lastvisit']) : 'Never',
+			'PROFILE_POSTS'                => (int) $u['user_posts'],
+			'PROFILE_IS_ONLINE'            => $is_online,
+			'U_MEMBERLIST_PROFILE'         => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $user_id),
+			'U_PM'                         => append_sid($this->root_path . 'ucp.' . $this->php_ext, 'i=pm&mode=compose&action=post&u=' . $user_id),
+			'U_BACK_DASHBOARD'             => $this->helper->route('booskit_dashboard_home'),
 
-			'S_CAN_VIEW_STATISTICS'      => $can_view_stats_tab,
-			'S_CAN_VIEW_DISCIPLINARY'    => $can_view_disc,
-			'S_CAN_VIEW_IC_DISCIPLINARY' => $can_view_ic,
-			'S_CAN_VIEW_AWARDS'          => $can_view_awards,
-			'S_CAN_VIEW_CAREER'          => $can_view_career,
-			'S_CAN_VIEW_COMMENDATIONS'   => $can_view_comm,
-			'S_CAN_VIEW_GTAW'            => $can_view_gtaw,
+			'ENTRIES_PER_PAGE'             => $limit,
+			'SEARCH_QUERY'                 => $search_query,
+			'S_SEARCH_ACTIVE'              => ($search_query !== ''),
+			'U_PROFILE_SEARCH'             => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id]),
+			'U_CLEAR_SEARCH'               => $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $user_id] + ($limit !== 20 ? ['limit' => $limit] : [])),
 
-			'S_CAN_VIEW_ISSUED'          => !empty($profile['can_view_issued']),
-			'S_CAN_VIEW_TOPICS'          => !empty($profile['can_view_topics']),
-			'S_CAN_VIEW_VISITED_FORUMS'  => !empty($profile['can_view_visited_forums']),
-			'S_CAN_VIEW_VISITED_USERS'   => !empty($profile['can_view_visited_users']),
-			'S_CAN_VIEW_VISITED_PROFILES'=> !empty($profile['can_view_visited_profiles']),
+			'S_CAN_VIEW_STATISTICS'        => $can_view_stats_tab,
+			'S_CAN_VIEW_DISCIPLINARY'      => $can_view_disc,
+			'S_CAN_VIEW_IC_DISCIPLINARY'   => $can_view_ic,
+			'S_CAN_VIEW_AWARDS'            => $can_view_awards,
+			'S_CAN_VIEW_CAREER'            => $can_view_career,
+			'S_CAN_VIEW_COMMENDATIONS'     => $can_view_comm,
+			'S_CAN_VIEW_GTAW'              => $can_view_gtaw,
 
-			'S_CAN_ISSUE_DISCIPLINARY'   => $can_issue_disc,
-			'U_ISSUE_DISCIPLINARY'       => $u_issue_disc,
-			'S_CAN_ISSUE_AWARD'          => $can_issue_award,
-			'U_ISSUE_AWARD'              => $u_issue_award,
-			'S_CAN_ISSUE_CAREER'         => $can_issue_career,
-			'U_ISSUE_CAREER'             => $u_issue_career,
-			'S_CAN_ISSUE_COMMENDATION'   => $can_issue_comm,
-			'U_ISSUE_COMMENDATION'       => $u_issue_comm,
-			'S_CAN_ISSUE_ANY'            => ($can_issue_disc || $can_issue_award || $can_issue_career || $can_issue_comm),
+			'S_CAN_VIEW_ISSUED'            => !empty($profile['can_view_issued']),
+			'S_CAN_VIEW_TOPICS'            => !empty($profile['can_view_topics']),
+			'S_CAN_VIEW_VISITED_FORUMS'    => !empty($profile['can_view_visited_forums']),
+			'S_CAN_VIEW_VISITED_USERS'     => !empty($profile['can_view_visited_users']),
+			'S_CAN_VIEW_VISITED_PROFILES'  => !empty($profile['can_view_visited_profiles']),
 
-			'COUNT_MONTHLY_STATS'        => $stat_total_count,
-			'COUNT_AWARDS'               => count($profile['awards']),
-			'COUNT_CAREER'               => count($profile['career']),
-			'COUNT_COMMENDATIONS'        => count($profile['commendations']),
-			'COUNT_DISCIPLINARY'         => count($profile['disciplinary']),
-			'COUNT_IC_DISCIPLINARY'      => count($profile['ic_disciplinary']),
-			'COUNT_GTAW'                 => count($profile['gtaw_characters']),
-			'COUNT_VISITED_TOPICS'       => $count_visited_topics,
-			'COUNT_VISITED_FORUMS'       => $count_visited_forums,
-			'COUNT_VISITED_USERS'        => $count_visited_users,
-			'COUNT_VISITED_PROFILES'     => $count_visited_profiles,
-			'COUNT_ISSUED_TOTAL'         => $issued_total,
+			'S_CAN_ISSUE_DISCIPLINARY'     => $can_issue_disc,
+			'U_ISSUE_DISCIPLINARY'         => $u_issue_disc,
+			'S_CAN_ISSUE_AWARD'            => $can_issue_award,
+			'U_ISSUE_AWARD'                => $u_issue_award,
+			'S_CAN_ISSUE_CAREER'           => $can_issue_career,
+			'U_ISSUE_CAREER'               => $u_issue_career,
+			'S_CAN_ISSUE_COMMENDATION'     => $can_issue_comm,
+			'U_ISSUE_COMMENDATION'         => $u_issue_comm,
+			'S_CAN_ISSUE_ANY'              => ($can_issue_disc || $can_issue_award || $can_issue_career || $can_issue_comm),
+
+			'COUNT_MONTHLY_STATS'          => $stat_total_count,
+			'COUNT_AWARDS'                 => $profile['count_awards'],
+			'COUNT_CAREER'                 => $profile['count_career'],
+			'COUNT_COMMENDATIONS'          => $profile['count_commendations'],
+			'COUNT_DISCIPLINARY'           => $profile['count_disciplinary'],
+			'COUNT_IC_DISCIPLINARY'        => $profile['count_ic_disciplinary'],
+			'COUNT_GTAW'                   => $profile['count_gtaw'],
+			'COUNT_VISITED_TOPICS'         => $count_visited_topics,
+			'COUNT_VISITED_FORUMS'         => $count_visited_forums,
+			'COUNT_VISITED_USERS'          => $count_visited_users,
+			'COUNT_VISITED_PROFILES'       => $count_visited_profiles,
+			'COUNT_ISSUED_TOTAL'           => $issued_total,
+			'COUNT_ISSUED_DISCIPLINARY'    => $profile['issued']['count_disciplinary'],
+			'COUNT_ISSUED_IC_DISCIPLINARY' => $profile['issued']['count_ic_disciplinary'],
+			'COUNT_ISSUED_COMMENDATIONS'   => $profile['issued']['count_commendations'],
+			'COUNT_ISSUED_AWARDS'          => $profile['issued']['count_awards'],
 		]);
 
 		// Awards

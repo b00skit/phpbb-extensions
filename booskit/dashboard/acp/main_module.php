@@ -69,12 +69,10 @@ class main_module
 					$cat_name = $request->variable('new_cat_name', '', true);
 					$cat_desc = $request->variable('new_cat_desc', '', true);
 					$cat_order = $request->variable('new_cat_order', 0);
-					$allowed_groups = $request->variable('new_cat_allowed_groups', [0]);
-					$use_allowed_groups = $request->variable('new_cat_use_allowed_groups', [0]);
 
 					if (!empty($cat_name))
 					{
-						$dashboard_manager->add_stat_category($cat_name, $cat_desc, $cat_order, $allowed_groups, $use_allowed_groups);
+						$dashboard_manager->add_stat_category($cat_name, $cat_desc, $cat_order);
 					}
 					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
 				}
@@ -85,12 +83,10 @@ class main_module
 					$cat_name = $request->variable('cat_name', '', true);
 					$cat_desc = $request->variable('cat_desc', '', true);
 					$cat_order = $request->variable('cat_order', 0);
-					$allowed_groups = $request->variable('allowed_groups', [0]);
-					$use_allowed_groups = $request->variable('use_allowed_groups', [0]);
 
 					if ($cat_id > 0 && !empty($cat_name))
 					{
-						$dashboard_manager->update_stat_category($cat_id, $cat_name, $cat_desc, $cat_order, $allowed_groups, $use_allowed_groups);
+						$dashboard_manager->update_stat_category($cat_id, $cat_name, $cat_desc, $cat_order);
 					}
 					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
 				}

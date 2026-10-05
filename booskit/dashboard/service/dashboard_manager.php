@@ -20,6 +20,7 @@ class dashboard_manager
 	protected $table_stat_cats;
 	protected $table_stat_defs;
 	protected $table_stat_posts;
+	protected $table_post_roles;
 	protected $group_avatars_cache = null;
 
 	public function __construct(
@@ -40,6 +41,7 @@ class dashboard_manager
 		$this->table_stat_cats = $this->table_prefix . 'booskit_dashboard_stat_cats';
 		$this->table_stat_defs = $this->table_prefix . 'booskit_dashboard_stat_defs';
 		$this->table_stat_posts = $this->table_prefix . 'booskit_dashboard_stat_posts';
+		$this->table_post_roles = $this->table_prefix . 'booskit_dashboard_post_roles';
 	}
 
 	public function is_ext_enabled($ext_name)
@@ -1423,19 +1425,28 @@ class dashboard_manager
 		catch (\Exception $e) {}
 	}
 
-	public function get_user_visited_topics_count($viewer_id, $target_user_id)
+	public function get_user_visited_topics_count($viewer_id, $target_user_id, $search = '')
 	{
 		if (!$this->can_view_recent_topics($viewer_id, $target_user_id)) { return 0; }
 		$this->sync_historical_views($target_user_id);
 		$table = $this->table_prefix . 'booskit_dashboard_topic_views';
-		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$sql = 'SELECT COUNT(v.view_id) as cnt
+				FROM ' . $table . ' v
+				JOIN ' . TOPICS_TABLE . ' t ON v.topic_id = t.topic_id
+				JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND (t.topic_title ' . $like . ' OR f.forum_name ' . $like . ')';
+		}
 		$res = @$this->db->sql_query($sql);
 		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
 		if ($res) { $this->db->sql_freeresult($res); }
 		return $cnt;
 	}
 
-	public function get_user_visited_topics($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	public function get_user_visited_topics($viewer_id, $target_user_id, $start = 0, $limit = 20, $search = '')
 	{
 		if (!$this->can_view_recent_topics($viewer_id, $target_user_id)) { return []; }
 		$this->sync_historical_views($target_user_id);
@@ -1447,8 +1458,13 @@ class dashboard_manager
 				FROM ' . $table . ' v
 				JOIN ' . TOPICS_TABLE . ' t ON v.topic_id = t.topic_id
 				JOIN ' . FORUMS_TABLE . ' f ON t.forum_id = f.forum_id
-				WHERE v.user_id = ' . (int)$target_user_id . '
-				ORDER BY v.view_time DESC';
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND (t.topic_title ' . $like . ' OR f.forum_name ' . $like . ')';
+		}
+		$sql .= ' ORDER BY v.view_time DESC';
 		$res = @$this->db->sql_query_limit($sql, $limit, $start);
 
 		$topics = [];
@@ -1470,19 +1486,27 @@ class dashboard_manager
 	}
 
 	/* Visited Forums */
-	public function get_user_visited_forums_count($viewer_id, $target_user_id)
+	public function get_user_visited_forums_count($viewer_id, $target_user_id, $search = '')
 	{
 		if (!$this->can_view_visited_forums($viewer_id, $target_user_id)) { return 0; }
 		$this->sync_historical_views($target_user_id);
 		$table = $this->table_prefix . 'booskit_dashboard_forum_views';
-		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$sql = 'SELECT COUNT(v.view_id) as cnt
+				FROM ' . $table . ' v
+				JOIN ' . FORUMS_TABLE . ' f ON v.forum_id = f.forum_id
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND (f.forum_name ' . $like . ' OR f.forum_desc ' . $like . ')';
+		}
 		$res = @$this->db->sql_query($sql);
 		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
 		if ($res) { $this->db->sql_freeresult($res); }
 		return $cnt;
 	}
 
-	public function get_user_visited_forums($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	public function get_user_visited_forums($viewer_id, $target_user_id, $start = 0, $limit = 20, $search = '')
 	{
 		if (!$this->can_view_visited_forums($viewer_id, $target_user_id)) { return []; }
 		$this->sync_historical_views($target_user_id);
@@ -1491,8 +1515,13 @@ class dashboard_manager
 		$sql = 'SELECT v.forum_id, v.view_time, v.view_count, f.forum_name, f.forum_desc
 				FROM ' . $table . ' v
 				JOIN ' . FORUMS_TABLE . ' f ON v.forum_id = f.forum_id
-				WHERE v.user_id = ' . (int)$target_user_id . '
-				ORDER BY v.view_time DESC';
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND (f.forum_name ' . $like . ' OR f.forum_desc ' . $like . ')';
+		}
+		$sql .= ' ORDER BY v.view_time DESC';
 		$res = @$this->db->sql_query_limit($sql, $limit, $start);
 
 		$forums = [];
@@ -1514,18 +1543,26 @@ class dashboard_manager
 	}
 
 	/* Visited Users (Memberlist views) */
-	public function get_user_visited_users_count($viewer_id, $target_user_id)
+	public function get_user_visited_users_count($viewer_id, $target_user_id, $search = '')
 	{
 		if (!$this->can_view_visited_users($viewer_id, $target_user_id)) { return 0; }
 		$table = $this->table_prefix . 'booskit_dashboard_user_views';
-		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$sql = 'SELECT COUNT(v.view_id) as cnt
+				FROM ' . $table . ' v
+				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND u.username ' . $like;
+		}
 		$res = @$this->db->sql_query($sql);
 		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
 		if ($res) { $this->db->sql_freeresult($res); }
 		return $cnt;
 	}
 
-	public function get_user_visited_users($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	public function get_user_visited_users($viewer_id, $target_user_id, $start = 0, $limit = 20, $search = '')
 	{
 		if (!$this->can_view_visited_users($viewer_id, $target_user_id)) { return []; }
 
@@ -1534,8 +1571,13 @@ class dashboard_manager
 				       u.user_id, u.username, u.user_colour, u.user_avatar, u.user_avatar_type, u.group_id
 				FROM ' . $table . ' v
 				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
-				WHERE v.user_id = ' . (int)$target_user_id . '
-				ORDER BY v.view_time DESC';
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND u.username ' . $like;
+		}
+		$sql .= ' ORDER BY v.view_time DESC';
 		$res = @$this->db->sql_query_limit($sql, $limit, $start);
 
 		$users = [];
@@ -1554,18 +1596,26 @@ class dashboard_manager
 	}
 
 	/* Visited Dashboard Profiles */
-	public function get_user_visited_profiles_count($viewer_id, $target_user_id)
+	public function get_user_visited_profiles_count($viewer_id, $target_user_id, $search = '')
 	{
 		if (!$this->can_view_visited_profiles($viewer_id, $target_user_id)) { return 0; }
 		$table = $this->table_prefix . 'booskit_dashboard_profile_views';
-		$sql = 'SELECT COUNT(view_id) as cnt FROM ' . $table . ' WHERE user_id = ' . (int)$target_user_id;
+		$sql = 'SELECT COUNT(v.view_id) as cnt
+				FROM ' . $table . ' v
+				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND u.username ' . $like;
+		}
 		$res = @$this->db->sql_query($sql);
 		$cnt = $res ? (int)$this->db->sql_fetchfield('cnt') : 0;
 		if ($res) { $this->db->sql_freeresult($res); }
 		return $cnt;
 	}
 
-	public function get_user_visited_profiles($viewer_id, $target_user_id, $start = 0, $limit = 30)
+	public function get_user_visited_profiles($viewer_id, $target_user_id, $start = 0, $limit = 20, $search = '')
 	{
 		if (!$this->can_view_visited_profiles($viewer_id, $target_user_id)) { return []; }
 
@@ -1574,8 +1624,13 @@ class dashboard_manager
 				       u.user_id, u.username, u.user_colour, u.user_avatar, u.user_avatar_type, u.group_id
 				FROM ' . $table . ' v
 				JOIN ' . USERS_TABLE . ' u ON v.viewed_user_id = u.user_id
-				WHERE v.user_id = ' . (int)$target_user_id . '
-				ORDER BY v.view_time DESC';
+				WHERE v.user_id = ' . (int)$target_user_id;
+		if ($search !== '')
+		{
+			$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+			$sql .= ' AND u.username ' . $like;
+		}
+		$sql .= ' ORDER BY v.view_time DESC';
 		$res = @$this->db->sql_query_limit($sql, $limit, $start);
 
 		$profiles = [];
@@ -1631,31 +1686,72 @@ class dashboard_manager
 	 * ISSUED ACTIONS
 	 * ========================================================================= */
 
-	public function get_user_issued_actions($viewer_id, $target_user_id)
+	public function get_user_issued_actions($viewer_id, $target_user_id, $search = '', $limit = 20, array $starts = [])
 	{
 		if (!$this->can_view_issued_actions($viewer_id, $target_user_id))
 		{
-			return ['disciplinary' => [], 'ic_disciplinary' => [], 'commendations' => [], 'awards' => []];
+			return [
+				'disciplinary'          => [],
+				'count_disciplinary'    => 0,
+				'ic_disciplinary'       => [],
+				'count_ic_disciplinary' => 0,
+				'commendations'         => [],
+				'count_commendations'   => 0,
+				'awards'                => [],
+				'count_awards'          => 0,
+				'total_count'           => 0,
+			];
 		}
 
 		$target_user_id = (int) $target_user_id;
 		$issued = [
-			'disciplinary'    => [],
-			'ic_disciplinary' => [],
-			'commendations'   => [],
-			'awards'          => [],
+			'disciplinary'          => [],
+			'count_disciplinary'    => 0,
+			'ic_disciplinary'       => [],
+			'count_ic_disciplinary' => 0,
+			'commendations'         => [],
+			'count_commendations'   => 0,
+			'awards'                => [],
+			'count_awards'          => 0,
+			'total_count'           => 0,
 		];
 
 		// Disciplinary issued
 		if ($this->is_ext_enabled('booskit/disciplinary'))
 		{
 			$disc_defs = $this->get_definitions('booskit/disciplinary');
+			$where_clause = 'd.issuer_user_id = ' . $target_user_id;
+			if ($search !== '')
+			{
+				$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+				$search_conds = ['d.reason ' . $like, 'u.username ' . $like];
+				$match_defs = [];
+				foreach ($disc_defs as $d_id => $d_name)
+				{
+					if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+				}
+				if (!empty($match_defs))
+				{
+					$search_conds[] = 'd.disciplinary_type_id IN (' . implode(',', $match_defs) . ')';
+				}
+				$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+			}
+
+			$cnt_sql = 'SELECT COUNT(d.record_id) as cnt
+						FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
+						JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
+						WHERE ' . $where_clause;
+			$cnt_res = @$this->db->sql_query($cnt_sql);
+			$issued['count_disciplinary'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+			if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+			$start_issued_disc = isset($starts['issued_disc']) ? (int)$starts['issued_disc'] : 0;
 			$sql = 'SELECT d.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
 					JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
-					WHERE d.issuer_user_id = ' . $target_user_id . '
+					WHERE ' . $where_clause . '
 					ORDER BY d.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 30);
+			$res = @$this->db->sql_query_limit($sql, $limit, $start_issued_disc);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -1671,13 +1767,40 @@ class dashboard_manager
 		if ($this->is_ext_enabled('booskit/icdisciplinary'))
 		{
 			$ic_defs = $this->get_definitions('booskit/icdisciplinary');
+			$where_clause = 'r.issuer_user_id = ' . $target_user_id;
+			if ($search !== '')
+			{
+				$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+				$search_conds = ['r.reason ' . $like, 'c.character_name ' . $like, 'u.username ' . $like];
+				$match_defs = [];
+				foreach ($ic_defs as $d_id => $d_name)
+				{
+					if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+				}
+				if (!empty($match_defs))
+				{
+					$search_conds[] = 'r.disciplinary_type_id IN (' . implode(',', $match_defs) . ')';
+				}
+				$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+			}
+
+			$cnt_sql = 'SELECT COUNT(r.record_id) as cnt
+						FROM ' . $this->table_prefix . 'booskit_ic_records r
+						JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
+						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
+						WHERE ' . $where_clause;
+			$cnt_res = @$this->db->sql_query($cnt_sql);
+			$issued['count_ic_disciplinary'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+			if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+			$start_issued_ic = isset($starts['issued_ic']) ? (int)$starts['issued_ic'] : 0;
 			$sql = 'SELECT r.*, c.character_name, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_ic_records r
 					JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
 					JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
-					WHERE r.issuer_user_id = ' . $target_user_id . '
+					WHERE ' . $where_clause . '
 					ORDER BY r.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 30);
+			$res = @$this->db->sql_query_limit($sql, $limit, $start_issued_ic);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -1692,12 +1815,28 @@ class dashboard_manager
 		// Commendations issued
 		if ($this->is_ext_enabled('booskit/commendations'))
 		{
+			$where_clause = 'c.issuer_user_id = ' . $target_user_id;
+			if ($search !== '')
+			{
+				$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+				$where_clause .= ' AND (c.reason ' . $like . ' OR c.commendation_type ' . $like . ' OR u.username ' . $like . ')';
+			}
+
+			$cnt_sql = 'SELECT COUNT(c.commendation_id) as cnt
+						FROM ' . $this->table_prefix . 'booskit_commendations c
+						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
+						WHERE ' . $where_clause;
+			$cnt_res = @$this->db->sql_query($cnt_sql);
+			$issued['count_commendations'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+			if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+			$start_issued_comm = isset($starts['issued_comm']) ? (int)$starts['issued_comm'] : 0;
 			$sql = 'SELECT c.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_commendations c
 					JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
-					WHERE c.issuer_user_id = ' . $target_user_id . '
+					WHERE ' . $where_clause . '
 					ORDER BY c.commendation_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 30);
+			$res = @$this->db->sql_query_limit($sql, $limit, $start_issued_comm);
 			if ($res)
 			{
 				$issued['commendations'] = $this->db->sql_fetchrowset($res);
@@ -1709,12 +1848,38 @@ class dashboard_manager
 		if ($this->is_ext_enabled('booskit/awards'))
 		{
 			$award_defs = $this->get_definitions('booskit/awards');
+			$where_clause = 'a.issuer_user_id = ' . $target_user_id;
+			if ($search !== '')
+			{
+				$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+				$search_conds = ['a.comment ' . $like, 'u.username ' . $like];
+				$match_defs = [];
+				foreach ($award_defs as $d_id => $d_name)
+				{
+					if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+				}
+				if (!empty($match_defs))
+				{
+					$search_conds[] = 'a.award_definition_id IN (' . implode(',', $match_defs) . ')';
+				}
+				$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+			}
+
+			$cnt_sql = 'SELECT COUNT(a.award_id) as cnt
+						FROM ' . $this->table_prefix . 'booskit_awards_users a
+						JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
+						WHERE ' . $where_clause;
+			$cnt_res = @$this->db->sql_query($cnt_sql);
+			$issued['count_awards'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+			if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+			$start_issued_awards = isset($starts['issued_awards']) ? (int)$starts['issued_awards'] : 0;
 			$sql = 'SELECT a.*, u.user_id, u.username, u.user_colour
 					FROM ' . $this->table_prefix . 'booskit_awards_users a
 					JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
-					WHERE a.issuer_user_id = ' . $target_user_id . '
+					WHERE ' . $where_clause . '
 					ORDER BY a.issue_date DESC';
-			$res = @$this->db->sql_query_limit($sql, 30);
+			$res = @$this->db->sql_query_limit($sql, $limit, $start_issued_awards);
 			if ($res)
 			{
 				while ($row = $this->db->sql_fetchrow($res))
@@ -1726,6 +1891,7 @@ class dashboard_manager
 			}
 		}
 
+		$issued['total_count'] = $issued['count_disciplinary'] + $issued['count_ic_disciplinary'] + $issued['count_commendations'] + $issued['count_awards'];
 		return $issued;
 	}
 
@@ -1733,7 +1899,7 @@ class dashboard_manager
 	 * PROFILE DATA AGGREGATION
 	 * ========================================================================= */
 
-	public function get_user_profile_data($viewer_id, $target_user_id)
+	public function get_user_profile_data($viewer_id, $target_user_id, $search = '', $limit = 20, array $starts = [])
 	{
 		$target_user_id = (int) $target_user_id;
 
@@ -1753,20 +1919,26 @@ class dashboard_manager
 		$perms = $this->get_effective_permissions($viewer_id, $target_user_id);
 
 		$data = [
-			'user'                     => $user_data,
-			'avatar_html'              => $this->get_user_avatar_or_group_or_initial($user_data, $user_data['username'], $user_data['group_id']),
-			'awards'                   => [],
-			'career'                   => [],
-			'commendations'            => [],
-			'disciplinary'             => [],
-			'ic_disciplinary'          => [],
-			'gtaw_characters'          => [],
-			'issued'                   => $this->get_user_issued_actions($viewer_id, $target_user_id),
-			'can_view_issued'          => !empty($perms['view_issued']),
-			'can_view_topics'          => !empty($perms['view_visited_topics']),
-			'can_view_visited_forums'  => !empty($perms['view_visited_forums']),
-			'can_view_visited_users'   => !empty($perms['view_visited_users']),
-			'can_view_visited_profiles'=> !empty($perms['view_visited_profiles']),
+			'user'                      => $user_data,
+			'avatar_html'               => $this->get_user_avatar_or_group_or_initial($user_data, $user_data['username'], $user_data['group_id']),
+			'awards'                    => [],
+			'count_awards'              => 0,
+			'career'                    => [],
+			'count_career'              => 0,
+			'commendations'             => [],
+			'count_commendations'       => 0,
+			'disciplinary'              => [],
+			'count_disciplinary'        => 0,
+			'ic_disciplinary'           => [],
+			'count_ic_disciplinary'     => 0,
+			'gtaw_characters'           => [],
+			'count_gtaw'                => 0,
+			'issued'                    => $this->get_user_issued_actions($viewer_id, $target_user_id, $search, $limit, $starts),
+			'can_view_issued'           => !empty($perms['view_issued']),
+			'can_view_topics'           => !empty($perms['view_visited_topics']),
+			'can_view_visited_forums'   => !empty($perms['view_visited_forums']),
+			'can_view_visited_users'    => !empty($perms['view_visited_users']),
+			'can_view_visited_profiles' => !empty($perms['view_visited_profiles']),
 		];
 
 		// Awards
@@ -1776,13 +1948,40 @@ class dashboard_manager
 			if ($where !== false)
 			{
 				$defs = $this->get_definitions('booskit/awards');
+				$where_clause = 'a.user_id = ' . $target_user_id . ' AND (' . $where . ')';
+				if ($search !== '')
+				{
+					$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+					$search_conds = ['a.comment ' . $like, 'i.username ' . $like];
+					$match_defs = [];
+					foreach ($defs as $d_id => $d_name)
+					{
+						if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+					}
+					if (!empty($match_defs))
+					{
+						$search_conds[] = 'a.award_definition_id IN (' . implode(',', $match_defs) . ')';
+					}
+					$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+				}
+
+				$cnt_sql = 'SELECT COUNT(a.award_id) as cnt
+							FROM ' . $this->table_prefix . 'booskit_awards_users a
+							LEFT JOIN ' . USERS_TABLE . ' i ON a.issuer_user_id = i.user_id
+							JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
+							WHERE ' . $where_clause;
+				$cnt_res = @$this->db->sql_query($cnt_sql);
+				$data['count_awards'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+				if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+				$start_awards = isset($starts['awards']) ? (int)$starts['awards'] : 0;
 				$sql = 'SELECT a.*, i.username as issuer_name, i.user_colour as issuer_colour
 						FROM ' . $this->table_prefix . 'booskit_awards_users a
 						LEFT JOIN ' . USERS_TABLE . ' i ON a.issuer_user_id = i.user_id
 						JOIN ' . USERS_TABLE . ' u ON a.user_id = u.user_id
-						WHERE a.user_id = ' . $target_user_id . ' AND (' . $where . ')
+						WHERE ' . $where_clause . '
 						ORDER BY a.issue_date DESC';
-				$res = @$this->db->sql_query($sql);
+				$res = @$this->db->sql_query_limit($sql, $limit, $start_awards);
 				if ($res)
 				{
 					while ($row = $this->db->sql_fetchrow($res))
@@ -1802,13 +2001,40 @@ class dashboard_manager
 			if ($where !== false)
 			{
 				$defs = $this->get_definitions('booskit/usercareer');
+				$where_clause = 'n.user_id = ' . $target_user_id . ' AND (' . $where . ')';
+				if ($search !== '')
+				{
+					$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+					$search_conds = ['n.description ' . $like, 'i.username ' . $like];
+					$match_defs = [];
+					foreach ($defs as $d_id => $d_name)
+					{
+						if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+					}
+					if (!empty($match_defs))
+					{
+						$search_conds[] = 'n.career_type_id IN (' . implode(',', $match_defs) . ')';
+					}
+					$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+				}
+
+				$cnt_sql = 'SELECT COUNT(n.note_id) as cnt
+							FROM ' . $this->table_prefix . 'booskit_career_notes n
+							LEFT JOIN ' . USERS_TABLE . ' i ON n.issuer_user_id = i.user_id
+							JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id
+							WHERE ' . $where_clause;
+				$cnt_res = @$this->db->sql_query($cnt_sql);
+				$data['count_career'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+				if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+				$start_career = isset($starts['career']) ? (int)$starts['career'] : 0;
 				$sql = 'SELECT n.*, i.username as issuer_name, i.user_colour as issuer_colour
 						FROM ' . $this->table_prefix . 'booskit_career_notes n
 						LEFT JOIN ' . USERS_TABLE . ' i ON n.issuer_user_id = i.user_id
 						JOIN ' . USERS_TABLE . ' u ON n.user_id = u.user_id
-						WHERE n.user_id = ' . $target_user_id . ' AND (' . $where . ')
+						WHERE ' . $where_clause . '
 						ORDER BY n.note_date DESC';
-				$res = @$this->db->sql_query($sql);
+				$res = @$this->db->sql_query_limit($sql, $limit, $start_career);
 				if ($res)
 				{
 					while ($row = $this->db->sql_fetchrow($res))
@@ -1827,13 +2053,30 @@ class dashboard_manager
 			$where = $this->get_module_where_clause('commendations', $viewer_id);
 			if ($where !== false)
 			{
+				$where_clause = 'c.user_id = ' . $target_user_id . ' AND (' . $where . ')';
+				if ($search !== '')
+				{
+					$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+					$where_clause .= ' AND (c.reason ' . $like . ' OR c.commendation_type ' . $like . ' OR i.username ' . $like . ')';
+				}
+
+				$cnt_sql = 'SELECT COUNT(c.commendation_id) as cnt
+							FROM ' . $this->table_prefix . 'booskit_commendations c
+							LEFT JOIN ' . USERS_TABLE . ' i ON c.issuer_user_id = i.user_id
+							JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
+							WHERE ' . $where_clause;
+				$cnt_res = @$this->db->sql_query($cnt_sql);
+				$data['count_commendations'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+				if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+				$start_comm = isset($starts['comm']) ? (int)$starts['comm'] : 0;
 				$sql = 'SELECT c.*, i.username as issuer_name, i.user_colour as issuer_colour
 						FROM ' . $this->table_prefix . 'booskit_commendations c
 						LEFT JOIN ' . USERS_TABLE . ' i ON c.issuer_user_id = i.user_id
 						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
-						WHERE c.user_id = ' . $target_user_id . ' AND (' . $where . ')
+						WHERE ' . $where_clause . '
 						ORDER BY c.commendation_date DESC';
-				$res = @$this->db->sql_query($sql);
+				$res = @$this->db->sql_query_limit($sql, $limit, $start_comm);
 				if ($res)
 				{
 					$data['commendations'] = $this->db->sql_fetchrowset($res);
@@ -1849,6 +2092,34 @@ class dashboard_manager
 			if ($where !== false)
 			{
 				$defs = $this->get_definitions('booskit/disciplinary');
+				$where_clause = 'd.user_id = ' . $target_user_id . ' AND (' . $where . ')';
+				if ($search !== '')
+				{
+					$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+					$search_conds = ['d.reason ' . $like, 'd.evidence ' . $like, 'd.archive_reason ' . $like, 'i.username ' . $like, 'a.username ' . $like];
+					$match_defs = [];
+					foreach ($defs as $d_id => $d_name)
+					{
+						if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+					}
+					if (!empty($match_defs))
+					{
+						$search_conds[] = 'd.disciplinary_type_id IN (' . implode(',', $match_defs) . ')';
+					}
+					$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+				}
+
+				$cnt_sql = 'SELECT COUNT(d.record_id) as cnt
+							FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
+							LEFT JOIN ' . USERS_TABLE . ' i ON d.issuer_user_id = i.user_id
+							LEFT JOIN ' . USERS_TABLE . ' a ON d.archived_by_user_id = a.user_id
+							JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
+							WHERE ' . $where_clause;
+				$cnt_res = @$this->db->sql_query($cnt_sql);
+				$data['count_disciplinary'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+				if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+				$start_disc = isset($starts['disc']) ? (int)$starts['disc'] : 0;
 				$sql = 'SELECT d.*, i.username as issuer_name, i.user_colour as issuer_colour,
 						       a.username as archived_by_name, a.user_colour as archived_by_colour
 						FROM ' . $this->table_prefix . 'booskit_disciplinary_users d
@@ -1856,9 +2127,9 @@ class dashboard_manager
 						LEFT JOIN ' . USERS_TABLE . ' a ON d.archived_by_user_id = a.user_id
 						JOIN ' . USERS_TABLE . ' u ON d.user_id = u.user_id
 						LEFT JOIN ' . $this->table_prefix . 'booskit_disciplinary_definitions def ON d.disciplinary_type_id = def.disc_id
-						WHERE d.user_id = ' . $target_user_id . ' AND (' . $where . ')
+						WHERE ' . $where_clause . '
 						ORDER BY d.issue_date DESC';
-				$res = @$this->db->sql_query($sql);
+				$res = @$this->db->sql_query_limit($sql, $limit, $start_disc);
 				if ($res)
 				{
 					while ($row = $this->db->sql_fetchrow($res))
@@ -1879,6 +2150,35 @@ class dashboard_manager
 			if ($where !== false)
 			{
 				$defs = $this->get_definitions('booskit/icdisciplinary');
+				$where_clause = 'c.user_id = ' . $target_user_id . ' AND (' . $where . ')';
+				if ($search !== '')
+				{
+					$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+					$search_conds = ['r.reason ' . $like, 'r.evidence ' . $like, 'r.archive_reason ' . $like, 'c.character_name ' . $like, 'i.username ' . $like, 'a.username ' . $like];
+					$match_defs = [];
+					foreach ($defs as $d_id => $d_name)
+					{
+						if (stripos($d_name, $search) !== false) { $match_defs[] = (int)$d_id; }
+					}
+					if (!empty($match_defs))
+					{
+						$search_conds[] = 'r.disciplinary_type_id IN (' . implode(',', $match_defs) . ')';
+					}
+					$where_clause .= ' AND (' . implode(' OR ', $search_conds) . ')';
+				}
+
+				$cnt_sql = 'SELECT COUNT(r.record_id) as cnt
+							FROM ' . $this->table_prefix . 'booskit_ic_records r
+							JOIN ' . $this->table_prefix . 'booskit_ic_characters c ON r.character_id = c.character_id
+							LEFT JOIN ' . USERS_TABLE . ' i ON r.issuer_user_id = i.user_id
+							LEFT JOIN ' . USERS_TABLE . ' a ON r.archived_by_user_id = a.user_id
+							JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
+							WHERE ' . $where_clause;
+				$cnt_res = @$this->db->sql_query($cnt_sql);
+				$data['count_ic_disciplinary'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+				if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+				$start_ic = isset($starts['ic']) ? (int)$starts['ic'] : 0;
 				$sql = 'SELECT r.*, c.character_name, i.username as issuer_name, i.user_colour as issuer_colour,
 						       a.username as archived_by_name, a.user_colour as archived_by_colour
 						FROM ' . $this->table_prefix . 'booskit_ic_records r
@@ -1887,9 +2187,9 @@ class dashboard_manager
 						LEFT JOIN ' . USERS_TABLE . ' a ON r.archived_by_user_id = a.user_id
 						JOIN ' . USERS_TABLE . ' u ON c.user_id = u.user_id
 						LEFT JOIN ' . $this->table_prefix . 'booskit_ic_definitions def ON r.disciplinary_type_id = def.disc_id
-						WHERE c.user_id = ' . $target_user_id . ' AND (' . $where . ')
+						WHERE ' . $where_clause . '
 						ORDER BY r.issue_date DESC';
-				$res = @$this->db->sql_query($sql);
+				$res = @$this->db->sql_query_limit($sql, $limit, $start_ic);
 				if ($res)
 				{
 					while ($row = $this->db->sql_fetchrow($res))
@@ -1906,8 +2206,21 @@ class dashboard_manager
 		// GTAW Characters
 		if ($this->is_ext_enabled('booskit/gtawtracker') && !empty($perms['view_gtaw']))
 		{
-			$sql = 'SELECT * FROM ' . $this->table_prefix . 'booskit_gtaw_characters WHERE user_id = ' . $target_user_id . ' ORDER BY character_name ASC';
-			$res = @$this->db->sql_query($sql);
+			$where_clause = 'user_id = ' . $target_user_id;
+			if ($search !== '')
+			{
+				$like = $this->db->sql_like_expression($this->db->get_any_char() . $this->db->sql_escape($search) . $this->db->get_any_char());
+				$where_clause .= ' AND (character_name ' . $like . ' OR faction_name ' . $like . ' OR rank_name ' . $like . ')';
+			}
+
+			$cnt_sql = 'SELECT COUNT(character_id) as cnt FROM ' . $this->table_prefix . 'booskit_gtaw_characters WHERE ' . $where_clause;
+			$cnt_res = @$this->db->sql_query($cnt_sql);
+			$data['count_gtaw'] = $cnt_res ? (int)$this->db->sql_fetchfield('cnt') : 0;
+			if ($cnt_res) { $this->db->sql_freeresult($cnt_res); }
+
+			$start_gtaw = isset($starts['gtaw']) ? (int)$starts['gtaw'] : 0;
+			$sql = 'SELECT * FROM ' . $this->table_prefix . 'booskit_gtaw_characters WHERE ' . $where_clause . ' ORDER BY character_name ASC';
+			$res = @$this->db->sql_query_limit($sql, $limit, $start_gtaw);
 			if ($res)
 			{
 				$data['gtaw_characters'] = $this->db->sql_fetchrowset($res);
@@ -2920,42 +3233,73 @@ class dashboard_manager
 	public function can_view_stat_category($viewer_id, array $cat_row)
 	{
 		$viewer_id = (int) $viewer_id;
-		if ($this->is_admin($viewer_id))
+		if ($viewer_id <= 0)
+		{
+			return false;
+		}
+
+		$cat_id = isset($cat_row['cat_id']) ? (int) $cat_row['cat_id'] : 0;
+		if ($cat_id <= 0)
 		{
 			return true;
 		}
 
-		$allowed = isset($cat_row['allowed_groups_array']) ? $cat_row['allowed_groups_array'] : (!empty($cat_row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $cat_row['allowed_groups'])))) : []);
-
-		if (empty($allowed))
+		// Category is visible if one or more definitions under it are visible to viewer
+		$defs = $this->get_stat_definitions($cat_id);
+		if (empty($defs))
 		{
-			return true; // No permission bound = visible to all who have stats access
+			return false;
 		}
 
-		$viewer_groups = $this->get_user_groups($viewer_id);
-		return (bool) array_intersect($viewer_groups, $allowed);
+		foreach ($defs as $def)
+		{
+			if ($this->can_view_stat_definition($viewer_id, $def))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public function can_use_stat_category($poster_id, array $cat_row, $poster_groups = null)
+	{
+		$poster_id = (int) $poster_id;
+		if ($poster_id <= 0 || $poster_id === ANONYMOUS)
+		{
+			return false;
+		}
+
+		$cat_id = isset($cat_row['cat_id']) ? (int) $cat_row['cat_id'] : 0;
+		if ($cat_id <= 0)
+		{
+			return true;
+		}
+
+		// Category is usable if one or more definitions under it can be used by poster
+		$defs = $this->get_stat_definitions($cat_id);
+		if (empty($defs))
+		{
+			return false;
+		}
+
+		foreach ($defs as $def)
+		{
+			if ($this->can_use_stat_definition($poster_id, $def, $poster_groups))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public function can_view_stat_definition($viewer_id, array $stat_row)
 	{
 		$viewer_id = (int) $viewer_id;
-		if ($this->is_admin($viewer_id))
+		if ($viewer_id <= 0)
 		{
-			return true;
-		}
-
-		// Check parent category permissions if category info is attached
-		if (!empty($stat_row['cat_allowed_groups']))
-		{
-			$cat_allowed = isset($stat_row['cat_allowed_groups_array']) ? $stat_row['cat_allowed_groups_array'] : array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['cat_allowed_groups']))));
-			if (!empty($cat_allowed))
-			{
-				$viewer_groups = $this->get_user_groups($viewer_id);
-				if (!array_intersect($viewer_groups, $cat_allowed))
-				{
-					return false;
-				}
-			}
+			return false;
 		}
 
 		$allowed = isset($stat_row['allowed_groups_array']) ? $stat_row['allowed_groups_array'] : (!empty($stat_row['allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['allowed_groups'])))) : []);
@@ -2969,7 +3313,7 @@ class dashboard_manager
 		return (bool) array_intersect($viewer_groups, $allowed);
 	}
 
-	public function can_use_stat_definition($poster_id, array $stat_row)
+	public function can_use_stat_definition($poster_id, array $stat_row, $poster_groups = null)
 	{
 		$poster_id = (int) $poster_id;
 		if ($poster_id <= 0 || $poster_id === ANONYMOUS)
@@ -2977,23 +3321,13 @@ class dashboard_manager
 			return false;
 		}
 
-		if ($this->is_admin($poster_id))
+		if ($poster_groups === null)
 		{
-			return true;
+			$poster_groups = $this->get_user_groups($poster_id);
 		}
-
-		// Check parent category use permissions if present
-		if (!empty($stat_row['cat_use_allowed_groups']))
+		else
 		{
-			$cat_use_allowed = isset($stat_row['cat_use_allowed_groups_array']) ? $stat_row['cat_use_allowed_groups_array'] : array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['cat_use_allowed_groups']))));
-			if (!empty($cat_use_allowed))
-			{
-				$poster_groups = $this->get_user_groups($poster_id);
-				if (!array_intersect($poster_groups, $cat_use_allowed))
-				{
-					return false;
-				}
-			}
+			$poster_groups = is_array($poster_groups) ? array_map('intval', $poster_groups) : array_map('intval', array_filter(array_map('trim', explode(',', (string) $poster_groups))));
 		}
 
 		$allowed = isset($stat_row['use_allowed_groups_array']) ? $stat_row['use_allowed_groups_array'] : (!empty($stat_row['use_allowed_groups']) ? array_map('intval', array_filter(array_map('trim', explode(',', $stat_row['use_allowed_groups'])))) : []);
@@ -3003,8 +3337,79 @@ class dashboard_manager
 			return true; // No permission bound = any registered user can use
 		}
 
-		$poster_groups = $this->get_user_groups($poster_id);
 		return (bool) array_intersect($poster_groups, $allowed);
+	}
+
+	public function record_post_roles($post_id, $poster_id, $post_time = null, $user_groups = null)
+	{
+		$post_id = (int) $post_id;
+		$poster_id = (int) $poster_id;
+		if ($post_id <= 0 || $poster_id <= 0)
+		{
+			return;
+		}
+
+		if ($user_groups === null)
+		{
+			$user_groups = $this->get_user_groups($poster_id);
+		}
+
+		$user_groups_str = is_array($user_groups) ? implode(',', array_map('intval', array_filter($user_groups))) : (string) $user_groups;
+		$post_time = ($post_time !== null && (int) $post_time > 0) ? (int) $post_time : time();
+
+		$sql = 'SELECT post_id FROM ' . $this->table_post_roles . ' WHERE post_id = ' . $post_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+
+		if ($row)
+		{
+			$sql_ary = [
+				'poster_id'  => $poster_id,
+				'user_roles' => $user_groups_str,
+				'post_time'  => $post_time,
+			];
+			$sql = 'UPDATE ' . $this->table_post_roles . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE post_id = ' . $post_id;
+			@$this->db->sql_query($sql);
+		}
+		else
+		{
+			$sql_ary = [
+				'post_id'    => $post_id,
+				'poster_id'  => $poster_id,
+				'user_roles' => $user_groups_str,
+				'post_time'  => $post_time,
+			];
+			$sql = 'INSERT INTO ' . $this->table_post_roles . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
+			@$this->db->sql_query($sql);
+		}
+	}
+
+	public function get_post_roles($post_id)
+	{
+		$post_id = (int) $post_id;
+		if ($post_id <= 0)
+		{
+			return null;
+		}
+
+		$sql = 'SELECT user_roles FROM ' . $this->table_post_roles . ' WHERE post_id = ' . $post_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+
+		if ($row !== null && $row !== false)
+		{
+			return !empty($row['user_roles']) ? array_map('intval', array_filter(array_map('trim', explode(',', $row['user_roles'])))) : [];
+		}
+
+		return null;
 	}
 
 	/* =========================================================================
@@ -3062,7 +3467,7 @@ class dashboard_manager
 		return array_values($tags);
 	}
 
-	public function sync_post_stats($post_id, $post_text, $topic_id, $forum_id, $poster_id, $post_time)
+	public function sync_post_stats($post_id, $post_text, $topic_id, $forum_id, $poster_id, $post_time, $poster_groups = null)
 	{
 		$post_id = (int) $post_id;
 		$poster_id = (int) $poster_id;
@@ -3071,14 +3476,36 @@ class dashboard_manager
 			return;
 		}
 
-		// Delete existing entries for this post
-		$this->delete_post_stats($post_id);
-
 		$tags = $this->parse_post_stat_tags($post_text);
 		if (empty($tags))
 		{
+			// Tag removed or none present: remove all stats and stored post roles for this post
+			$this->delete_post_stats($post_id, true);
 			return;
 		}
+
+		if ($poster_groups === null)
+		{
+			$stored_roles = $this->get_post_roles($post_id);
+			if ($stored_roles !== null)
+			{
+				$poster_groups = $stored_roles;
+			}
+			else
+			{
+				$poster_groups = $this->get_user_groups($poster_id);
+				$this->record_post_roles($post_id, $poster_id, $post_time, $poster_groups);
+			}
+		}
+		else
+		{
+			$this->record_post_roles($post_id, $poster_id, $post_time, $poster_groups);
+		}
+
+		// Delete existing entries for this post before re-adding current valid tags
+		$this->delete_post_stats($post_id, false);
+
+		$poster_groups_str = is_array($poster_groups) ? implode(',', array_map('intval', $poster_groups)) : (string) $poster_groups;
 
 		foreach ($tags as $tag)
 		{
@@ -3088,26 +3515,27 @@ class dashboard_manager
 				continue;
 			}
 
-			// Verify if the author has permission to use this tag
-			if (!$this->can_use_stat_definition($poster_id, $def))
+			// Verify if the author had permission to use this tag at the time of post
+			if (!$this->can_use_stat_definition($poster_id, $def, $poster_groups))
 			{
 				continue; // Not allowed: do not count towards statistics
 			}
 
 			$sql_ary = [
-				'stat_tag'   => $tag,
-				'post_id'    => $post_id,
-				'topic_id'   => (int) $topic_id,
-				'forum_id'   => (int) $forum_id,
-				'poster_id'  => $poster_id,
-				'post_time'  => (int) $post_time,
+				'stat_tag'      => $tag,
+				'post_id'       => $post_id,
+				'topic_id'      => (int) $topic_id,
+				'forum_id'      => (int) $forum_id,
+				'poster_id'     => $poster_id,
+				'post_time'     => (int) $post_time,
+				'poster_groups' => $poster_groups_str,
 			];
 			$sql = 'INSERT INTO ' . $this->table_stat_posts . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
 			$this->db->sql_query($sql);
 		}
 	}
 
-	public function delete_post_stats($post_id)
+	public function delete_post_stats($post_id, $delete_roles = true)
 	{
 		if (is_array($post_id))
 		{
@@ -3116,6 +3544,12 @@ class dashboard_manager
 			{
 				$sql = 'DELETE FROM ' . $this->table_stat_posts . ' WHERE ' . $this->db->sql_in_set('post_id', $ids);
 				$this->db->sql_query($sql);
+
+				if ($delete_roles)
+				{
+					$sql = 'DELETE FROM ' . $this->table_post_roles . ' WHERE ' . $this->db->sql_in_set('post_id', $ids);
+					@$this->db->sql_query($sql);
+				}
 			}
 		}
 		else
@@ -3125,6 +3559,12 @@ class dashboard_manager
 			{
 				$sql = 'DELETE FROM ' . $this->table_stat_posts . ' WHERE post_id = ' . $post_id;
 				$this->db->sql_query($sql);
+
+				if ($delete_roles)
+				{
+					$sql = 'DELETE FROM ' . $this->table_post_roles . ' WHERE post_id = ' . $post_id;
+					@$this->db->sql_query($sql);
+				}
 			}
 		}
 	}
@@ -3134,6 +3574,20 @@ class dashboard_manager
 		// Empty table
 		$sql = 'DELETE FROM ' . $this->table_stat_posts;
 		$this->db->sql_query($sql);
+
+		// Pre-load all recorded post roles at post time
+		$all_post_roles = [];
+		$sql_roles = 'SELECT post_id, poster_id, user_roles, post_time FROM ' . $this->table_post_roles;
+		$res_roles = @$this->db->sql_query($sql_roles);
+		if ($res_roles)
+		{
+			while ($r_row = $this->db->sql_fetchrow($res_roles))
+			{
+				$pid = (int) $r_row['post_id'];
+				$all_post_roles[$pid] = !empty($r_row['user_roles']) ? array_map('intval', array_filter(array_map('trim', explode(',', $r_row['user_roles'])))) : [];
+			}
+			$this->db->sql_freeresult($res_roles);
+		}
 
 		// Scan posts table for stat tags
 		$sql = 'SELECT post_id, topic_id, forum_id, poster_id, post_time, post_text 
@@ -3146,8 +3600,25 @@ class dashboard_manager
 		$count = 0;
 		while ($row = $this->db->sql_fetchrow($result))
 		{
+			$post_id = (int) $row['post_id'];
 			$poster_id = (int) $row['poster_id'];
+			$post_time = (int) $row['post_time'];
+
+			// Use recorded member roles at time of post if available; otherwise initialize with current groups
+			if (isset($all_post_roles[$post_id]))
+			{
+				$poster_groups = $all_post_roles[$post_id];
+			}
+			else
+			{
+				$poster_groups = $this->get_user_groups($poster_id);
+				$this->record_post_roles($post_id, $poster_id, $post_time, $poster_groups);
+				$all_post_roles[$post_id] = $poster_groups;
+			}
+
 			$tags = $this->parse_post_stat_tags($row['post_text']);
+			$poster_groups_str = implode(',', $poster_groups);
+
 			foreach ($tags as $tag)
 			{
 				$def = $this->get_stat_definition_by_tag($tag);
@@ -3156,18 +3627,20 @@ class dashboard_manager
 					continue;
 				}
 
-				if (!$this->can_use_stat_definition($poster_id, $def))
+				// Check permission against the member roles at the time of the post
+				if (!$this->can_use_stat_definition($poster_id, $def, $poster_groups))
 				{
 					continue;
 				}
 
 				$sql_ary = [
-					'stat_tag'   => $tag,
-					'post_id'    => (int) $row['post_id'],
-					'topic_id'   => (int) $row['topic_id'],
-					'forum_id'   => (int) $row['forum_id'],
-					'poster_id'  => $poster_id,
-					'post_time'  => (int) $row['post_time'],
+					'stat_tag'      => $tag,
+					'post_id'       => $post_id,
+					'topic_id'      => (int) $row['topic_id'],
+					'forum_id'      => (int) $row['forum_id'],
+					'poster_id'     => $poster_id,
+					'post_time'     => $post_time,
+					'poster_groups' => $poster_groups_str,
 				];
 				$sql_ins = 'INSERT INTO ' . $this->table_stat_posts . ' ' . $this->db->sql_build_array('INSERT', $sql_ary);
 				$this->db->sql_query($sql_ins);
