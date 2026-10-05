@@ -243,12 +243,26 @@ class main
 			'FORM_DESC'           => $form['form_desc'],
 			'FORM_HEADER'         => $form['form_header'],
 			'U_ACTION'            => $this->helper->route('booskit_forms_submit', ['form_id' => $form_id]),
-			'SUBMITTED_DATA_JSON' => !empty($submitted_data) ? htmlspecialchars(json_encode($submitted_data), ENT_QUOTES, 'UTF-8') : '',
+			'SUBMITTED_DATA_JSON' => !empty($submitted_data) ? htmlspecialchars(json_encode($this->decode_submitted_data($submitted_data)), ENT_QUOTES, 'UTF-8') : '',
 			'S_HAS_ERRORS'        => !empty($errors),
 			'ERROR_MSG'           => implode('<br />', $errors),
 		]);
 
 		return $this->helper->render('form_display.html', $form['form_name']);
+	}
+
+	protected function decode_submitted_data($data)
+	{
+		if (is_array($data))
+		{
+			$result = [];
+			foreach ($data as $k => $v)
+			{
+				$result[$k] = $this->decode_submitted_data($v);
+			}
+			return $result;
+		}
+		return htmlspecialchars_decode((string) $data, ENT_QUOTES);
 	}
 
 	protected function get_field_options($field)
@@ -795,7 +809,7 @@ class main
 							{
 								$this->template->assign_block_vars('hidden_fields', [
 									'NAME'  => $key . '[' . $row_idx . '][]',
-									'VALUE' => htmlspecialchars($v, ENT_QUOTES, 'UTF-8'),
+									'VALUE' => $v,
 								]);
 							}
 						}
@@ -803,7 +817,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[' . $row_idx . ']',
-								'VALUE' => htmlspecialchars($row_val, ENT_QUOTES, 'UTF-8'),
+								'VALUE' => $row_val,
 							]);
 						}
 					}
@@ -816,7 +830,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[]',
-								'VALUE' => htmlspecialchars($v, ENT_QUOTES, 'UTF-8'),
+								'VALUE' => $v,
 							]);
 						}
 					}
@@ -824,7 +838,7 @@ class main
 					{
 						$this->template->assign_block_vars('hidden_fields', [
 							'NAME'  => $key,
-							'VALUE' => htmlspecialchars(isset($val[0]) ? $val[0] : '', ENT_QUOTES, 'UTF-8'),
+							'VALUE' => isset($val[0]) ? $val[0] : '',
 						]);
 					}
 				}

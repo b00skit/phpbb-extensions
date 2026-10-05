@@ -77,8 +77,15 @@
 			<h4 style="margin: 0 0 5px 0; color: #6b21a8; font-size: 1.1em; font-weight: bold; border-bottom: 1px dashed #d8b4fe; padding-bottom: 5px;">{fields.LABEL}</h4>
 			<!-- IF fields.EXPLAIN --><p style="margin: 0 0 12px 0; font-size: 0.85em; color: #7c3aed; font-style: italic;">{fields.EXPLAIN}</p><!-- ENDIF -->
 			<div class="group-rows-container" id="group_rows_{fields.NAME}">
-				<div class="group-row" data-index="0" style="display: grid; grid-template-columns: repeat({fields.COLUMNS}, 1fr); gap: 15px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; background-color: #ffffff; position: relative;">
+				<div class="group-row" data-index="0" style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 10px; background-color: #ffffff; position: relative;">
+					<!-- IF fields.S_MULTI -->
+					<div class="group-row-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #f1f5f9;">
+						<span class="group-row-title" style="font-weight: bold; font-size: 0.85em; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Entry 1</span>
+					</div>
+					<!-- ENDIF -->
+					<div class="group-row-grid" style="display: grid; grid-template-columns: repeat({fields.COLUMNS}, 1fr); gap: 15px;">
 	<!-- ELSEIF fields.S_INPUT_GROUP_END -->
+					</div>
 				</div>
 			</div>
 			<!-- IF $GROUP_MULTI -->
@@ -190,7 +197,7 @@
 	border-color: #a855f7 !important;
 }
 @media (max-width: 700px) {
-	.group-row {
+	.group-row-grid {
 		grid-template-columns: 1fr !important;
 	}
 }
@@ -210,16 +217,42 @@ function addGroupRow(groupName) {
 	var newRow = firstRow.cloneNode(true);
 	newRow.setAttribute('data-index', nextIndex);
 	
+	var rowTitle = newRow.querySelector('.group-row-title');
+	if (rowTitle) {
+		rowTitle.textContent = 'Entry ' + (nextIndex + 1);
+	}
+	
+	// Remove any cloned select2 containers
+	var select2Containers = newRow.querySelectorAll('.select2, .select2-container');
+	select2Containers.forEach(function(el) {
+		if (el.parentNode) el.parentNode.removeChild(el);
+	});
+	
 	var inputs = newRow.querySelectorAll('input, textarea, select');
 	inputs.forEach(function(input) {
 		if (input.name) {
 			input.name = input.name.replace(/\[\d+\]/, '[' + nextIndex + ']');
 		}
 		if (input.id) {
-			input.id = input.id.replace(/_0$/, '_' + nextIndex);
+			input.id = input.id.replace(/_\d+$/, '_' + nextIndex);
 		}
+		
+		// Clean up Select2 classes and attributes
+		input.classList.remove('select2-hidden-accessible');
+		input.removeAttribute('data-select2-id');
+		input.removeAttribute('aria-hidden');
+		input.removeAttribute('tabindex');
+		if (input.style && input.style.display === 'none') {
+			input.style.display = '';
+		}
+		
 		if (input.type === 'checkbox' || input.type === 'radio') {
 			input.checked = false;
+		} else if (input.tagName === 'SELECT') {
+			input.selectedIndex = 0;
+			if (input.options && input.options.length > 0) {
+				input.options[0].selected = true;
+			}
 		} else {
 			input.value = '';
 		}
@@ -228,33 +261,52 @@ function addGroupRow(groupName) {
 	var labels = newRow.querySelectorAll('label');
 	labels.forEach(function(label) {
 		if (label.htmlFor) {
-			label.htmlFor = label.htmlFor.replace(/_0$/, '_' + nextIndex);
+			label.htmlFor = label.htmlFor.replace(/_\d+$/, '_' + nextIndex);
 		}
 	});
 	
 	var oldBtn = newRow.querySelector('.remove-row-btn');
-	if (oldBtn) oldBtn.parentNode.removeChild(oldBtn);
+	if (oldBtn && oldBtn.parentNode) oldBtn.parentNode.removeChild(oldBtn);
 	
 	var removeBtn = document.createElement('button');
 	removeBtn.type = 'button';
 	removeBtn.className = 'button2 remove-row-btn';
-	removeBtn.innerHTML = 'Remove';
-	removeBtn.style.position = 'absolute';
-	removeBtn.style.top = '10px';
-	removeBtn.style.right = '10px';
+	removeBtn.innerHTML = '&times; Remove';
 	removeBtn.style.padding = '2px 8px';
 	removeBtn.style.fontSize = '0.8em';
-	removeBtn.style.backgroundColor = '#f87171';
+	removeBtn.style.backgroundColor = '#ef4444';
 	removeBtn.style.color = '#fff';
 	removeBtn.style.border = 'none';
 	removeBtn.style.borderRadius = '4px';
 	removeBtn.style.cursor = 'pointer';
+	removeBtn.style.fontWeight = 'bold';
 	removeBtn.onclick = function() {
 		newRow.parentNode.removeChild(newRow);
 	};
-	newRow.appendChild(removeBtn);
+	
+	var header = newRow.querySelector('.group-row-header');
+	if (header) {
+		header.appendChild(removeBtn);
+	} else {
+		newRow.appendChild(removeBtn);
+	}
 	
 	container.appendChild(newRow);
+	
+	// Re-initialize Select2 if Select2 / jQuery is present
+	if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+		jQuery(newRow).find('select').not('.no-select2').each(function() {
+			var $select = jQuery(this);
+			var isMultiple = $select.prop('multiple');
+			$select.select2({
+				width: isMultiple ? 'style' : '100%',
+				allowClear: false
+			});
+		});
+	}
+	if (window.jQuery) {
+		jQuery(document).trigger('phpbb:dynamic_content');
+	}
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -324,6 +376,11 @@ document.addEventListener('DOMContentLoaded', function() {
 					} else if (input.type === 'radio') {
 						var cellVal = Array.isArray(vals) ? vals[i] : vals;
 						input.checked = (String(cellVal) === String(input.value));
+					} else if (input.tagName === 'SELECT') {
+						input.value = val;
+						if (window.jQuery && jQuery(input).data('select2')) {
+							jQuery(input).trigger('change');
+						}
 					} else {
 						input.value = val;
 					}
