@@ -12,7 +12,11 @@ class v101_dashboard_enhancements extends \phpbb\db\migration\migration
 {
 	public function effectively_installed()
 	{
-		return isset($this->config['booskit_dashboard_perm_system']) && $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_dashboard_perm_groups');
+		return isset($this->config['booskit_dashboard_perm_system']) &&
+			$this->db_tools->sql_table_exists($this->table_prefix . 'booskit_dashboard_perm_groups') &&
+			$this->db_tools->sql_table_exists($this->table_prefix . 'booskit_dashboard_forum_views') &&
+			$this->db_tools->sql_table_exists($this->table_prefix . 'booskit_dashboard_user_views') &&
+			$this->db_tools->sql_table_exists($this->table_prefix . 'booskit_dashboard_profile_views');
 	}
 
 	static public function depends_on()
@@ -47,8 +51,8 @@ class v101_dashboard_enhancements extends \phpbb\db\migration\migration
 					),
 					'PRIMARY_KEY' => 'view_id',
 					'KEYS' => array(
-						'user_forum' => array('INDEX', array('user_id', 'forum_id')),
-						'user_view'  => array('INDEX', array('user_id', 'view_time')),
+						'user_forum'  => array('INDEX', array('user_id', 'forum_id')),
+						'f_user_view' => array('INDEX', array('user_id', 'view_time')),
 					),
 				),
 				$this->table_prefix . 'booskit_dashboard_user_views' => array(

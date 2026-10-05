@@ -39,8 +39,8 @@ class v101_pending_logins extends \phpbb\db\migration\migration
                     ),
                     'PRIMARY_KEY' => 'login_token',
                     'KEYS' => array(
-                        'user_id'    => array('INDEX', 'user_id'),
-                        'expires_at' => array('INDEX', 'expires_at'),
+                        'b2fa_pl_uid' => array('INDEX', 'user_id'),
+                        'b2fa_pl_exp' => array('INDEX', 'expires_at'),
                     ),
                 ),
             ),

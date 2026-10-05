@@ -12,7 +12,11 @@ class v100_initial extends \phpbb\db\migration\migration
 {
     public function effectively_installed()
     {
-        return isset($this->config['booskit_2fa_enabled']) && $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_2fa_users');
+        return isset($this->config['booskit_2fa_enabled']) &&
+            $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_2fa_users') &&
+            $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_2fa_backup_codes') &&
+            $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_2fa_sessions') &&
+            $this->db_tools->sql_table_exists($this->table_prefix . 'booskit_2fa_trusted_devices');
     }
 
     static public function depends_on()
@@ -96,7 +100,7 @@ class v100_initial extends \phpbb\db\migration\migration
                     ),
                     'PRIMARY_KEY' => 'code_id',
                     'KEYS' => array(
-                        'user_id' => array('INDEX', 'user_id'),
+                        'b2fa_bc_uid' => array('INDEX', 'user_id'),
                     ),
                 ),
                 $this->table_prefix . 'booskit_2fa_sessions' => array(
@@ -114,7 +118,7 @@ class v100_initial extends \phpbb\db\migration\migration
                     ),
                     'PRIMARY_KEY' => 'session_id',
                     'KEYS' => array(
-                        'user_id' => array('INDEX', 'user_id'),
+                        'b2fa_sess_uid' => array('INDEX', 'user_id'),
                     ),
                 ),
                 $this->table_prefix . 'booskit_2fa_trusted_devices' => array(
@@ -129,9 +133,9 @@ class v100_initial extends \phpbb\db\migration\migration
                     ),
                     'PRIMARY_KEY' => 'device_id',
                     'KEYS' => array(
-                        'user_id'    => array('INDEX', 'user_id'),
-                        'ip_hash'    => array('INDEX', 'ip_hash'),
-                        'expires_at' => array('INDEX', 'expires_at'),
+                        'b2fa_dev_uid' => array('INDEX', 'user_id'),
+                        'b2fa_dev_ip'  => array('INDEX', 'ip_hash'),
+                        'b2fa_dev_exp' => array('INDEX', 'expires_at'),
                     ),
                 ),
             ),
