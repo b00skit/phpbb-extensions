@@ -311,6 +311,66 @@
 				</dd>
 			</dl>
 
+		</fieldset>
+
+		<fieldset>
+			<legend>{{ lang('WEBHOOK_SETTINGS') }}</legend>
+			<dl>
+				<dt><label for="webhook_enabled">{{ lang('WEBHOOK_ENABLED') }}:</label><br /><span>{{ lang('WEBHOOK_ENABLED_EXPLAIN') }}</span></dt>
+				<dd>
+					<label><input type="radio" class="radio" name="webhook_enabled" value="1"<!-- IF WEBHOOK_ENABLED --> checked="checked"<!-- ENDIF --> /> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="webhook_enabled" value="0"<!-- IF not WEBHOOK_ENABLED --> checked="checked"<!-- ENDIF --> /> {{ lang('NO') }}</label>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="webhook_url">{{ lang('WEBHOOK_URL') }}:</label><br /><span>{{ lang('WEBHOOK_URL_EXPLAIN') }}</span></dt>
+				<dd><textarea id="webhook_url" name="webhook_url" rows="3" cols="50" style="width: 100%; max-width: 600px;" placeholder="https://discord.com/api/webhooks/...">{WEBHOOK_URL}</textarea></dd>
+			</dl>
+			<dl>
+				<dt><label for="webhook_template">{{ lang('WEBHOOK_TEMPLATE') }}:</label><br /><span>{{ lang('WEBHOOK_TEMPLATE_EXPLAIN') }}</span></dt>
+				<dd style="width: 100%; max-width: 650px;">
+					<div style="margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+						<button type="button" class="btn-secondary" onclick="loadWebhookPreset('discord')">{{ lang('WEBHOOK_PRESET_DISCORD') }}</button>
+						<button type="button" class="btn-secondary" onclick="loadWebhookPreset('discord_simple')">{{ lang('WEBHOOK_PRESET_DISCORD_SIMPLE') }}</button>
+						<button type="button" class="btn-secondary" onclick="loadWebhookPreset('generic')">{{ lang('WEBHOOK_PRESET_GENERIC') }}</button>
+						<button type="button" class="btn-secondary" onclick="clearWebhookTemplate()">{{ lang('WEBHOOK_CLEAR') }}</button>
+					</div>
+					<textarea id="webhook_template" name="webhook_template" rows="12" cols="50" style="width: 100%; font-family: monospace; font-size: 0.9em; tab-size: 2;" placeholder="{{ lang('WEBHOOK_TEMPLATE_PLACEHOLDER') }}">{WEBHOOK_TEMPLATE}</textarea>
+				</dd>
+			</dl>
+			<div class="rules" style="margin: 15px 0; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #5865f2; border-radius: 8px; font-size: 0.95em; color: #1e293b;">
+				<h3 style="margin-top: 0; margin-bottom: 8px; color: #312e81; font-size: 1.1em; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+					<span>🔗</span> {{ lang('WEBHOOK_VARS_GUIDE_TITLE') }}
+				</h3>
+				<p style="margin-bottom: 12px; font-size: 0.9em; color: #475569;">{{ lang('WEBHOOK_VARS_GUIDE_INTRO') }}</p>
+				
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; margin-top: 10px;">
+					<div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.9em; display: block; margin-bottom: 4px;">{{ lang('WEBHOOK_VAR_DISCORD_FIELDS_TITLE') }}</strong>
+						<p style="margin: 0 0 6px 0; font-size: 0.82em; color: #64748b;">{{ lang('WEBHOOK_VAR_DISCORD_FIELDS_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 3px 6px; border-radius: 4px; display: block; font-size: 0.82em; font-family: monospace;">&#34;fields&#34;: &#123;&#123;DISCORD_FIELDS_JSON&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.9em; display: block; margin-bottom: 4px;">{{ lang('WEBHOOK_VAR_FIELDS_JSON_TITLE') }}</strong>
+						<p style="margin: 0 0 6px 0; font-size: 0.82em; color: #64748b;">{{ lang('WEBHOOK_VAR_FIELDS_JSON_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 3px 6px; border-radius: 4px; display: block; font-size: 0.82em; font-family: monospace;">&#34;fields&#34;: &#123;&#123;FIELDS_JSON&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.9em; display: block; margin-bottom: 4px;">{{ lang('WEBHOOK_VAR_SYSTEM_TITLE') }}</strong>
+						<p style="margin: 0 0 6px 0; font-size: 0.82em; color: #64748b;">{{ lang('WEBHOOK_VAR_SYSTEM_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 3px 6px; border-radius: 4px; display: block; font-size: 0.82em; font-family: monospace;">&#123;&#123;FORM_NAME&#125;&#125;, &#123;&#123;USERNAME&#125;&#125;, &#123;&#123;POST_URL&#125;&#125;, &#123;&#123;ISO_DATE&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.9em; display: block; margin-bottom: 4px;">{{ lang('WEBHOOK_VAR_FIELD_TITLE') }}</strong>
+						<p style="margin: 0 0 6px 0; font-size: 0.82em; color: #64748b;">{{ lang('WEBHOOK_VAR_FIELD_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 3px 6px; border-radius: 4px; display: block; font-size: 0.82em; font-family: monospace;">&#34;my_field&#34;: &#34;&#123;&#123;field_name&#125;&#125;&#34;</code>
+					</div>
+				</div>
+			</div>
+
 			<p class="submit-buttons">
 				<input class="button1" type="submit" id="submit" name="submit" value="{{ lang('SUBMIT') }}" />&nbsp;
 				<input class="button2" type="reset" id="reset" name="reset" value="{{ lang('RESET') }}" />
@@ -326,6 +386,7 @@
 		<tr>
 			<th>{{ lang('FORM_NAME') }}</th>
 			<th>{{ lang('ENABLED') }}</th>
+			<th>{{ lang('WEBHOOK') }}</th>
 			<th>{{ lang('ACTION') }}</th>
 		</tr>
 		</thead>
@@ -334,6 +395,7 @@
 		<tr>
 			<td style="text-align: center;">{forms.NAME}</td>
 			<td style="text-align: center;"><!-- IF forms.ENABLED -->{{ lang('YES') }}<!-- ELSE -->{{ lang('NO') }}<!-- ENDIF --></td>
+			<td style="text-align: center;"><!-- IF forms.WEBHOOK --><span style="color: #16a34a; font-weight: bold;">{{ lang('YES') }}</span><!-- ELSE --><span style="color: #94a3b8;">{{ lang('NO') }}</span><!-- ENDIF --></td>
 			<td style="text-align: center;">
 				<a href="{forms.U_EDIT}">{ICON_EDIT}</a>
 				<a href="{forms.U_DELETE}" data-ajax="row_delete">{ICON_DELETE}</a>
@@ -341,7 +403,7 @@
 		</tr>
 		<!-- BEGINELSE -->
 		<tr>
-			<td colspan="3" style="text-align: center;">{{ lang('NO_FORMS') }}</td>
+			<td colspan="4" style="text-align: center;">{{ lang('NO_FORMS') }}</td>
 		</tr>
 		<!-- END forms -->
 		</tbody>
@@ -1101,4 +1163,58 @@
 	deserialize();
 	renderBuilder();
 })();
+
+window.loadWebhookPreset = function(type) {
+	var tplArea = document.getElementById('webhook_template');
+	if (!tplArea) return;
+	if (type === 'discord') {
+		tplArea.value = JSON.stringify({
+			"username": "Custom Forms",
+			"embeds": [
+				{
+					"title": "New Submission: {{FORM_NAME}}",
+					"url": "{{POST_URL}}",
+					"description": "Submitted by **{{USERNAME}}**",
+					"color": 5793266,
+					"fields": "{{DISCORD_FIELDS_JSON}}",
+					"footer": {
+						"text": "phpBB Custom Forms • {{DATE}} {{TIME}}"
+					},
+					"timestamp": "{{ISO_DATE}}"
+				}
+			]
+		}, null, 2).replace('"{{DISCORD_FIELDS_JSON}}"', '{{DISCORD_FIELDS_JSON}}');
+	} else if (type === 'discord_simple') {
+		tplArea.value = JSON.stringify({
+			"content": "**{{FORM_NAME}}** submitted by **{{USERNAME}}**\nTopic: {{POST_URL}}\n\n>>> {{SUMMARY}}"
+		}, null, 2);
+	} else if (type === 'generic') {
+		tplArea.value = JSON.stringify({
+			"event": "form_submission",
+			"form_id": "{{FORM_ID}}",
+			"form_name": "{{FORM_NAME}}",
+			"form_slug": "{{FORM_SLUG}}",
+			"user_id": "{{USER_ID}}",
+			"username": "{{USERNAME}}",
+			"post_id": "{{POST_ID}}",
+			"post_url": "{{POST_URL}}",
+			"date": "{{DATE}}",
+			"time": "{{TIME}}",
+			"timestamp": "{{TIMESTAMP}}",
+			"fields": "{{FIELDS_JSON}}"
+		}, null, 2)
+		.replace('"{{FORM_ID}}"', '{{FORM_ID}}')
+		.replace('"{{USER_ID}}"', '{{USER_ID}}')
+		.replace('"{{POST_ID}}"', '{{POST_ID}}')
+		.replace('"{{TIMESTAMP}}"', '{{TIMESTAMP}}')
+		.replace('"{{FIELDS_JSON}}"', '{{FIELDS_JSON}}');
+	}
+};
+
+window.clearWebhookTemplate = function() {
+	var tplArea = document.getElementById('webhook_template');
+	if (tplArea) {
+		tplArea.value = '';
+	}
+};
 </script>

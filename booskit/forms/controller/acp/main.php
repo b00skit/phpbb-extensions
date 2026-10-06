@@ -68,6 +68,9 @@ class main
 				'forum_id'			=> $this->request->variable('forum_id', 0),
 				'poster_id'			=> $this->request->variable('poster_id', 0),
 				'enabled'			=> $this->request->variable('enabled', 1),
+				'webhook_enabled'	=> $this->request->variable('webhook_enabled', 0),
+				'webhook_url'		=> $this->request->variable('webhook_url', '', true),
+				'webhook_template'	=> $this->request->variable('webhook_template', '', true),
 			];
 
 			$form_fields_json = $this->request->variable('form_fields', '', true);
@@ -176,6 +179,9 @@ class main
 				'FORUM_ID'			=> isset($form_data['forum_id']) ? $form_data['forum_id'] : 0,
 				'POSTER_ID'			=> isset($form_data['poster_id']) ? $form_data['poster_id'] : 0,
 				'ENABLED'			=> isset($form_data['enabled']) ? $form_data['enabled'] : 1,
+				'WEBHOOK_ENABLED'	=> isset($form_data['webhook_enabled']) ? $form_data['webhook_enabled'] : 0,
+				'WEBHOOK_URL'		=> isset($form_data['webhook_url']) ? $form_data['webhook_url'] : '',
+				'WEBHOOK_TEMPLATE'	=> isset($form_data['webhook_template']) ? $form_data['webhook_template'] : '',
 			]);
 
 			return;
@@ -188,6 +194,7 @@ class main
 				'ID'		=> $form['form_id'],
 				'NAME'		=> $form['form_name'],
 				'ENABLED'	=> $form['enabled'],
+				'WEBHOOK'	=> !empty($form['webhook_enabled']),
 				'U_EDIT'	=> $u_action . '&amp;action=edit&amp;form_id=' . $form['form_id'],
 				'U_DELETE'	=> $u_action . '&amp;action=delete&amp;form_id=' . $form['form_id'],
 			]);

@@ -862,7 +862,24 @@ class main
 			return $this->helper->error($this->user->lang['FORM_ALREADY_SUBMITTED'], 400);
 		}
 
-		$post_id = $this->form_manager->create_post($form['forum_id'], $form['poster_id'], $subject, $body);
+		$post_id = 0;
+		$topic_id = 0;
+		if (!empty($form['forum_id']))
+		{
+			$post_id = $this->form_manager->create_post($form['forum_id'], $form['poster_id'], $subject, $body);
+			$topic_id = $this->form_manager->get_last_topic_id();
+		}
+
+		if (!empty($form['webhook_enabled']) && !empty($form['webhook_url']))
+		{
+			$this->form_manager->send_form_webhook($form, [
+				'replacements' => $replacements,
+				'raw_values'   => $raw_values,
+				'fields'       => $fields,
+				'post_id'      => $post_id,
+				'topic_id'     => $topic_id,
+			]);
+		}
 
 		return $this->helper->message($this->user->lang['FORM_SUBMITTED_SUCCESS'], array_values([
 			$this->user->lang['BACK_TO_FORM'] => $this->helper->route('booskit_forms_view', ['form_id' => $form_id]),

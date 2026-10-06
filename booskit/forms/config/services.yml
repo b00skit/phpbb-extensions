@@ -6,6 +6,7 @@ services:
             - '@user'
             - '%core.table_prefix%booskit_forms'
             - '%core.table_prefix%booskit_form_fields'
+            - '@log'
 
     booskit.forms.controller.main:
         class: booskit\forms\controller\main
