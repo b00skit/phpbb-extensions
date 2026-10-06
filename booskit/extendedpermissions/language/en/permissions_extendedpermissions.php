@@ -22,5 +22,7 @@ $lang = array_merge($lang, [
 	'ACL_A_EXTENSIONS_MANAGE' => 'Can manage extensions',
 	'ACL_M_MOD_LOGS'          => 'Can view moderator logs',
 	'ACL_M_LAST_ACTIONS'      => 'Can view last 5 actions',
-]);
 
+	'ACP_EXTENSIONS_MANAGER'  => 'Extensions Manager',
+	'ACP_CUSTOM_EXTENSIONS'   => 'Custom Extensions',
+]);

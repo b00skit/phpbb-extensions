@@ -1,4 +1,15 @@
 services:
+    booskit.extendedpermissions.manager:
+        class: booskit\extendedpermissions\service\permission_manager
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@user'
+            - '@auth'
+            - '@ext.manager'
+            - '%core.table_prefix%booskit_extperm_groups'
+            - '%core.root_path%'
+
     booskit.extendedpermissions.listener:
         class: booskit\extendedpermissions\event\main_listener
         arguments:
@@ -8,5 +19,6 @@ services:
             - '@template'
             - '@dbal.conn'
             - '@user'
+            - '@booskit.extendedpermissions.manager'
         tags:
             - { name: event.listener }

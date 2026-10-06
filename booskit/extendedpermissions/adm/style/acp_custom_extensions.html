@@ -1,0 +1,162 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_CUSTOM_EXTENSIONS') }}</h1>
+<p>{{ lang('ACP_CUSTOM_EXTENSIONS_EXPLAIN') }}</p>
+
+<form id="acp_custom_extensions" method="post" action="{{ U_ACTION }}">
+
+<fieldset>
+	<legend>{{ lang('ACP_CUSTOM_EXTENSIONS_SETTINGS') }}</legend>
+	<dl>
+		<dt><label for="booskit_extperm_perm_system">{{ lang('EXTPERM_SYSTEM') }}{{ lang('COLON') }}</label><br><span>{{ lang('EXTPERM_SYSTEM_EXPLAIN') }}</span></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_extperm_perm_system" value="groups" {% if BOOSKIT_EXTPERM_PERM_SYSTEM == 'groups' %}checked="checked"{% endif %} /> {{ lang('EXTPERM_SYSTEM_ENABLED') }}</label>
+			<label><input type="radio" class="radio" name="booskit_extperm_perm_system" value="disabled" {% if BOOSKIT_EXTPERM_PERM_SYSTEM == 'disabled' %}checked="checked"{% endif %} /> {{ lang('EXTPERM_SYSTEM_DISABLED') }}</label>
+		</dd>
+	</dl>
+
+	<dl>
+		<dt><label for="module_access_groups">{{ lang('MODULE_ACCESS_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('MODULE_ACCESS_GROUPS_EXPLAIN') }}</span></dt>
+		<dd>
+			<select name="module_access_groups[]" id="module_access_groups" multiple="multiple" size="5" style="width: 300px;">
+				{% for g in PHPBB_GROUPS %}
+					<option value="{{ g.group_id }}" {% if g.group_id in MODULE_ACCESS_GROUPS %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+				{% endfor %}
+			</select>
+		</dd>
+	</dl>
+
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('SUBMIT') }}" />
+	</p>
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('PERMISSION_GROUPS') }}</legend>
+	<p>{{ lang('PERMISSION_GROUPS_EXPLAIN') }}</p>
+
+	{% for pg in PERMISSION_GROUPS %}
+	<div style="background: #f4f4f4; border: 1px solid #ccc; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+		<dl>
+			<dt><label>{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="text" name="perm_group_name[{{ pg.perm_group_id }}]" value="{{ pg.group_name }}" size="40" /></dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+			<dd>
+				<select name="applies_to[{{ pg.perm_group_id }}][]" multiple="multiple" size="5" style="width: 300px;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}" {% if g.group_id in pg.applies_to_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('CAN_MANAGE_MODULE') }}{{ lang('COLON') }}</label><br><span>{{ lang('CAN_MANAGE_MODULE_EXPLAIN') }}</span></dt>
+			<dd>
+				<label>
+					<input type="checkbox" name="can_manage_module[{{ pg.perm_group_id }}]" value="1" {% if pg.can_manage_module %}checked="checked"{% endif %} /> {{ lang('CAN_MANAGE_MODULE') }}
+				</label>
+			</dd>
+		</dl>
+		<dl>
+			<dt><label>{{ lang('ALLOWED_EXTENSIONS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ALLOWED_EXTENSIONS_EXPLAIN') }}</span></dt>
+			<dd>
+				<table class="table1 zebra-table" style="margin-top: 5px;">
+					<thead>
+						<tr>
+							<th>{{ lang('EXTENSION_NAME') }}</th>
+							<th style="text-align: center; width: 120px;">{{ lang('PERM_ACCESS') }}</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for ext in EXTENSIONS %}
+						<tr>
+							<td>
+								<strong>{{ ext.display_name }}</strong> (<code>{{ ext.name }}</code>)
+								{% if ext.description %}<br><span style="font-size: 0.9em; color: #666;">{{ ext.description }}</span>{% endif %}
+							</td>
+							<td style="text-align: center;">
+								<input type="checkbox" name="perms[{{ pg.perm_group_id }}][{{ ext.name }}]" value="1" {% if ext.name in pg.allowed_extensions_array or pg.permissions_array.extensions[ext.name] %}checked="checked"{% endif %} />
+							</td>
+						</tr>
+						{% else %}
+						<tr>
+							<td colspan="2">{{ lang('NO_EXTENSIONS_FOUND') }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</dd>
+		</dl>
+		<p class="submit-buttons" style="margin-top: 10px;">
+			<button type="submit" name="submit" class="button2" formaction="{{ U_ACTION }}&amp;action=update_perm_group&amp;perm_group_id={{ pg.perm_group_id }}">{{ lang('UPDATE') }}</button>
+			<a href="{{ U_ACTION }}&amp;action=delete_perm_group&amp;perm_group_id={{ pg.perm_group_id }}" class="button2">{{ lang('DELETE') }}</a>
+		</p>
+	</div>
+	{% endfor %}
+</fieldset>
+
+<fieldset>
+	<legend>{{ lang('ADD_PERMISSION_GROUP') }}</legend>
+	<dl>
+		<dt><label for="new_perm_group_name">{{ lang('PERMISSION_GROUP_NAME') }}{{ lang('COLON') }}</label></dt>
+		<dd><input type="text" id="new_perm_group_name" name="new_perm_group_name" placeholder="e.g. Moderator Extensions" size="40" /></dd>
+	</dl>
+	<dl>
+		<dt><label>{{ lang('APPLIES_TO_GROUPS') }}{{ lang('COLON') }}</label><br><span>{{ lang('APPLIES_TO_GROUPS_EXPLAIN') }}</span></dt>
+		<dd>
+			<select name="new_applies_to[]" multiple="multiple" size="5" style="width: 300px;">
+				{% for g in PHPBB_GROUPS %}
+					<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+				{% endfor %}
+			</select>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label>{{ lang('CAN_MANAGE_MODULE') }}{{ lang('COLON') }}</label><br><span>{{ lang('CAN_MANAGE_MODULE_EXPLAIN') }}</span></dt>
+		<dd>
+			<label>
+				<input type="checkbox" name="new_can_manage_module" value="1" /> {{ lang('CAN_MANAGE_MODULE') }}
+			</label>
+		</dd>
+	</dl>
+	<dl>
+		<dt><label>{{ lang('ALLOWED_EXTENSIONS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ALLOWED_EXTENSIONS_EXPLAIN') }}</span></dt>
+		<dd>
+			<table class="table1 zebra-table" style="margin-top: 5px;">
+				<thead>
+					<tr>
+						<th>{{ lang('EXTENSION_NAME') }}</th>
+						<th style="text-align: center; width: 120px;">{{ lang('PERM_ACCESS') }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for ext in EXTENSIONS %}
+					<tr>
+						<td>
+							<strong>{{ ext.display_name }}</strong> (<code>{{ ext.name }}</code>)
+							{% if ext.description %}<br><span style="font-size: 0.9em; color: #666;">{{ ext.description }}</span>{% endif %}
+						</td>
+						<td style="text-align: center;">
+							<input type="checkbox" name="new_perms[{{ ext.name }}]" value="1" />
+						</td>
+					</tr>
+					{% else %}
+					<tr>
+						<td colspan="2">{{ lang('NO_EXTENSIONS_FOUND') }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</dd>
+	</dl>
+	<p class="submit-buttons">
+		<input class="button1" type="submit" name="submit" value="{{ lang('ADD_PERMISSION_GROUP') }}" formaction="{{ U_ACTION }}&amp;action=add_perm_group" />
+	</p>
+</fieldset>
+
+{{ S_FORM_TOKEN }}
+</form>
+
+{% INCLUDE 'overall_footer.html' %}

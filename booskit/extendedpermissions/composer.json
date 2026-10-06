@@ -1,9 +1,9 @@
 {
     "name": "booskit/extendedpermissions",
     "type": "phpbb-extension",
-    "description": "Extended Permissions - adds moderator permissions for MCP moderator logs and last 5 actions, and adds a new permission to manage extensions in the ACP.",
+    "description": "Extended Permissions - adds moderator permissions for MCP moderator logs and last 5 actions, and adds Extensions Manager with Custom Extensions ACP access control.",
     "homepage": "",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "time": "2026-07-01",
     "license": "GPL-2.0",
     "authors": [
