@@ -29,6 +29,9 @@ class install extends \phpbb\db\migration\migration
 			// Add custom administration permission 'a_extensions_manage' (global permission, copy defaults from 'a_board')
 			['permission.add', ['a_extensions_manage', true, 'a_board']],
 
+			// Add custom administration blank permission 'a_acp_access' (global permission, disabled by default)
+			['permission.add', ['a_acp_access', true]],
+
 			// Add custom moderator permissions (global moderator permissions, disabled by default)
 			['permission.add', ['m_mod_logs', true]],
 			['permission.add', ['m_last_actions', true]],
@@ -42,6 +45,7 @@ class install extends \phpbb\db\migration\migration
 	{
 		return [
 			['permission.remove', ['a_extensions_manage']],
+			['permission.remove', ['a_acp_access']],
 			['permission.remove', ['m_mod_logs']],
 			['permission.remove', ['m_last_actions']],
 		];

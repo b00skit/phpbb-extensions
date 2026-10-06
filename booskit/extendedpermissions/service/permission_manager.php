@@ -192,8 +192,15 @@ class permission_manager
 	 * @param array $permissions
 	 * @return int Inserted ID
 	 */
-	public function add_permission_group($group_name, $applies_to, $can_manage_module, $allowed_extensions, $permissions = [])
+	public function add_permission_group($group_name, $applies_to, $allowed_extensions = [], $permissions = [])
 	{
+		// Support legacy parameter order if 3rd arg is int/bool (can_manage_module)
+		if (is_numeric($allowed_extensions) || is_bool($allowed_extensions))
+		{
+			$allowed_extensions = !empty($permissions) ? $permissions : [];
+			$permissions = func_num_args() > 4 ? func_get_arg(4) : [];
+		}
+
 		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', array_filter($applies_to))) : (string) $applies_to;
 
 		$allowed_array = is_array($allowed_extensions) ? array_values(array_filter($allowed_extensions)) : [];
@@ -212,8 +219,7 @@ class permission_manager
 				$ext_map[$ext] = 1;
 			}
 			$permissions = [
-				'can_manage_module' => (int) $can_manage_module,
-				'extensions'        => $ext_map,
+				'extensions' => $ext_map,
 			];
 		}
 		$perms_str = json_encode($permissions);
@@ -221,7 +227,7 @@ class permission_manager
 		$sql_ary = [
 			'group_name'         => (string) $group_name,
 			'applies_to'         => $applies_str,
-			'can_manage_module'  => (int) $can_manage_module,
+			'can_manage_module'  => 0,
 			'allowed_extensions' => $allowed_str,
 			'permissions'        => $perms_str,
 		];
@@ -239,13 +245,19 @@ class permission_manager
 	 * @param int $perm_group_id
 	 * @param string $group_name
 	 * @param array|string $applies_to
-	 * @param int $can_manage_module
 	 * @param array|string $allowed_extensions
 	 * @param array $permissions
 	 * @return void
 	 */
-	public function update_permission_group($perm_group_id, $group_name, $applies_to, $can_manage_module, $allowed_extensions, $permissions = [])
+	public function update_permission_group($perm_group_id, $group_name, $applies_to, $allowed_extensions = [], $permissions = [])
 	{
+		// Support legacy parameter order if 4th arg is int/bool (can_manage_module)
+		if (is_numeric($allowed_extensions) || is_bool($allowed_extensions))
+		{
+			$allowed_extensions = !empty($permissions) ? $permissions : [];
+			$permissions = func_num_args() > 5 ? func_get_arg(5) : [];
+		}
+
 		$applies_str = is_array($applies_to) ? implode(',', array_map('intval', array_filter($applies_to))) : (string) $applies_to;
 
 		$allowed_array = is_array($allowed_extensions) ? array_values(array_filter($allowed_extensions)) : [];
@@ -264,8 +276,7 @@ class permission_manager
 				$ext_map[$ext] = 1;
 			}
 			$permissions = [
-				'can_manage_module' => (int) $can_manage_module,
-				'extensions'        => $ext_map,
+				'extensions' => $ext_map,
 			];
 		}
 		$perms_str = json_encode($permissions);
@@ -273,7 +284,7 @@ class permission_manager
 		$sql_ary = [
 			'group_name'         => (string) $group_name,
 			'applies_to'         => $applies_str,
-			'can_manage_module'  => (int) $can_manage_module,
+			'can_manage_module'  => 0,
 			'allowed_extensions' => $allowed_str,
 			'permissions'        => $perms_str,
 		];
@@ -471,19 +482,6 @@ class permission_manager
 		if (!empty($allowed_groups) && array_intersect($user_groups, $allowed_groups))
 		{
 			return true;
-		}
-
-		// Check permission groups with can_manage_module
-		$perm_groups = $this->get_permission_groups();
-		foreach ($perm_groups as $pg)
-		{
-			if (!empty($pg['can_manage_module']) && !empty($pg['applies_to_array']))
-			{
-				if (array_intersect($user_groups, $pg['applies_to_array']))
-				{
-					return true;
-				}
-			}
 		}
 
 		return false;

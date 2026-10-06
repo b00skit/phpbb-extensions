@@ -88,13 +88,12 @@ class custom_extensions_module
 			{
 				$group_name        = $request->variable('new_perm_group_name', '', true);
 				$applies_to        = $request->variable('new_applies_to', [0]);
-				$can_manage_module = $request->variable('new_can_manage_module', 0);
 				$perms_raw         = $request->variable('new_perms', ['' => 0]);
 				$allowed_exts      = array_keys(array_filter($perms_raw));
 
 				if (!empty($group_name))
 				{
-					$permission_manager->add_permission_group($group_name, $applies_to, $can_manage_module, $allowed_exts);
+					$permission_manager->add_permission_group($group_name, $applies_to, $allowed_exts);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
@@ -105,18 +104,16 @@ class custom_extensions_module
 				$perm_group_id         = $request->variable('perm_group_id', 0);
 				$group_names           = $request->variable('perm_group_name', [0 => ''], true);
 				$applies_to_all        = $request->variable('applies_to', [0 => [0]]);
-				$can_manage_module_all = $request->variable('can_manage_module', [0 => 0]);
 				$perms_all             = $request->variable('perms', [0 => ['' => 0]]);
 
 				if ($perm_group_id && isset($group_names[$perm_group_id]))
 				{
 					$group_name        = $group_names[$perm_group_id];
 					$applies_to        = isset($applies_to_all[$perm_group_id]) ? $applies_to_all[$perm_group_id] : [];
-					$can_manage_module = isset($can_manage_module_all[$perm_group_id]) ? $can_manage_module_all[$perm_group_id] : 0;
 					$perms             = isset($perms_all[$perm_group_id]) ? $perms_all[$perm_group_id] : [];
 					$allowed_exts      = array_keys(array_filter($perms));
 
-					$permission_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $can_manage_module, $allowed_exts);
+					$permission_manager->update_permission_group($perm_group_id, $group_name, $applies_to, $allowed_exts);
 				}
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}

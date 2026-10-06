@@ -103,9 +103,12 @@ class main_listener implements EventSubscriberInterface
 			// If user can access custom extensions module or any extension, ensure they have ACP access
 			if ($this->permission_manager->can_user_access_module($user_id) || $this->permission_manager->get_user_allowed_extensions($user_id) !== [])
 			{
-				if (isset($this->auth->cache))
+				if (is_array($this->auth->cache))
 				{
-					$this->auth->cache[0]['a_extensions_manage'] = 1;
+					if (!isset($this->auth->cache[0]))
+					{
+						$this->auth->cache[0] = [];
+					}
 					$this->auth->cache[0]['a_'] = 1;
 				}
 			}
@@ -125,8 +128,9 @@ class main_listener implements EventSubscriberInterface
 	{
 		$permissions = $event['permissions'];
 		$permissions['a_extensions_manage'] = ['lang' => 'ACL_A_EXTENSIONS_MANAGE', 'cat' => 'misc'];
-		$permissions['m_mod_logs']           = ['lang' => 'ACL_M_MOD_LOGS', 'cat' => 'misc'];
-		$permissions['m_last_actions']       = ['lang' => 'ACL_M_LAST_ACTIONS', 'cat' => 'misc'];
+		$permissions['a_acp_access']        = ['lang' => 'ACL_A_ACP_ACCESS', 'cat' => 'settings'];
+		$permissions['m_mod_logs']          = ['lang' => 'ACL_M_MOD_LOGS', 'cat' => 'misc'];
+		$permissions['m_last_actions']      = ['lang' => 'ACL_M_LAST_ACTIONS', 'cat' => 'misc'];
 		$event['permissions'] = $permissions;
 	}
 
@@ -202,6 +206,14 @@ class main_listener implements EventSubscriberInterface
 				// Prepend/OR the manage extensions check
 				$module_auth = str_replace('acl_a_board', '(acl_a_board || acl_a_extensions_manage)', $module_auth);
 				$event['module_auth'] = $module_auth;
+
+				// Override valid_tokens for phpBB's module_auth eval
+				if (isset($event['valid_tokens']) && is_array($event['valid_tokens']))
+				{
+					$valid_tokens = $event['valid_tokens'];
+					$valid_tokens = ['acl_a_board' => '1'] + $valid_tokens;
+					$event['valid_tokens'] = $valid_tokens;
+				}
 			}
 		}
 	}

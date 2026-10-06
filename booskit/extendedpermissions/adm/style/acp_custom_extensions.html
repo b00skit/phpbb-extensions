@@ -52,14 +52,6 @@
 			</dd>
 		</dl>
 		<dl>
-			<dt><label>{{ lang('CAN_MANAGE_MODULE') }}{{ lang('COLON') }}</label><br><span>{{ lang('CAN_MANAGE_MODULE_EXPLAIN') }}</span></dt>
-			<dd>
-				<label>
-					<input type="checkbox" name="can_manage_module[{{ pg.perm_group_id }}]" value="1" {% if pg.can_manage_module %}checked="checked"{% endif %} /> {{ lang('CAN_MANAGE_MODULE') }}
-				</label>
-			</dd>
-		</dl>
-		<dl>
 			<dt><label>{{ lang('ALLOWED_EXTENSIONS') }}{{ lang('COLON') }}</label><br><span>{{ lang('ALLOWED_EXTENSIONS_EXPLAIN') }}</span></dt>
 			<dd>
 				<table class="table1 zebra-table" style="margin-top: 5px;">
@@ -111,14 +103,6 @@
 					<option value="{{ g.group_id }}">{{ g.group_name }}</option>
 				{% endfor %}
 			</select>
-		</dd>
-	</dl>
-	<dl>
-		<dt><label>{{ lang('CAN_MANAGE_MODULE') }}{{ lang('COLON') }}</label><br><span>{{ lang('CAN_MANAGE_MODULE_EXPLAIN') }}</span></dt>
-		<dd>
-			<label>
-				<input type="checkbox" name="new_can_manage_module" value="1" /> {{ lang('CAN_MANAGE_MODULE') }}
-			</label>
 		</dd>
 	</dl>
 	<dl>

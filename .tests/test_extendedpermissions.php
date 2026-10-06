@@ -165,6 +165,7 @@ function assert_test($cond, $msg) {
 require_once __DIR__ . '/../booskit/extendedpermissions/event/main_listener.php';
 require_once __DIR__ . '/../booskit/extendedpermissions/migrations/install.php';
 require_once __DIR__ . '/../booskit/extendedpermissions/migrations/v110_custom_extensions.php';
+require_once __DIR__ . '/../booskit/extendedpermissions/migrations/v111_acp_access_perm.php';
 require_once __DIR__ . '/../booskit/extendedpermissions/service/permission_manager.php';
 require_once __DIR__ . '/../booskit/extendedpermissions/acp/custom_extensions_module_info.php';
 
@@ -193,6 +194,9 @@ $listener = new \booskit\extendedpermissions\event\main_listener($config, $auth,
 $event_perm = new \phpbb\event\data(['permissions' => []]);
 $listener->add_permissions($event_perm);
 assert_test(isset($event_perm['permissions']['a_extensions_manage']), 'Registers a_extensions_manage permission');
+assert_test(isset($event_perm['permissions']['a_acp_access']), 'Registers a_acp_access permission');
+assert_test($event_perm['permissions']['a_acp_access']['cat'] === 'settings', 'a_acp_access category is settings');
+assert_test($event_perm['permissions']['a_acp_access']['lang'] === 'ACL_A_ACP_ACCESS', 'a_acp_access lang is ACL_A_ACP_ACCESS');
 assert_test(isset($event_perm['permissions']['m_mod_logs']), 'Registers m_mod_logs permission');
 assert_test(isset($event_perm['permissions']['m_last_actions']), 'Registers m_last_actions permission');
 assert_test($event_perm['permissions']['m_mod_logs']['cat'] === 'misc', 'm_mod_logs category is misc');
@@ -264,14 +268,17 @@ $migration = new \booskit\extendedpermissions\migrations\install();
 $update_data = $migration->update_data();
 $has_m_mod_logs = false;
 $has_m_last_actions = false;
+$has_a_acp_access = false;
 foreach ($update_data as $entry) {
     if ($entry[0] === 'permission.add') {
         if ($entry[1][0] === 'm_mod_logs') $has_m_mod_logs = true;
         if ($entry[1][0] === 'm_last_actions') $has_m_last_actions = true;
+        if ($entry[1][0] === 'a_acp_access') $has_a_acp_access = true;
     }
 }
 assert_test($has_m_mod_logs, 'Migration update_data adds m_mod_logs permission');
 assert_test($has_m_last_actions, 'Migration update_data adds m_last_actions permission');
+assert_test($has_a_acp_access, 'Migration update_data adds a_acp_access permission');
 
 // Test 8: custom_extensions_module_info structure
 $info = new \booskit\extendedpermissions\acp\custom_extensions_module_info();
@@ -280,6 +287,7 @@ assert_test($module_info['title'] === 'ACP_EXTENSIONS_MANAGER', 'ACP module cate
 assert_test(isset($module_info['modes']['custom_extensions']), 'Module defines custom_extensions mode');
 assert_test($module_info['modes']['custom_extensions']['title'] === 'ACP_CUSTOM_EXTENSIONS', 'custom_extensions title is ACP_CUSTOM_EXTENSIONS');
 assert_test(in_array('ACP_EXTENSIONS_MANAGER', $module_info['modes']['custom_extensions']['cat'], true), 'custom_extensions category is ACP_EXTENSIONS_MANAGER');
+assert_test($module_info['modes']['custom_extensions']['auth'] === 'ext_booskit/extendedpermissions && acl_a_board', 'custom_extensions auth requires acl_a_board by default');
 
 // Test 9: v110_custom_extensions migration
 $v110 = new \booskit\extendedpermissions\migrations\v110_custom_extensions();
@@ -304,13 +312,26 @@ foreach ($v110_data as $entry) {
 assert_test($has_ext_mgr_cat, 'v110 migration adds Extensions Manager category under ACP_CAT_DOT_MODS');
 assert_test($has_custom_ext_mod, 'v110 migration adds Custom Extensions ACP module under Extensions Manager');
 
+// Test 9b: v111_acp_access_perm migration
+$v111 = new \booskit\extendedpermissions\migrations\v111_acp_access_perm();
+$v111_depends = \booskit\extendedpermissions\migrations\v111_acp_access_perm::depends_on();
+assert_test(in_array('\booskit\extendedpermissions\migrations\v110_custom_extensions', $v111_depends, true), 'v111 depends on v110 migration');
+$v111_data = $v111->update_data();
+$v111_has_acp_perm = false;
+foreach ($v111_data as $entry) {
+    if ($entry[0] === 'permission.add' && $entry[1][0] === 'a_acp_access') {
+        $v111_has_acp_perm = true;
+    }
+}
+assert_test($v111_has_acp_perm, 'v111 migration adds a_acp_access permission');
+
 // Test 10: permission_manager CRUD operations
 $db_mgr = new \phpbb\db\driver\driver();
 $ext_mgr = new \phpbb\extension\manager();
 $perm_mgr = new \booskit\extendedpermissions\service\permission_manager($config, $db_mgr, $user, $auth, $ext_mgr);
 
 // Add permission group
-$new_id = $perm_mgr->add_permission_group('Moderators', [4, 5], 1, ['booskit/awards', 'booskit/disciplinary']);
+$new_id = $perm_mgr->add_permission_group('Moderators', [4, 5], ['booskit/awards', 'booskit/disciplinary']);
 assert_test($new_id === 1, 'add_permission_group returns new ID');
 assert_test(strpos($db_mgr->last_query, 'INSERT INTO') !== false, 'add_permission_group executes INSERT query');
 
@@ -320,7 +341,7 @@ $db_mgr->rows = [
         'perm_group_id' => 1,
         'group_name' => 'Moderators',
         'applies_to' => '4,5',
-        'can_manage_module' => 1,
+        'can_manage_module' => 0,
         'allowed_extensions' => json_encode(['booskit/awards']),
         'permissions' => json_encode(['extensions' => ['booskit/awards' => 1]]),
     ]
@@ -329,10 +350,9 @@ $groups = $perm_mgr->get_permission_groups(true);
 assert_test(count($groups) === 1, 'get_permission_groups returns 1 group');
 assert_test($groups[0]['applies_to_array'] === [4, 5], 'applies_to parsed to integer array [4, 5]');
 assert_test($groups[0]['allowed_extensions_array'] === ['booskit/awards'], 'allowed_extensions parsed to array');
-assert_test($groups[0]['can_manage_module'] === true, 'can_manage_module is true');
 
 // Update permission group
-$perm_mgr->update_permission_group(1, 'Senior Moderators', [5], 0, ['booskit/disciplinary']);
+$perm_mgr->update_permission_group(1, 'Senior Moderators', [5], ['booskit/disciplinary']);
 assert_test(strpos($db_mgr->last_query, 'UPDATE') !== false, 'update_permission_group executes UPDATE query');
 
 // Delete permission group
@@ -345,53 +365,29 @@ $auth->permissions['a_board'] = true;
 assert_test($perm_mgr->can_user_access_module(2) === true, 'Admin with a_board can access Custom Extensions module');
 
 $auth->permissions['a_board'] = false;
+
 // Global module access groups config
 $config['booskit_extperm_module_access'] = '10,12';
 $db_mgr->rows = [['group_id' => 10]]; // user is in group 10
 assert_test($perm_mgr->can_user_access_module(2) === true, 'User in configured module_access_groups can access Custom Extensions module');
 
-// Permission group can_manage_module
-$config['booskit_extperm_module_access'] = '';
+// User not in module_access_groups cannot access Custom Extensions module even with extension permissions
+$config['booskit_extperm_module_access'] = '12';
 $perm_mgr->clear_cache();
-$db_mgr->rows = [['group_id' => 7]]; // user is in group 7
-// Mock permission groups in DB
+$db_mgr->rows = [['group_id' => 7]]; // user is in group 7, not 12
+assert_test($perm_mgr->can_user_access_module(2) === false, 'User not in module_access_groups cannot access Custom Extensions module');
+
+// Test 12: can_user_access_extension check
+$perm_mgr->clear_cache();
+$db_mgr->rows = [['group_id' => 7]];
 $reflection = new \ReflectionClass($perm_mgr);
 $prop = $reflection->getProperty('cached_perm_groups');
 $prop->setAccessible(true);
 $prop->setValue($perm_mgr, [
     [
-        'perm_group_id' => 2,
-        'group_name' => 'Admins',
-        'applies_to_array' => [7],
-        'can_manage_module' => 1,
-        'allowed_extensions_array' => ['booskit/awards'],
-    ]
-]);
-assert_test($perm_mgr->can_user_access_module(2) === true, 'User in permission group with can_manage_module can access module');
-
-// Unauthorized user
-$perm_mgr->clear_cache();
-$db_mgr->rows = [['group_id' => 7]];
-$prop->setValue($perm_mgr, [
-    [
-        'perm_group_id' => 2,
-        'group_name' => 'Admins',
-        'applies_to_array' => [99], // not user's group
-        'can_manage_module' => 1,
-        'allowed_extensions_array' => [],
-    ]
-]);
-assert_test($perm_mgr->can_user_access_module(2) === false, 'Unauthorized user cannot access Custom Extensions module');
-
-// Test 12: can_user_access_extension check
-$perm_mgr->clear_cache();
-$db_mgr->rows = [['group_id' => 7]];
-$prop->setValue($perm_mgr, [
-    [
         'perm_group_id' => 3,
         'group_name' => 'Support',
         'applies_to_array' => [7],
-        'can_manage_module' => 0,
         'allowed_extensions_array' => ['booskit/disciplinary'],
     ]
 ]);
@@ -402,9 +398,30 @@ assert_test($perm_mgr->can_user_access_extension(2, 'booskit/awards') === false,
 $listener_with_mgr = new \booskit\extendedpermissions\event\main_listener($config, $auth, $request, $template, $db_mgr, $user, $perm_mgr);
 
 // Permitted extension allows auth rewrite
-$event_allowed = new \phpbb\event\data(['module_auth' => 'ext_booskit/disciplinary && acl_a_board']);
+$valid_tokens_base = [
+    'acl_([a-z0-9_]+)(,\$id)?' => '(int) $auth->acl_get(\'\\1\'\\2)',
+    'ext_([a-zA-Z0-9_/]+)'      => 'array_key_exists(\'\\1\', $ext_mgr->all_enabled())',
+];
+$event_allowed = new \phpbb\event\data([
+    'module_auth' => 'ext_booskit/disciplinary && acl_a_board',
+    'valid_tokens' => $valid_tokens_base,
+]);
 $listener_with_mgr->check_module_auth($event_allowed);
 assert_test(strpos($event_allowed['module_auth'], 'acl_a_extensions_manage') !== false, 'Permitted extension rewrites auth to include acl_a_extensions_manage');
+assert_test(isset($event_allowed['valid_tokens']['acl_a_board']), 'Permitted extension sets valid_tokens for acl_a_board');
+
+// Verify evaluation like phpBB's functions_module.php
+$eval_tokens = ['ext_booskit/disciplinary', '&&', 'acl_a_board'];
+$mod_auth_eval = implode(' ', $eval_tokens);
+$mod_auth_eval = preg_replace(
+    array_map(function($v) { return '#' . $v . '#'; }, array_keys($event_allowed['valid_tokens'])),
+    array_values($event_allowed['valid_tokens']),
+    $mod_auth_eval
+);
+$phpbb_extension_manager = $ext_mgr;
+$is_auth_result = false;
+eval('$is_auth_result = (int) (' . $mod_auth_eval . ');');
+assert_test($is_auth_result === 1, 'functions_module.php eval completes successfully without syntax error');
 
 // Forbidden extension does NOT rewrite auth (denies non-admin)
 $event_forbidden = new \phpbb\event\data(['module_auth' => 'ext_booskit/awards && acl_a_board']);

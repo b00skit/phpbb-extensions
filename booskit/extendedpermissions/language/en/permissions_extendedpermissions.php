@@ -20,6 +20,7 @@ if (empty($lang) || !is_array($lang))
 
 $lang = array_merge($lang, [
 	'ACL_A_EXTENSIONS_MANAGE' => 'Can manage extensions',
+	'ACL_A_ACP_ACCESS'        => 'Can access ACP (Blank Permission)',
 	'ACL_M_MOD_LOGS'          => 'Can view moderator logs',
 	'ACL_M_LAST_ACTIONS'      => 'Can view last 5 actions',
 
