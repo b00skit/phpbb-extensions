@@ -473,6 +473,9 @@ class form_manager
 			}, $tpl);
 		}
 
+		// 1b. Process Option Loops: {{$fieldname}} ... {{/$fieldname}}, {{$options}}, etc.
+		$tpl = $this->process_option_loops($tpl, $fields, $raw_values);
+
 		// 2. Process Field Checkbox/Array Loops: {{#fieldname}} ... {{/fieldname}}
 		foreach ($fields as $field)
 		{
@@ -780,4 +783,314 @@ class form_manager
 			return ['success' => true, 'response' => $response, 'code' => $http_code];
 		}
 	}
+
+	public function get_field_options($field)
+	{
+		$options = isset($field['field_options']) ? $field['field_options'] : '';
+		if (is_array($options))
+		{
+			$decoded_options = $options;
+		}
+		else
+		{
+			$decoded_options = json_decode($options, true);
+		}
+
+		if ((json_last_error() === JSON_ERROR_NONE || is_array($options)) && is_array($decoded_options))
+		{
+			$result = [];
+			$is_list_of_items = isset($decoded_options[0]) && is_array($decoded_options[0]) && (isset($decoded_options[0]['label']) || isset($decoded_options[0]['value']));
+			if ($is_list_of_items)
+			{
+				foreach ($decoded_options as $item)
+				{
+					$val = isset($item['value']) && $item['value'] !== '' ? (string) $item['value'] : (isset($item['label']) ? (string) $item['label'] : '');
+					$lbl = isset($item['label']) ? (string) $item['label'] : $val;
+					if ($val !== '')
+					{
+						$result[$val] = $lbl;
+					}
+				}
+				return $result;
+			}
+			else
+			{
+				foreach ($decoded_options as $k => $v)
+				{
+					if (is_array($v))
+					{
+						$val = isset($v['value']) && $v['value'] !== '' ? (string) $v['value'] : (isset($v['label']) ? (string) $v['label'] : (string) $k);
+						$lbl = isset($v['label']) ? (string) $v['label'] : $val;
+						$result[$val] = $lbl;
+					}
+					else if (is_int($k))
+					{
+						$result[(string) $v] = (string) $v;
+					}
+					else
+					{
+						$result[(string) $k] = (string) $v;
+					}
+				}
+				return $result;
+			}
+		}
+		else if (is_string($options) && $options !== '')
+		{
+			$lines = preg_split('/[\r\n,]+/', $options);
+			$lines = array_filter(array_map('trim', $lines));
+			$res = [];
+			foreach ($lines as $line)
+			{
+				if (strpos($line, ':') !== false)
+				{
+					$kv = explode(':', $line, 2);
+					$res[trim($kv[0])] = trim($kv[1]);
+				}
+				else
+				{
+					$res[$line] = $line;
+				}
+			}
+			return !empty($res) ? $res : [$options => $options];
+		}
+
+		return [];
+	}
+
+	public function render_option_item($template, $val, $lbl, $is_selected, $index, $field = null)
+	{
+		$tpl = $template;
+
+		// 1. Process block conditionals: {selected}...{/selected}, {{selected}}...{{/selected}}, {checked}...
+		$selected_patterns = [
+			'/\{selected\}(.*?)\{\/selected\}/is',
+			'/\{\{selected\}\}(.*?)\{\{\/selected\}\}/is',
+			'/\{checked\}(.*?)\{\/checked\}/is',
+			'/\{\{checked\}\}(.*?)\{\{\/checked\}\}/is',
+		];
+		foreach ($selected_patterns as $p)
+		{
+			$tpl = preg_replace_callback($p, function($m) use ($is_selected) {
+				return $is_selected ? $m[1] : '';
+			}, $tpl);
+		}
+
+		$not_selected_patterns = [
+			'/\{not_selected\}(.*?)\{\/not_selected\}/is',
+			'/\{\{not_selected\}\}(.*?)\{\{\/not_selected\}\}/is',
+			'/\{unselected\}(.*?)\{\/unselected\}/is',
+			'/\{\{unselected\}\}(.*?)\{\{\/unselected\}\}/is',
+			'/\{unchecked\}(.*?)\{\/unchecked\}/is',
+			'/\{\{unchecked\}\}(.*?)\{\{\/unchecked\}\}/is',
+		];
+		foreach ($not_selected_patterns as $p)
+		{
+			$tpl = preg_replace_callback($p, function($m) use ($is_selected) {
+				return !$is_selected ? $m[1] : '';
+			}, $tpl);
+		}
+
+		// 2. Standalone tags & labels/values
+		$replacements = [
+			'/\{selected\}|\{\{selected\}\}/i'         => $is_selected ? 'X' : ' ',
+			'/\{checked\}|\{\{checked\}\}/i'           => $is_selected ? 'X' : ' ',
+			'/\{not_selected\}|\{\{not_selected\}\}/i' => !$is_selected ? ' ' : '',
+			'/\{unselected\}|\{\{unselected\}\}/i'     => !$is_selected ? ' ' : '',
+			'/\{unchecked\}|\{\{unchecked\}\}/i'       => !$is_selected ? ' ' : '',
+			'/\{is_selected\}|\{\{is_selected\}\}/i'   => $is_selected ? '1' : '0',
+			'/\{option\}|\{\{option\}\}/i'             => $lbl,
+			'/\{label\}|\{\{label\}\}/i'               => $lbl,
+			'/\{value\}|\{\{value\}\}/i'               => $val,
+			'/\{key\}|\{\{key\}\}/i'                   => $val,
+			'/\{index\}|\{\{index\}\}/i'               => (string) ($index + 1),
+			'/\{index0\}|\{\{index0\}\}/i'             => (string) $index,
+		];
+
+		if ($field)
+		{
+			$replacements['/\{field_name\}|\{\{field_name\}\}/i'] = $field['field_name'];
+			$replacements['/\{field_label\}|\{\{field_label\}\}/i'] = $field['field_label'];
+		}
+
+		foreach ($replacements as $pat => $rep)
+		{
+			$tpl = preg_replace($pat, $rep, $tpl);
+		}
+
+		return $tpl;
+	}
+
+	public function render_field_options_block($field, array $selected_values, $block_template)
+	{
+		$options = $this->get_field_options($field);
+		if (empty($options))
+		{
+			return '';
+		}
+
+		$selected_strings = [];
+		foreach ($selected_values as $sv)
+		{
+			if (is_array($sv))
+			{
+				foreach ($sv as $sub_v)
+				{
+					if ($sub_v !== '')
+					{
+						$selected_strings[] = (string) $sub_v;
+					}
+				}
+			}
+			else if ($sv !== '')
+			{
+				$selected_strings[] = (string) $sv;
+			}
+		}
+
+		$trim_tpl = preg_replace('/^[ \t]*\r?\n/', '', $block_template);
+		$trim_tpl = preg_replace('/\r?\n[ \t]*$/', '', $trim_tpl);
+
+		$rendered_items = [];
+		$idx = 0;
+		foreach ($options as $val => $lbl)
+		{
+			$is_selected = false;
+			foreach ($selected_strings as $s)
+			{
+				$s_trim = trim($s);
+				if ($s_trim === (string) $val || $s_trim === (string) $lbl || strcasecmp($s_trim, (string) $val) === 0 || strcasecmp($s_trim, (string) $lbl) === 0)
+				{
+					$is_selected = true;
+					break;
+				}
+			}
+
+			$rendered_items[] = $this->render_option_item($trim_tpl, (string) $val, (string) $lbl, $is_selected, $idx, $field);
+			$idx++;
+		}
+
+		return implode("\n", $rendered_items);
+	}
+
+	public function process_option_loops($template, array $fields, array $raw_values)
+	{
+		$tpl = $template;
+
+		$field_map = [];
+		$options_fields = [];
+		foreach ($fields as $f)
+		{
+			if (in_array($f['field_type'], ['section_start', 'section_end', 'input_group_start', 'input_group_end']))
+			{
+				continue;
+			}
+			$fname = $f['field_name'];
+			$field_map[$fname] = $f;
+			$opts = $this->get_field_options($f);
+			if (!empty($opts))
+			{
+				$options_fields[$fname] = $f;
+			}
+		}
+
+		// 1. Process closed option loops for specific fields: {{$name}}...{{/$name}}, {{#name_options}}...{{/name_options}}, etc.
+		foreach ($options_fields as $fname => $field)
+		{
+			$selected = isset($raw_values[$fname]) ? (array) $raw_values[$fname] : [];
+			$open_tags = preg_quote($fname, '/') . '(?:[:_\.]options)?|options:' . preg_quote($fname, '/') . '|' . preg_quote($fname, '/') . '_options';
+			$close_tags = preg_quote($fname, '/') . '(?:[:_\.]options)?|options:' . preg_quote($fname, '/') . '|' . preg_quote($fname, '/') . '_options|options';
+			$pattern = '/\{\{\s*(?:\$|#)(' . $open_tags . ')\s*\}\}(.*?)\{\{\s*[\/\$]+(?:' . $close_tags . ')\s*\}\}/is';
+
+			$self = $this;
+			$tpl = preg_replace_callback($pattern, function($matches) use ($self, $field, $selected) {
+				return $self->render_field_options_block($field, $selected, $matches[2]);
+			}, $tpl);
+
+			// Check for {{#fieldname}} containing {selected} / {not_selected}
+			$pattern_legacy = '/\{\{\s*#' . preg_quote($fname, '/') . '\s*\}\}(.*?)\{\{\s*\/' . preg_quote($fname, '/') . '\s*\}\}/is';
+			if (preg_match($pattern_legacy, $tpl, $leg_m))
+			{
+				if (preg_match('/\{(?:selected|not_selected|unselected|checked|unchecked|option)\}/i', $leg_m[1]))
+				{
+					$tpl = preg_replace_callback($pattern_legacy, function($matches) use ($self, $field, $selected) {
+						return $self->render_field_options_block($field, $selected, $matches[1]);
+					}, $tpl);
+				}
+			}
+		}
+
+		// 2. Generic closed {{$options}}...{{/$options}} or {{#options}}...{{/options}}
+		$gen_pattern = '/\{\{\s*(?:\$|#)options\s*\}\}(.*?)\{\{\s*[\/\$]+options\s*\}\}/is';
+		if (preg_match($gen_pattern, $tpl))
+		{
+			$target_field = null;
+			if (isset($options_fields['options']))
+			{
+				$target_field = $options_fields['options'];
+			}
+			else if (!empty($options_fields))
+			{
+				$target_field = reset($options_fields);
+			}
+
+			if ($target_field)
+			{
+				$target_name = $target_field['field_name'];
+				$selected = isset($raw_values[$target_name]) ? (array) $raw_values[$target_name] : [];
+				$self = $this;
+				$tpl = preg_replace_callback($gen_pattern, function($matches) use ($self, $target_field, $selected) {
+					return $self->render_field_options_block($target_field, $selected, $matches[1]);
+				}, $tpl);
+			}
+			else
+			{
+				$tpl = preg_replace($gen_pattern, '', $tpl);
+			}
+		}
+
+		// 3. Process unclosed option loops: {{$name}} or {{$options}} followed by single line item template
+		foreach ($options_fields as $fname => $field)
+		{
+			$selected = isset($raw_values[$fname]) ? (array) $raw_values[$fname] : [];
+			$pattern_unclosed = '/\{\{\s*\$(' . preg_quote($fname, '/') . ')\s*\}\}(?:[ \t]*\r?\n)?([^\r\n]+)/i';
+
+			$self = $this;
+			$tpl = preg_replace_callback($pattern_unclosed, function($matches) use ($self, $field, $selected) {
+				return $self->render_field_options_block($field, $selected, $matches[2]);
+			}, $tpl);
+		}
+
+		// Generic unclosed {{$options}}
+		$gen_unclosed = '/\{\{\s*\$options\s*\}\}(?:[ \t]*\r?\n)?([^\r\n]+)/i';
+		if (preg_match($gen_unclosed, $tpl))
+		{
+			$target_field = null;
+			if (isset($options_fields['options']))
+			{
+				$target_field = $options_fields['options'];
+			}
+			else if (!empty($options_fields))
+			{
+				$target_field = reset($options_fields);
+			}
+
+			if ($target_field)
+			{
+				$target_name = $target_field['field_name'];
+				$selected = isset($raw_values[$target_name]) ? (array) $raw_values[$target_name] : [];
+				$self = $this;
+				$tpl = preg_replace_callback($gen_unclosed, function($matches) use ($self, $target_field, $selected) {
+					return $self->render_field_options_block($target_field, $selected, $matches[1]);
+				}, $tpl);
+			}
+			else
+			{
+				$tpl = preg_replace($gen_unclosed, '', $tpl);
+			}
+		}
+
+		return $tpl;
+	}
 }
+

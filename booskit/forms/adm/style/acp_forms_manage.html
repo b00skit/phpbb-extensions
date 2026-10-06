@@ -67,19 +67,25 @@
 					</div>
 
 					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">3. {{ lang('FORM_VARS_LOOPS_TITLE') }}</strong>
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">3. {{ lang('FORM_VARS_OPTIONS_TITLE') }}</strong>
+						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_OPTIONS_DESC') }}</p>
+						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;$variable_name&#125;&#125;&#10;[&#123;selected&#125;X&#123;/selected&#125;&#123;not_selected&#125; &#123;/not_selected&#125;] &#123;option&#125;&#10;&#123;&#123;/$variable_name&#125;&#125;</code>
+					</div>
+
+					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">4. {{ lang('FORM_VARS_LOOPS_TITLE') }}</strong>
 						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_LOOPS_DESC') }}</p>
 						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;#fields&#125;&#125;&#10;**&#123;&#123;label&#125;&#125;**: &#123;&#123;value&#125;&#125;&#10;&#123;&#123;/fields&#125;&#125;</code>
 					</div>
 
 					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
-						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">4. {{ lang('FORM_VARS_GROUP_TITLE') }}</strong>
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">5. {{ lang('FORM_VARS_GROUP_TITLE') }}</strong>
 						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_GROUP_DESC') }}</p>
 						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace;">&#123;&#123;field_inside_group&#125;&#125;</code>
 					</div>
 
 					<div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; grid-column: 1 / -1;">
-						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">5. {{ lang('FORM_VARS_MULTI_GROUP_TITLE') }}</strong>
+						<strong style="color: #0f172a; font-size: 0.95em; display: block; margin-bottom: 4px;">6. {{ lang('FORM_VARS_MULTI_GROUP_TITLE') }}</strong>
 						<p style="margin: 0 0 8px 0; font-size: 0.85em; color: #64748b; line-height: 1.4;">{{ lang('FORM_VARS_MULTI_GROUP_DESC') }}</p>
 						<code style="background: #f1f5f9; color: #1e293b; padding: 4px 8px; border-radius: 4px; display: block; font-size: 0.85em; font-family: monospace; white-space: pre;">&#123;&#123;#group_name&#125;&#125;&#10;Field 1: &#123;&#123;field1_var&#125;&#125; | Field 2: &#123;&#123;field2_var&#125;&#125;&#10;&#123;&#123;/group_name&#125;&#125;</code>
 					</div>

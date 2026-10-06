@@ -267,71 +267,7 @@ class main
 
 	protected function get_field_options($field)
 	{
-		$options = isset($field['field_options']) ? $field['field_options'] : '';
-		if (is_array($options))
-		{
-			$decoded_options = $options;
-		}
-		else
-		{
-			$decoded_options = json_decode($options, true);
-		}
-		
-		if ((json_last_error() === JSON_ERROR_NONE || is_array($options)) && is_array($decoded_options))
-		{
-			$result = [];
-			$is_list_of_items = isset($decoded_options[0]) && is_array($decoded_options[0]) && (isset($decoded_options[0]['label']) || isset($decoded_options[0]['value']));
-			if ($is_list_of_items)
-			{
-				foreach ($decoded_options as $item)
-				{
-					$val = isset($item['value']) && $item['value'] !== '' ? (string)$item['value'] : (isset($item['label']) ? (string)$item['label'] : '');
-					$lbl = isset($item['label']) ? (string)$item['label'] : $val;
-					if ($val !== '')
-					{
-						$result[$val] = $lbl;
-					}
-				}
-				return $result;
-			}
-			else
-			{
-				foreach ($decoded_options as $k => $v)
-				{
-					if (is_array($v))
-					{
-						$val = isset($v['value']) && $v['value'] !== '' ? (string)$v['value'] : (isset($v['label']) ? (string)$v['label'] : (string)$k);
-						$lbl = isset($v['label']) ? (string)$v['label'] : $val;
-						$result[$val] = $lbl;
-					}
-					else if (is_int($k))
-					{
-						$result[(string)$v] = (string)$v;
-					}
-					else
-					{
-						$result[(string)$k] = (string)$v;
-					}
-				}
-				return $result;
-			}
-		}
-		else if (is_string($options) && strpos($options, ':') !== false)
-		{
-			$pairs = explode(',', $options);
-			$res = [];
-			foreach ($pairs as $p)
-			{
-				$kv = explode(':', $p);
-				if (count($kv) == 2)
-				{
-					$res[trim($kv[0])] = trim($kv[1]);
-				}
-			}
-			return $res;
-		}
-
-		return is_string($options) && $options !== '' ? [$options => $options] : [];
+		return $this->form_manager->get_field_options($field);
 	}
 
 	public function submit($form_id)
@@ -649,12 +585,23 @@ class main
 			
 			$pattern = '/\{\{\s*#' . preg_quote($group_name, '/') . '\s*\}\}(.*?)\{\{\s*\/' . preg_quote($group_name, '/') . '\s*\}\}/s';
 			
-			$replacement_func = function($matches) use ($rows_data, $group_info) {
+			$replacement_func = function($matches) use ($rows_data, $group_info, $raw_values) {
 				$loop_content = $matches[1];
 				$result = '';
-				foreach ($rows_data as $row_data)
+				foreach ($rows_data as $row_idx => $row_data)
 				{
 					$temp = $loop_content;
+
+					// Process option loops for row
+					$row_raw_values = [];
+					foreach ($group_info['fields'] as $gf)
+					{
+						$gf_name = $gf['field_name'];
+						$val_at_row = isset($raw_values[$gf_name][$row_idx]) ? $raw_values[$gf_name][$row_idx] : '';
+						$row_raw_values[$gf_name] = is_array($val_at_row) ? $val_at_row : ($val_at_row !== '' ? [$val_at_row] : []);
+					}
+					$temp = $this->form_manager->process_option_loops($temp, $group_info['fields'], $row_raw_values);
+
 					foreach ($group_info['fields'] as $gf)
 					{
 						$gf_name = $gf['field_name'];
@@ -672,6 +619,10 @@ class main
 			$body = preg_replace_callback($pattern, $replacement_func, $body);
 			$subject = preg_replace_callback($pattern, $replacement_func, $subject);
 		}
+
+		// 3c. Process Option Loops: {{$fieldname}} ... {{/$fieldname}}, {{$options}}, etc.
+		$body = $this->form_manager->process_option_loops($body, $fields, $raw_values);
+		$subject = $this->form_manager->process_option_loops($subject, $fields, $raw_values);
 
 		// 4. Process Field Loops: {{#fieldname}} ... {{/fieldname}}
 		foreach ($fields as $field)
@@ -735,6 +686,7 @@ class main
 		// 5. Global Fields Loop: {{#fields}} ... {{/fields}}
 		if (!isset($raw_values['fields']))
 		{
+			$fields_by_name = [];
 			$all_fields_data = [];
 			foreach ($fields as $field)
 			{
@@ -742,6 +694,7 @@ class main
 				{
 					continue;
 				}
+				$fields_by_name[$field['field_name']] = $field;
 				$all_fields_data[] = [
 					'name'  => $field['field_name'],
 					'label' => $field['field_label'],
@@ -749,14 +702,21 @@ class main
 				];
 			}
 			
-			$fields_loop_callback = function($matches) use ($all_fields_data) {
+			$fields_loop_callback = function($matches) use ($all_fields_data, $fields_by_name, $raw_values) {
 				$loop_content = $matches[1];
 				$result = '';
 				foreach ($all_fields_data as $data)
 				{
-					$temp = preg_replace_callback('/\{\{\s*name\s*\}\}/i', function() use ($data) { return $data['name']; }, $loop_content);
+					$temp = $loop_content;
+					$temp = preg_replace_callback('/\{\{\s*name\s*\}\}/i', function() use ($data) { return $data['name']; }, $temp);
 					$temp = preg_replace_callback('/\{\{\s*label\s*\}\}/i', function() use ($data) { return $data['label']; }, $temp);
 					$temp = preg_replace_callback('/\{\{\s*value\s*\}\}/i', function() use ($data) { return $data['value']; }, $temp);
+
+					if (isset($fields_by_name[$data['name']]))
+					{
+						$temp = $this->form_manager->process_option_loops($temp, [$fields_by_name[$data['name']]], $raw_values);
+					}
+
 					$result .= $temp;
 				}
 				return $result;
