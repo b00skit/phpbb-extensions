@@ -735,7 +735,7 @@ class main
 			$body = preg_replace_callback($pattern, $callback, $body);
 		}
 
-		if (!$this->request->is_set_post('confirm'))
+		if (!empty($form['forum_id']) && !$this->request->is_set_post('confirm'))
 		{
 			// Preview
 			$preview_body = $body;
@@ -769,7 +769,7 @@ class main
 							{
 								$this->template->assign_block_vars('hidden_fields', [
 									'NAME'  => $key . '[' . $row_idx . '][]',
-									'VALUE' => $v,
+									'VALUE' => htmlspecialchars($v, ENT_COMPAT, 'UTF-8'),
 								]);
 							}
 						}
@@ -777,7 +777,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[' . $row_idx . ']',
-								'VALUE' => $row_val,
+								'VALUE' => htmlspecialchars($row_val, ENT_COMPAT, 'UTF-8'),
 							]);
 						}
 					}
@@ -790,7 +790,7 @@ class main
 						{
 							$this->template->assign_block_vars('hidden_fields', [
 								'NAME'  => $key . '[]',
-								'VALUE' => $v,
+								'VALUE' => htmlspecialchars($v, ENT_COMPAT, 'UTF-8'),
 							]);
 						}
 					}
@@ -798,7 +798,7 @@ class main
 					{
 						$this->template->assign_block_vars('hidden_fields', [
 							'NAME'  => $key,
-							'VALUE' => isset($val[0]) ? $val[0] : '',
+							'VALUE' => isset($val[0]) ? htmlspecialchars($val[0], ENT_COMPAT, 'UTF-8') : '',
 						]);
 					}
 				}

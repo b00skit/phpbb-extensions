@@ -1173,47 +1173,48 @@
 window.loadWebhookPreset = function(type) {
 	var tplArea = document.getElementById('webhook_template');
 	if (!tplArea) return;
+	var p = function(tag) { return '{{' + tag + '}}'; };
 	if (type === 'discord') {
 		tplArea.value = JSON.stringify({
 			"username": "Custom Forms",
 			"embeds": [
 				{
-					"title": "New Submission: {{FORM_NAME}}",
-					"url": "{{POST_URL}}",
-					"description": "Submitted by **{{USERNAME}}**",
+					"title": "New Submission: " + p('FORM_NAME'),
+					"url": p('POST_URL'),
+					"description": "Submitted by **" + p('USERNAME') + "**",
 					"color": 5793266,
-					"fields": "{{DISCORD_FIELDS_JSON}}",
+					"fields": "PLACEHOLDER_DISCORD_FIELDS",
 					"footer": {
-						"text": "phpBB Custom Forms • {{DATE}} {{TIME}}"
+						"text": "phpBB Custom Forms • " + p('DATE') + " " + p('TIME')
 					},
-					"timestamp": "{{ISO_DATE}}"
+					"timestamp": p('ISO_DATE')
 				}
 			]
-		}, null, 2).replace('"{{DISCORD_FIELDS_JSON}}"', '{{DISCORD_FIELDS_JSON}}');
+		}, null, 2).replace('"PLACEHOLDER_DISCORD_FIELDS"', p('DISCORD_FIELDS_JSON'));
 	} else if (type === 'discord_simple') {
 		tplArea.value = JSON.stringify({
-			"content": "**{{FORM_NAME}}** submitted by **{{USERNAME}}**\nTopic: {{POST_URL}}\n\n>>> {{SUMMARY}}"
+			"content": "**" + p('FORM_NAME') + "** submitted by **" + p('USERNAME') + "**\nTopic: " + p('POST_URL') + "\n\n>>> " + p('SUMMARY')
 		}, null, 2);
 	} else if (type === 'generic') {
 		tplArea.value = JSON.stringify({
 			"event": "form_submission",
-			"form_id": "{{FORM_ID}}",
-			"form_name": "{{FORM_NAME}}",
-			"form_slug": "{{FORM_SLUG}}",
-			"user_id": "{{USER_ID}}",
-			"username": "{{USERNAME}}",
-			"post_id": "{{POST_ID}}",
-			"post_url": "{{POST_URL}}",
-			"date": "{{DATE}}",
-			"time": "{{TIME}}",
-			"timestamp": "{{TIMESTAMP}}",
-			"fields": "{{FIELDS_JSON}}"
+			"form_id": "PLACEHOLDER_FORM_ID",
+			"form_name": p('FORM_NAME'),
+			"form_slug": p('FORM_SLUG'),
+			"user_id": "PLACEHOLDER_USER_ID",
+			"username": p('USERNAME'),
+			"post_id": "PLACEHOLDER_POST_ID",
+			"post_url": p('POST_URL'),
+			"date": p('DATE'),
+			"time": p('TIME'),
+			"timestamp": "PLACEHOLDER_TIMESTAMP",
+			"fields": "PLACEHOLDER_FIELDS_JSON"
 		}, null, 2)
-		.replace('"{{FORM_ID}}"', '{{FORM_ID}}')
-		.replace('"{{USER_ID}}"', '{{USER_ID}}')
-		.replace('"{{POST_ID}}"', '{{POST_ID}}')
-		.replace('"{{TIMESTAMP}}"', '{{TIMESTAMP}}')
-		.replace('"{{FIELDS_JSON}}"', '{{FIELDS_JSON}}');
+		.replace('"PLACEHOLDER_FORM_ID"', p('FORM_ID'))
+		.replace('"PLACEHOLDER_USER_ID"', p('USER_ID'))
+		.replace('"PLACEHOLDER_POST_ID"', p('POST_ID'))
+		.replace('"PLACEHOLDER_TIMESTAMP"', p('TIMESTAMP'))
+		.replace('"PLACEHOLDER_FIELDS_JSON"', p('FIELDS_JSON'));
 	}
 };
 

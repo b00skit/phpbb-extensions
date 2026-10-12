@@ -69,8 +69,8 @@ class main
 				'poster_id'			=> $this->request->variable('poster_id', 0),
 				'enabled'			=> $this->request->variable('enabled', 1),
 				'webhook_enabled'	=> $this->request->variable('webhook_enabled', 0),
-				'webhook_url'		=> $this->request->variable('webhook_url', '', true),
-				'webhook_template'	=> $this->request->variable('webhook_template', '', true),
+				'webhook_url'		=> htmlspecialchars_decode($this->request->variable('webhook_url', '', true), ENT_QUOTES),
+				'webhook_template'	=> htmlspecialchars_decode($this->request->variable('webhook_template', '', true), ENT_QUOTES),
 			];
 
 			$form_fields_json = $this->request->variable('form_fields', '', true);
@@ -180,8 +180,8 @@ class main
 				'POSTER_ID'			=> isset($form_data['poster_id']) ? $form_data['poster_id'] : 0,
 				'ENABLED'			=> isset($form_data['enabled']) ? $form_data['enabled'] : 1,
 				'WEBHOOK_ENABLED'	=> isset($form_data['webhook_enabled']) ? $form_data['webhook_enabled'] : 0,
-				'WEBHOOK_URL'		=> isset($form_data['webhook_url']) ? $form_data['webhook_url'] : '',
-				'WEBHOOK_TEMPLATE'	=> isset($form_data['webhook_template']) ? $form_data['webhook_template'] : '',
+				'WEBHOOK_URL'		=> isset($form_data['webhook_url']) ? htmlspecialchars_decode($form_data['webhook_url'], ENT_QUOTES) : '',
+				'WEBHOOK_TEMPLATE'	=> isset($form_data['webhook_template']) ? htmlspecialchars_decode($form_data['webhook_template'], ENT_QUOTES) : '',
 			]);
 
 			return;

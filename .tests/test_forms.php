@@ -159,9 +159,87 @@ assert_test($manager->send_form_webhook(['webhook_enabled' => 1, 'webhook_url' =
 $dispatch_res = $manager->dispatch_webhook_request('not-a-valid-url', '{}');
 assert_test($dispatch_res['success'] === false && $dispatch_res['error'] === 'Invalid webhook URL', 'Invalid URL is safely rejected');
 
+// 9. Discord Payload Sanitization: Strips empty url and empty fields
+$raw_discord_payload = json_encode([
+    'username' => 'Custom Forms',
+    'embeds' => [
+        [
+            'title' => 'Test Embed',
+            'url' => '',
+            'description' => 'Test Desc',
+            'fields' => []
+        ]
+    ]
+]);
+$sanitized = $manager->sanitize_discord_payload($raw_discord_payload);
+$sanitized_json = json_decode($sanitized, true);
+assert_test(!isset($sanitized_json['embeds'][0]['url']), 'Discord sanitize strips empty embed URL');
+assert_test(!isset($sanitized_json['embeds'][0]['fields']), 'Discord sanitize strips empty embed fields');
+
+// 10. Discord Payload Sanitization: Limits fields to 25 max
+$twenty_six_fields = [];
+for ($i = 0; $i < 30; $i++) {
+    $twenty_six_fields[] = ['name' => "Field $i", 'value' => "Value $i"];
+}
+$overflow_payload = json_encode([
+    'embeds' => [
+        ['title' => 'Lots of fields', 'fields' => $twenty_six_fields]
+    ]
+]);
+$sanitized_overflow = $manager->sanitize_discord_payload($overflow_payload);
+$overflow_json = json_decode($sanitized_overflow, true);
+assert_test(count($overflow_json['embeds'][0]['fields']) === 25, 'Discord sanitize caps fields at 25');
+
+// 11. HTML Entities in Webhook Template (e.g. from phpBB request_var)
+$corrupted_html_tpl = '{ &quot;content&quot;: &quot;Hello {{USERNAME}}&quot; }';
+$rendered_html = $manager->render_webhook_template(htmlspecialchars_decode($corrupted_html_tpl, ENT_QUOTES), ['USERNAME' => 'Admin']);
+$decoded_html = json_decode($rendered_html, true);
+assert_test($decoded_html !== null && $decoded_html['content'] === 'Hello Admin', 'HTML entity decoded template renders valid JSON');
+
+// 12. Corrupted Twig-interpolated Discord payload (unquoted url: Array, fields: "Array", timestamp: "Array")
+$corrupted_payload = <<<JSON
+{
+  "username": "Custom Forms",
+  "embeds": [
+    {
+      "title": "New Submission: Array",
+      "url": Array,
+      "description": "Submitted by **Array**",
+      "color": 5793266,
+      "fields": "Array",
+      "footer": {
+        "text": "phpBB Custom Forms • Array Array"
+      },
+      "timestamp": "Array"
+    }
+  ]
+}
+JSON;
+
+$form_fixture = ['form_name' => 'omega test!'];
+$variables_fixture = ['USERNAME' => 'tester', 'POST_URL' => ''];
+$discord_fields_fixture = [['name' => 'My Field', 'value' => 'My Value', 'inline' => false]];
+
+$repaired_payload = $manager->sanitize_discord_payload($corrupted_payload, $form_fixture, $variables_fixture, $discord_fields_fixture);
+$repaired_json = json_decode($repaired_payload, true);
+assert_test($repaired_json !== null, 'Corrupted payload with unquoted Array successfully repairs to valid JSON');
+assert_test($repaired_json['embeds'][0]['title'] === 'New Submission: omega test!', 'Repaired title uses form name');
+assert_test($repaired_json['embeds'][0]['description'] === 'Submitted by **tester**', 'Repaired description uses username');
+assert_test(!isset($repaired_json['embeds'][0]['url']), 'Repaired url: Array is safely stripped');
+assert_test(is_array($repaired_json['embeds'][0]['fields']) && count($repaired_json['embeds'][0]['fields']) === 1, 'Corrupted fields string is replaced with valid discord_fields');
+
+// 13. Ensure acp_forms_manage.html contains no raw Twig placeholders in loadWebhookPreset
+$acp_html = file_get_contents(dirname(__DIR__) . '/booskit/forms/adm/style/acp_forms_manage.html');
+$preset_script_pos = strpos($acp_html, 'window.loadWebhookPreset');
+$preset_script = substr($acp_html, $preset_script_pos, 2500);
+assert_test(strpos($preset_script, '{{FORM_NAME}}') === false, 'ACP preset script does not contain literal {{FORM_NAME}}');
+assert_test(strpos($preset_script, '{{POST_URL}}') === false, 'ACP preset script does not contain literal {{POST_URL}}');
+assert_test(strpos($preset_script, '{{DISCORD_FIELDS_JSON}}') === false, 'ACP preset script does not contain literal {{DISCORD_FIELDS_JSON}}');
+
 echo "\n-------------------------------------------------\n";
 echo " Test Results: $passed Passed, $failed Failed.\n";
 echo "-------------------------------------------------\n";
 
 exit($failed === 0 ? 0 : 1);
 }
+

@@ -236,7 +236,8 @@ class form_manager
 			return false;
 		}
 
-		$urls = preg_split('/[\r\n,]+/', $form['webhook_url']);
+		$raw_urls = htmlspecialchars_decode($form['webhook_url'], ENT_QUOTES);
+		$urls = preg_split('/[\r\n,]+/', $raw_urls);
 		$urls = array_filter(array_map('trim', $urls));
 		if (empty($urls))
 		{
@@ -310,6 +311,8 @@ class form_manager
 		$variables['FIELDS_JSON'] = json_encode($fields_map, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 		$variables['DISCORD_FIELDS_JSON'] = json_encode($discord_fields, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
+		$webhook_template = isset($form['webhook_template']) ? htmlspecialchars_decode(trim($form['webhook_template']), ENT_QUOTES) : '';
+
 		$all_success = true;
 		foreach ($urls as $url)
 		{
@@ -318,13 +321,20 @@ class form_manager
 				continue;
 			}
 
-			if (!empty(trim($form['webhook_template'])))
+			$is_discord = (strpos($url, 'discord.com/api/webhooks') !== false || strpos($url, 'discordapp.com/api/webhooks') !== false);
+
+			if (!empty($webhook_template))
 			{
-				$payload = $this->render_webhook_template($form['webhook_template'], $variables, $fields, $raw_values);
+				$payload = $this->render_webhook_template($webhook_template, $variables, $fields, $raw_values);
 			}
 			else
 			{
 				$payload = $this->build_default_webhook_payload($url, $form, $variables, $fields_map, $discord_fields);
+			}
+
+			if ($is_discord)
+			{
+				$payload = $this->sanitize_discord_payload($payload, $form, $variables, $discord_fields);
 			}
 
 			$result = $this->dispatch_webhook_request($url, $payload);
@@ -339,6 +349,157 @@ class form_manager
 		}
 
 		return $all_success;
+	}
+
+	public function sanitize_discord_payload($payload, array $form = [], array $variables = [], array $discord_fields = [])
+	{
+		// Try repairing unquoted literal 'Array' (e.g. "url": Array,) that breaks JSON
+		$repaired_payload = preg_replace('/:\s*Array\s*([,\}\]])/i', ': ""$1', $payload);
+		$data = json_decode($repaired_payload, true);
+		if (!is_array($data))
+		{
+			$data = json_decode($payload, true);
+			if (!is_array($data))
+			{
+				return $payload;
+			}
+		}
+
+		$form_name = isset($form['form_name']) ? $form['form_name'] : '';
+		$username = isset($variables['USERNAME']) ? $variables['USERNAME'] : (isset($this->user->data['username']) ? $this->user->data['username'] : 'Guest');
+		$date = isset($variables['DATE']) ? $variables['DATE'] : date('M d, Y');
+		$time = isset($variables['TIME']) ? $variables['TIME'] : date('H:i');
+		$iso_date = isset($variables['ISO_DATE']) ? $variables['ISO_DATE'] : gmdate('Y-m-d\TH:i:s\Z');
+		$post_url = isset($variables['POST_URL']) ? $variables['POST_URL'] : '';
+
+		if (isset($data['embeds']) && is_array($data['embeds']))
+		{
+			foreach ($data['embeds'] as $k => &$emb)
+			{
+				if (!is_array($emb))
+				{
+					continue;
+				}
+
+				// Fix corrupted title from Twig interpolation bug
+				if (isset($emb['title']) && (strpos($emb['title'], 'Array') !== false || trim($emb['title']) === ''))
+				{
+					if (!empty($form_name))
+					{
+						$emb['title'] = str_replace('Array', $form_name, $emb['title']);
+					}
+				}
+
+				// Fix corrupted description
+				if (isset($emb['description']) && strpos($emb['description'], 'Array') !== false)
+				{
+					$emb['description'] = str_replace('Array', $username, $emb['description']);
+				}
+
+				// Fix corrupted footer
+				if (isset($emb['footer']) && is_array($emb['footer']) && isset($emb['footer']['text']) && strpos($emb['footer']['text'], 'Array') !== false)
+				{
+					$emb['footer']['text'] = 'phpBB Custom Forms • ' . $date . ' ' . $time;
+				}
+
+				// Sanitize / repair URL
+				if (isset($emb['url']))
+				{
+					$u = trim((string)$emb['url']);
+					if ($u === '' || strcasecmp($u, 'Array') === 0 || !filter_var($u, FILTER_VALIDATE_URL))
+					{
+						if (!empty($post_url) && filter_var($post_url, FILTER_VALIDATE_URL))
+						{
+							$emb['url'] = $post_url;
+						}
+						else
+						{
+							unset($emb['url']);
+						}
+					}
+				}
+
+				// Sanitize timestamp
+				if (isset($emb['timestamp']))
+				{
+					$ts = trim((string)$emb['timestamp']);
+					if ($ts === '' || strcasecmp($ts, 'Array') === 0 || !strtotime($ts))
+					{
+						$emb['timestamp'] = $iso_date;
+					}
+				}
+
+				// Sanitize fields
+				if (isset($emb['fields']))
+				{
+					if (empty($emb['fields']) || !is_array($emb['fields']))
+					{
+						if (!empty($discord_fields))
+						{
+							$emb['fields'] = array_slice($discord_fields, 0, 25);
+						}
+						else
+						{
+							unset($emb['fields']);
+						}
+					}
+					else
+					{
+						$cleaned = [];
+						foreach ($emb['fields'] as $f)
+						{
+							if (!is_array($f)) continue;
+							$name = isset($f['name']) ? trim((string)$f['name']) : '';
+							$val = isset($f['value']) ? (string)$f['value'] : '';
+							if ($name === '')
+							{
+								$name = 'Field';
+							}
+							if ($val === '')
+							{
+								$val = '—';
+							}
+							if (mb_strlen($name) > 256)
+							{
+								$name = mb_substr($name, 0, 253) . '...';
+							}
+							if (mb_strlen($val) > 1024)
+							{
+								$val = mb_substr($val, 0, 1021) . '...';
+							}
+							$cleaned[] = [
+								'name'   => $name,
+								'value'  => $val,
+								'inline' => !empty($f['inline']),
+							];
+						}
+						if (empty($cleaned))
+						{
+							if (!empty($discord_fields))
+							{
+								$emb['fields'] = array_slice($discord_fields, 0, 25);
+							}
+							else
+							{
+								unset($emb['fields']);
+							}
+						}
+						else
+						{
+							$emb['fields'] = array_slice($cleaned, 0, 25);
+						}
+					}
+				}
+				else if (!empty($discord_fields))
+				{
+					$emb['fields'] = array_slice($discord_fields, 0, 25);
+				}
+			}
+			unset($emb);
+			return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		}
+
+		return $payload;
 	}
 
 	public function build_default_webhook_payload($url, array $form, array $variables, array $fields_map, array $discord_fields)
@@ -360,12 +521,15 @@ class form_manager
 				'title'       => 'New Submission: ' . (isset($form['form_name']) ? $form['form_name'] : ''),
 				'description' => 'Submitted by **' . $username . '**',
 				'color'       => 5793266,
-				'fields'      => $discord_fields,
 				'footer'      => [
 					'text' => 'phpBB Custom Forms • ' . $date . ' ' . $time,
 				],
 				'timestamp'   => $iso_date,
 			];
+			if (!empty($discord_fields))
+			{
+				$embed['fields'] = array_slice($discord_fields, 0, 25);
+			}
 			if (!empty($post_url))
 			{
 				$embed['url'] = $post_url;
@@ -720,10 +884,16 @@ class form_manager
 
 	public function dispatch_webhook_request($url, $payload)
 	{
+		$url = htmlspecialchars_decode(trim($url), ENT_QUOTES);
 		if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL))
 		{
 			return ['success' => false, 'error' => 'Invalid webhook URL'];
 		}
+
+		$headers = [
+			'Content-Type: application/json',
+			'User-Agent: phpBB-CustomForms-Webhook/1.0',
+		];
 
 		if (function_exists('curl_init'))
 		{
@@ -731,11 +901,7 @@ class form_manager
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_POST, true);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, [
-				'Content-Type: application/json',
-				'Content-Length: ' . strlen($payload),
-				'User-Agent: phpBB-CustomForms-Webhook/1.0',
-			]);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
@@ -745,6 +911,25 @@ class form_manager
 			$error = curl_error($ch);
 			$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 			curl_close($ch);
+
+			if ($error && (stripos($error, 'certificate') !== false || stripos($error, 'SSL') !== false || stripos($error, 'issuer') !== false))
+			{
+				$ch = curl_init($url);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+				curl_setopt($ch, CURLOPT_POST, true);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+				curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+				curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+				curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+				curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+				$response = curl_exec($ch);
+				$error = curl_error($ch);
+				$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+				curl_close($ch);
+			}
 
 			if ($error)
 			{
@@ -767,6 +952,10 @@ class form_manager
 					'content'       => $payload,
 					'timeout'       => 10,
 					'ignore_errors' => true,
+				],
+				'ssl' => [
+					'verify_peer'      => false,
+					'verify_peer_name' => false,
 				],
 			]);
 
