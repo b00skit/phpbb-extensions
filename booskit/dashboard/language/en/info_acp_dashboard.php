@@ -44,6 +44,7 @@ $lang = array_merge($lang, array(
 	// Modules
 	'DASHBOARD_MODULE_SETTINGS'             => 'Extension Integration Modules',
 	'DASHBOARD_INCLUDE_STATS_TAB'           => 'Include Statistics Module / Profile Tab',
+	'DASHBOARD_INCLUDE_GROUP_VIEWS_TAB'     => 'Include Group Views Module',
 	'DASHBOARD_INCLUDE_AWARDS'              => 'Include Awards',
 	'DASHBOARD_INCLUDE_CAREER'              => 'Include Career Timeline',
 	'DASHBOARD_INCLUDE_COMMENDATIONS'       => 'Include Commendations',
@@ -72,6 +73,7 @@ $lang = array_merge($lang, array(
 	'PERM_VIEW_STATISTICS'                  => 'View Statistics Module & Profile Tab',
 	'PERM_VIEW_BOARD_STATISTICS'            => 'View Board Statistics Page',
 	'PERM_VIEW_PROFILE_STATISTICS'          => 'View Statistics Tab',
+	'PERM_VIEW_GROUP_VIEWS'                 => 'View Group Views Page',
 	'PERM_VIEW_ACTIVE_USERS'                => 'View Live Active Browsing',
 	'PERM_VIEW_HOT_TOPICS'                  => 'View Trending & Hot Topics',
 	'PERM_VIEW_FEEDS'                       => 'View Activity Feeds (Master)',
@@ -134,6 +136,26 @@ $lang = array_merge($lang, array(
 	'DASHBOARD_RESYNC_BUTTON'               => 'Resync / Scan All Posts Now',
 	'CONFIRM_RESYNC_STATS'                  => 'Are you sure you want to scan all posts and rebuild the statistics index?',
 	'DASHBOARD_RESYNC_SUCCESS'              => 'Successfully scanned forum posts and indexed %d statistic tag occurrences.',
+
+	// Group Views ACP Management
+	'ACP_BOOSKIT_DASHBOARD_GROUP_VIEWS'     => 'Group Views',
+	'ACP_DASHBOARD_GROUP_VIEWS_EXPLAIN'     => 'Create and configure saved Group Views. Specify combinations of included groups (match all or match any) and excluded groups (shielded/disallowed) to list matching forum members.',
+	'DASHBOARD_GROUP_VIEWS_LIST_TITLE'      => 'Configured Group Views',
+	'DASHBOARD_GROUP_VIEWS_LIST_DESC'       => 'All saved views available on the dashboard for browsing member combinations.',
+	'DASHBOARD_GROUP_VIEW_NAME'             => 'View Name',
+	'DASHBOARD_GROUP_VIEW_NAME_EXPLAIN'     => 'Human-readable name, e.g. "Senior Officers" or "Command Staff without Strike Team".',
+	'DASHBOARD_GROUP_VIEW_DESC'             => 'Description',
+	'DASHBOARD_GROUP_VIEW_DESC_EXPLAIN'     => 'Optional summary of what this group view filters or represents.',
+	'DASHBOARD_GROUP_VIEW_CRITERIA'         => 'Group Membership Criteria',
+	'DASHBOARD_GROUP_VIEW_MEMBERS'          => 'Matching Members',
+	'DASHBOARD_VIEW_ENABLED'                => 'Enabled / Active',
+	'DASHBOARD_TOGGLE_ACTIVE'               => 'Toggle Active Status',
+	'DASHBOARD_ALLOWED_VIEWERS'             => 'Allowed Viewer Groups',
+	'DASHBOARD_ALLOWED_VIEWERS_EXPLAIN'     => 'Leave empty to allow all dashboard users with Group Views access. Or select specific groups to restrict viewing.',
+	'DASHBOARD_ADD_GROUP_VIEW'              => 'Add New Group View',
+	'DASHBOARD_ADD_GROUP_VIEW_DESC'         => 'Define a new group view preset with custom included and excluded groups.',
+	'DASHBOARD_NO_GROUP_VIEWS'              => 'No group views created yet.',
+	'CONFIRM_DELETE_GROUP_VIEW'             => 'Are you sure you want to delete this group view?',
 
 	// Legacy settings
 	'DASHBOARD_PROFILE_ACCESS_SETTINGS'     => 'Legacy Group-to-Group Profile Access',

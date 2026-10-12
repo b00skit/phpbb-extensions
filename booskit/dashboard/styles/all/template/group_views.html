@@ -1,0 +1,276 @@
+{% INCLUDE 'overall_header.html' %}
+
+<div class="dashboard-container">
+
+	<!-- Top Bar -->
+	<div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+		<a href="{{ U_BACK_DASHBOARD }}" class="dash-btn dash-btn-secondary">
+			<i class="icon fa-arrow-left fa-fw"></i> {{ lang('DASHBOARD_BACK') }}
+		</a>
+		{% if IS_ADMIN and U_ACP_GROUP_VIEWS %}
+		<a href="{{ U_ACP_GROUP_VIEWS }}" class="dash-btn dash-btn-secondary" style="font-size: 0.85rem;" target="_blank">
+			<i class="icon fa-cog fa-fw"></i> {{ lang('DASHBOARD_MANAGE_VIEWS_ACP') }}
+		</a>
+		{% endif %}
+	</div>
+
+	<!-- Hero Header -->
+	<div class="dashboard-hero">
+		<div class="dashboard-hero-content">
+			<h1><i class="icon fa-users fa-fw" aria-hidden="true"></i> {{ lang('DASHBOARD_GROUP_VIEWS_TITLE') }}</h1>
+			<p>{{ lang('DASHBOARD_GROUP_VIEWS_SUBTITLE') }}</p>
+		</div>
+	</div>
+
+	<!-- View Tabs & Custom Builder Switcher -->
+	<div class="dash-views-nav-bar">
+		<div class="dash-views-tabs">
+			{% for v in group_views_list %}
+			<a href="{{ v.U_VIEW }}" class="dash-view-tab{% if v.IS_ACTIVE %} active{% endif %}">
+				<i class="icon fa-folder-open-o fa-fw"></i>
+				<span>{{ v.VIEW_NAME }}</span>
+				<span class="dash-view-pill-count">{{ v.MEMBER_COUNT }}</span>
+			</a>
+			{% endfor %}
+			<a href="{{ U_CUSTOM_TAB }}" class="dash-view-tab dash-view-tab-custom{% if S_CUSTOM_MODE %} active{% endif %}">
+				<i class="icon fa-sliders fa-fw"></i>
+				<span>{{ lang('DASHBOARD_CUSTOM_QUERY_TAB') }}</span>
+			</a>
+		</div>
+	</div>
+
+	<!-- Custom Filter Builder Drawer (When custom mode active) -->
+	{% if S_CUSTOM_MODE %}
+	<div class="dash-card" style="margin-bottom: 24px; border: 1px solid #cbd5e1;">
+		<div class="dash-card-header" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+			<h3 class="dash-card-title"><i class="icon fa-sliders fa-fw" style="color: var(--dash-primary);"></i> {{ lang('DASHBOARD_CUSTOM_GROUP_QUERY') }}</h3>
+		</div>
+		<div class="dash-card-body" style="padding: 20px;">
+			<form method="get" action="{{ U_CUSTOM_FILTER_ACTION }}" class="dash-custom-query-form">
+				<input type="hidden" name="custom" value="1" />
+
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+					<!-- Included Groups -->
+					<div class="dash-filter-col">
+						<label class="dash-filter-label">
+							<strong><i class="icon fa-check-circle fa-fw" style="color: #0284c7;"></i> {{ lang('DASHBOARD_INCLUDED_GROUPS') }}</strong>
+						</label>
+						<p style="font-size: 0.85rem; color: #64748b; margin: 2px 0 10px 0;">{{ lang('DASHBOARD_INCLUDED_GROUPS_EXPLAIN') }}</p>
+
+						<div style="margin-bottom: 10px;">
+							<label style="margin-right: 15px; font-size: 0.9rem;">
+								<input type="radio" name="include_mode" value="all" {% if INCLUDE_MODE == 'all' %}checked="checked"{% endif %} />
+								<strong>{{ lang('DASHBOARD_MODE_ALL') }}</strong> (AND)
+							</label>
+							<label style="font-size: 0.9rem;">
+								<input type="radio" name="include_mode" value="any" {% if INCLUDE_MODE == 'any' %}checked="checked"{% endif %} />
+								<strong>{{ lang('DASHBOARD_MODE_ANY') }}</strong> (OR)
+							</label>
+						</div>
+
+						<div class="dash-groups-checklist">
+							{% for g in filter_groups %}
+							<label class="dash-group-checkbox-row">
+								<input type="checkbox" name="include_groups[]" value="{{ g.GROUP_ID }}" {% if g.IS_INCLUDED %}checked="checked"{% endif %} />
+								<span>{{ g.GROUP_NAME }}</span>
+							</label>
+							{% endfor %}
+						</div>
+					</div>
+
+					<!-- Excluded Groups -->
+					<div class="dash-filter-col">
+						<label class="dash-filter-label">
+							<strong style="color: #b91c1c;"><i class="icon fa-ban fa-fw"></i> {{ lang('DASHBOARD_EXCLUDED_GROUPS') }}</strong>
+						</label>
+						<p style="font-size: 0.85rem; color: #64748b; margin: 2px 0 10px 0;">{{ lang('DASHBOARD_EXCLUDED_GROUPS_EXPLAIN') }}</p>
+
+						<div class="dash-groups-checklist">
+							{% for g in filter_groups %}
+							<label class="dash-group-checkbox-row">
+								<input type="checkbox" name="exclude_groups[]" value="{{ g.GROUP_ID }}" {% if g.IS_EXCLUDED %}checked="checked"{% endif %} />
+								<span style="color: #991b1b;">{{ g.GROUP_NAME }}</span>
+							</label>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+
+				<div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+					<div style="display: flex; align-items: center; gap: 8px;">
+						<input type="text" name="q" value="{{ SEARCH_QUERY }}" placeholder="{{ lang('DASHBOARD_FILTER_BY_USERNAME') }}" class="dash-input" style="width: 240px;" />
+					</div>
+					<div>
+						<button type="submit" name="run_filter" value="1" class="dash-btn dash-btn-primary">
+							<i class="icon fa-filter fa-fw"></i> {{ lang('DASHBOARD_APPLY_FILTER') }}
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	{% endif %}
+
+	<!-- Active View Criteria & Info Card -->
+	<div class="dash-card" style="margin-bottom: 24px;">
+		<div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+			<div>
+				<h3 class="dash-card-title" style="margin: 0; font-size: 1.15rem;">
+					<i class="icon fa-list-ul fa-fw" style="color: var(--dash-primary);"></i>
+					{{ VIEW_NAME }}
+				</h3>
+				{% if VIEW_DESC %}
+				<p style="margin: 4px 0 0 0; font-size: 0.88rem; color: #64748b;">{{ VIEW_DESC }}</p>
+				{% endif %}
+			</div>
+
+			<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+				<span class="badge" style="background: #eff6ff; color: #1d4ed8; font-weight: 700; padding: 6px 14px; border-radius: 8px; font-size: 0.95rem;">
+					<i class="icon fa-user fa-fw"></i> {{ TOTAL_MEMBERS|number_format }} {{ lang('DASHBOARD_MEMBERS') }}
+				</span>
+
+				<!-- Quick username search within current view -->
+				<form method="get" action="{{ U_SEARCH_ACTION }}" class="dash-inline-search-form">
+					{% if not S_CUSTOM_MODE and VIEW_ID %}
+					<input type="hidden" name="view_id" value="{{ VIEW_ID }}" />
+					{% endif %}
+					{% if S_CUSTOM_MODE %}
+					<input type="hidden" name="custom" value="1" />
+					<input type="hidden" name="include_mode" value="{{ INCLUDE_MODE }}" />
+					{% for g in filter_groups %}{% if g.IS_INCLUDED %}<input type="hidden" name="include_groups[]" value="{{ g.GROUP_ID }}" />{% endif %}{% endfor %}
+					{% for g in filter_groups %}{% if g.IS_EXCLUDED %}<input type="hidden" name="exclude_groups[]" value="{{ g.GROUP_ID }}" />{% endif %}{% endfor %}
+					{% endif %}
+					<input type="text" name="q" value="{{ SEARCH_QUERY }}" placeholder="{{ lang('DASHBOARD_FILTER_BY_USERNAME') }}" class="dash-input-sm" />
+					<button type="submit" class="dash-btn dash-btn-secondary dash-btn-xs"><i class="icon fa-search fa-fw"></i></button>
+					{% if SEARCH_QUERY %}
+					<a href="{{ U_SEARCH_ACTION }}{% if not S_CUSTOM_MODE and VIEW_ID %}?view_id={{ VIEW_ID }}{% elseif S_CUSTOM_MODE %}?custom=1{% endif %}" class="dash-btn dash-btn-secondary dash-btn-xs" title="{{ lang('DASHBOARD_CLEAR_FILTER') }}">&times;</a>
+					{% endif %}
+				</form>
+			</div>
+		</div>
+
+		<!-- Criteria Badges Bar -->
+		<div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+			<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+				<span style="font-size: 0.85rem; font-weight: 700; color: #475569;">{{ lang('DASHBOARD_INCLUDED_GROUPS') }}:</span>
+				{% if INCLUDE_MODE == 'all' %}
+					<span class="badge" style="background: #0284c7; color: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{{ lang('DASHBOARD_MATCH_ALL_BADGE') }}</span>
+				{% else %}
+					<span class="badge" style="background: #0d9488; color: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{{ lang('DASHBOARD_MATCH_ANY_BADGE') }}</span>
+				{% endif %}
+				{% if INCLUDED_GROUP_NAMES|length %}
+					{% for gname in INCLUDED_GROUP_NAMES %}
+					<span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.82rem;">
+						<i class="icon fa-check fa-fw"></i> {{ gname }}
+					</span>
+					{% endfor %}
+				{% else %}
+					<span style="font-size: 0.85rem; color: #94a3b8; font-style: italic;">{{ lang('DASHBOARD_ALL_MEMBERS_NO_FILTER') }}</span>
+				{% endif %}
+			</div>
+
+			{% if EXCLUDED_GROUP_NAMES|length %}
+			<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+				<span style="font-size: 0.85rem; font-weight: 700; color: #b91c1c;">{{ lang('DASHBOARD_EXCLUDED_GROUPS') }}:</span>
+				<span class="badge" style="background: #ef4444; color: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{{ lang('DASHBOARD_EXCLUDE_BADGE') }}</span>
+				{% for gname in EXCLUDED_GROUP_NAMES %}
+				<span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 0.82rem;">
+					&times; {{ gname }}
+				</span>
+				{% endfor %}
+			</div>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- Members Grid -->
+	{% if members_list|length %}
+	<div class="dash-members-grid">
+		{% for member in members_list %}
+		<div class="dash-member-card">
+			<div class="dash-member-card-header">
+				<div class="dash-member-avatar-wrap">
+					{{ member.AVATAR|raw }}
+					{% if member.IS_ONLINE %}
+					<span class="online-pulse-dot" title="{{ lang('DASHBOARD_ONLINE_PULSE') }}"></span>
+					{% endif %}
+				</div>
+				<div class="dash-member-card-info">
+					<div class="dash-member-username">{{ member.USERNAME|raw }}</div>
+					{% if member.PRIMARY_GROUP_NAME %}
+					<div class="dash-member-primary-group" style="{% if member.PRIMARY_GROUP_COLOUR %}color: #{{ member.PRIMARY_GROUP_COLOUR }};{% endif %}">
+						{{ member.PRIMARY_GROUP_NAME }}
+					</div>
+					{% endif %}
+				</div>
+			</div>
+
+			<!-- Member Group Badges -->
+			{% if member.user_groups|length %}
+			<div class="dash-member-groups-pills">
+				{% for ug in member.user_groups %}
+				<span class="dash-mini-group-pill{% if ug.IS_MATCHED %} matched{% endif %}" title="{{ ug.GROUP_NAME }}" style="{% if ug.GROUP_COLOUR %}border-color: #{{ ug.GROUP_COLOUR }};{% endif %}">
+					{% if ug.IS_MATCHED %}<i class="icon fa-check fa-fw"></i>{% endif %}
+					{{ ug.GROUP_NAME }}
+				</span>
+				{% endfor %}
+			</div>
+			{% endif %}
+
+			<!-- Member Stats & Meta -->
+			<div class="dash-member-meta-grid">
+				<div>
+					<span class="dash-meta-label">{{ lang('DASHBOARD_TOTAL_POSTS') }}</span>
+					<span class="dash-meta-val">{{ member.POSTS|number_format }}</span>
+				</div>
+				<div>
+					<span class="dash-meta-label">{{ lang('DASHBOARD_MEMBER_SINCE') }}</span>
+					<span class="dash-meta-val">{{ member.JOINED }}</span>
+				</div>
+				<div>
+					<span class="dash-meta-label">{{ lang('DASHBOARD_LAST_ACTIVE') }}</span>
+					<span class="dash-meta-val">{{ member.LAST_ACTIVE }}</span>
+				</div>
+			</div>
+
+			<!-- Actions -->
+			<div class="dash-member-card-actions">
+				{% if member.U_VIEW_PROFILE %}
+				<a href="{{ member.U_VIEW_PROFILE }}" class="dash-btn dash-btn-secondary dash-btn-xs" title="{{ lang('DASHBOARD_VIEW_PROFILE') }}">
+					<i class="icon fa-address-card-o fa-fw"></i> {{ lang('DASHBOARD_VIEW_PROFILE') }}
+				</a>
+				{% endif %}
+				<a href="{{ member.U_PHPBB_PROFILE }}" class="dash-btn dash-btn-secondary dash-btn-xs" title="{{ lang('DASHBOARD_MEMBERLIST_PROFILE') }}">
+					<i class="icon fa-user fa-fw"></i> {{ lang('DASHBOARD_MEMBERLIST_PROFILE') }}
+				</a>
+				<a href="{{ member.U_SEND_PM }}" class="dash-btn dash-btn-secondary dash-btn-xs" title="{{ lang('DASHBOARD_SEND_PM') }}">
+					<i class="icon fa-envelope-o fa-fw"></i>
+				</a>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+
+	<!-- Pagination -->
+	{% if pagination %}
+	<div class="dash-pagination-wrap" style="margin-top: 24px; display: flex; justify-content: flex-end;">
+		{% INCLUDE 'pagination.html' %}
+	</div>
+	{% endif %}
+
+	{% else %}
+	<!-- Empty State -->
+	<div class="dash-card">
+		<div class="dash-card-body" style="padding: 48px; text-align: center;">
+			<div style="font-size: 3rem; color: #cbd5e1; margin-bottom: 12px;">
+				<i class="icon fa-users fa-fw"></i>
+			</div>
+			<h3 style="color: #475569; margin: 0 0 6px 0;">{{ lang('DASHBOARD_NO_GROUP_MEMBERS_FOUND') }}</h3>
+			<p style="color: #94a3b8; margin: 0; font-size: 0.95rem;">{{ lang('DASHBOARD_NO_GROUP_MEMBERS_FOUND_EXPLAIN') }}</p>
+		</div>
+	</div>
+	{% endif %}
+
+</div>
+
+{% INCLUDE 'overall_footer.html' %}

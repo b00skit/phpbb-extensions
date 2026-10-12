@@ -26,6 +26,11 @@ class main_module_info
 					'auth'	=> 'ext_booskit/dashboard && acl_a_board',
 					'cat'	=> array('ACP_BOOSKIT_DASHBOARD_TITLE'),
 				),
+				'group_views'	=> array(
+					'title'	=> 'ACP_BOOSKIT_DASHBOARD_GROUP_VIEWS',
+					'auth'	=> 'ext_booskit/dashboard && acl_a_board',
+					'cat'	=> array('ACP_BOOSKIT_DASHBOARD_TITLE'),
+				),
 			),
 		);
 	}

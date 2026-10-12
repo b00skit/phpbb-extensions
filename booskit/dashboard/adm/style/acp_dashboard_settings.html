@@ -53,6 +53,13 @@
 		</dd>
 	</dl>
 	<dl>
+		<dt><label for="booskit_dashboard_include_group_views_tab">{{ lang('DASHBOARD_INCLUDE_GROUP_VIEWS_TAB') }}{{ lang('COLON') }}</label></dt>
+		<dd>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_group_views_tab" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_GROUP_VIEWS_TAB %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
+			<label><input type="radio" class="radio" name="booskit_dashboard_include_group_views_tab" value="0" {% if not BOOSKIT_DASHBOARD_INCLUDE_GROUP_VIEWS_TAB %}checked="checked"{% endif %} /> {{ lang('NO') }}</label>
+		</dd>
+	</dl>
+	<dl>
 		<dt><label for="booskit_dashboard_include_awards">{{ lang('DASHBOARD_INCLUDE_AWARDS') }}{{ lang('COLON') }}</label></dt>
 		<dd>
 			<label><input type="radio" class="radio" name="booskit_dashboard_include_awards" value="1" {% if BOOSKIT_DASHBOARD_INCLUDE_AWARDS %}checked="checked"{% endif %} /> {{ lang('YES') }}</label>
@@ -205,6 +212,7 @@
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_dashboard]" value="1" {% if pg.permissions_array.view_dashboard %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_DASHBOARD') }}</label>
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_stats]" value="1" {% if pg.permissions_array.view_stats %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_STATS') }}</label>
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_board_statistics]" value="1" {% if pg.permissions_array.view_board_statistics %}checked="checked"{% endif %} /> <strong>{{ lang('PERM_VIEW_BOARD_STATISTICS') }}</strong></label>
+					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_group_views]" value="1" {% if pg.permissions_array.view_group_views %}checked="checked"{% endif %} /> <strong>{{ lang('PERM_VIEW_GROUP_VIEWS') }}</strong></label>
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_active_users]" value="1" {% if pg.permissions_array.view_active_users %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_ACTIVE_USERS') }}</label>
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_hot_topics]" value="1" {% if pg.permissions_array.view_hot_topics %}checked="checked"{% endif %} /> {{ lang('PERM_VIEW_HOT_TOPICS') }}</label>
 					<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="perms[{{ pg.perm_group_id }}][view_feeds]" value="1" {% if pg.permissions_array.view_feeds %}checked="checked"{% endif %} /> <strong>{{ lang('PERM_VIEW_FEEDS') }}</strong></label>
@@ -306,6 +314,7 @@
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_dashboard]" value="1" checked="checked" /> {{ lang('PERM_VIEW_DASHBOARD') }}</label>
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_stats]" value="1" checked="checked" /> {{ lang('PERM_VIEW_STATS') }}</label>
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_board_statistics]" value="1" checked="checked" /> <strong>{{ lang('PERM_VIEW_BOARD_STATISTICS') }}</strong></label>
+				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_group_views]" value="1" checked="checked" /> <strong>{{ lang('PERM_VIEW_GROUP_VIEWS') }}</strong></label>
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_active_users]" value="1" checked="checked" /> {{ lang('PERM_VIEW_ACTIVE_USERS') }}</label>
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_hot_topics]" value="1" checked="checked" /> {{ lang('PERM_VIEW_HOT_TOPICS') }}</label>
 				<label style="display: inline-block; margin-right: 15px;"><input type="checkbox" name="new_perms[view_feeds]" value="1" checked="checked" /> <strong>{{ lang('PERM_VIEW_FEEDS') }}</strong></label>

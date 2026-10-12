@@ -112,11 +112,13 @@ class main
 
 			'S_PERM_VIEW_STATS'        => !empty($perms['view_stats']),
 			'S_PERM_VIEW_STATISTICS'   => (!empty($perms['view_board_statistics']) || !empty($perms['view_statistics'])),
+			'S_PERM_VIEW_GROUP_VIEWS'  => (!empty($perms['view_group_views']) || $this->auth->acl_get('a_board')) && !empty($this->config['booskit_dashboard_include_group_views_tab']),
 			'S_PERM_VIEW_ACTIVE_USERS' => !empty($perms['view_active_users']),
 			'S_PERM_VIEW_HOT_TOPICS'   => !empty($perms['view_hot_topics']),
 			'S_PERM_VIEW_FEEDS'        => !empty($perms['view_feeds']),
 			'S_PERM_SEARCH_USERS'      => !empty($perms['search_users']),
 			'U_COMBINED_STATISTICS'    => $this->get_safe_route('booskit_dashboard_combined_statistics'),
+			'U_GROUP_VIEWS'            => $this->get_safe_route('booskit_dashboard_group_views'),
 		]);
 
 		// Active users currently browsing
@@ -1108,6 +1110,221 @@ class main
 		]);
 
 		return $this->helper->render('combined_statistics.html', $this->user->lang['DASHBOARD_COMBINED_STATS_TITLE']);
+	}
+
+	public function group_views($view_id = 0)
+	{
+		$this->check_access();
+		$this->user->add_lang_ext('booskit/dashboard', 'dashboard');
+
+		$viewer_id = (int) $this->user->data['user_id'];
+		$perms = $this->dashboard_manager->get_effective_permissions($viewer_id);
+		$is_admin = (bool) $this->auth->acl_get('a_board');
+
+		if (empty($perms['view_group_views']) && !$is_admin)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		if (empty($this->config['booskit_dashboard_include_group_views_tab']) && !$is_admin)
+		{
+			trigger_error('NOT_AUTHORISED');
+		}
+
+		$all_views = $this->dashboard_manager->get_group_views(true, $viewer_id, true);
+		$all_phpbb_groups = $this->dashboard_manager->get_phpbb_groups();
+
+		$is_custom = $this->request->variable('custom', 0) || $this->request->is_set('run_filter');
+		$view_id = (int) ($view_id ?: $this->request->variable('view_id', 0));
+
+		$search_query = $this->request->variable('q', '', true);
+		$start = $this->request->variable('start', 0);
+		$limit = 48;
+
+		$active_view = null;
+		$include_groups = [];
+		$include_mode = 'all';
+		$exclude_groups = [];
+
+		if ($is_custom)
+		{
+			$include_groups = $this->request->variable('include_groups', [0]);
+			$include_mode = $this->request->variable('include_mode', 'all');
+			$exclude_groups = $this->request->variable('exclude_groups', [0]);
+			if (!in_array($include_mode, ['all', 'any']))
+			{
+				$include_mode = 'all';
+			}
+		}
+		else
+		{
+			if ($view_id <= 0 && !empty($all_views))
+			{
+				$view_id = (int) $all_views[0]['view_id'];
+			}
+
+			if ($view_id > 0)
+			{
+				$active_view = $this->dashboard_manager->get_group_view($view_id);
+				if ($active_view && $this->dashboard_manager->can_view_group_view($viewer_id, $active_view))
+				{
+					$include_groups = $active_view['include_groups_array'];
+					$include_mode = $active_view['include_mode'];
+					$exclude_groups = $active_view['exclude_groups_array'];
+				}
+				else
+				{
+					$active_view = null;
+				}
+			}
+		}
+
+		// Query members
+		$members_data = $this->dashboard_manager->get_group_view_members($include_groups, $include_mode, $exclude_groups, $limit, $start, $search_query);
+		$total_members = $members_data['total'];
+		$members = $members_data['members'];
+
+		// Pagination URL
+		if ($is_custom)
+		{
+			$page_params = [
+				'custom'       => 1,
+				'include_mode' => $include_mode,
+			];
+			if (!empty($include_groups))
+			{
+				$page_params['include_groups'] = $include_groups;
+			}
+			if (!empty($exclude_groups))
+			{
+				$page_params['exclude_groups'] = $exclude_groups;
+			}
+			if (!empty($search_query))
+			{
+				$page_params['q'] = $search_query;
+			}
+			$base_url = $this->helper->route('booskit_dashboard_group_views', $page_params);
+		}
+		else
+		{
+			$page_params = [];
+			if ($view_id > 0)
+			{
+				$page_params['view_id'] = $view_id;
+			}
+			if (!empty($search_query))
+			{
+				$page_params['q'] = $search_query;
+			}
+			$base_url = $this->helper->route('booskit_dashboard_group_views', $page_params);
+		}
+
+		$this->pagination->generate_template_pagination($base_url, 'pagination', 'start', $total_members, $limit, $start);
+
+		// Assign view tabs
+		foreach ($all_views as $v)
+		{
+			$this->template->assign_block_vars('group_views_list', [
+				'VIEW_ID'      => (int) $v['view_id'],
+				'VIEW_NAME'    => $v['view_name'],
+				'VIEW_DESC'    => $v['view_desc'],
+				'MEMBER_COUNT' => (int) $v['member_count'],
+				'IS_ACTIVE'    => (!$is_custom && $view_id === (int) $v['view_id']),
+				'U_VIEW'       => $this->helper->route('booskit_dashboard_group_views', ['view_id' => $v['view_id']]),
+			]);
+		}
+
+		// Assign member cards
+		foreach ($members as $m)
+		{
+			$profile_url = $this->dashboard_manager->can_view_user_profile($viewer_id, $m['user_id'])
+				? $this->helper->route('booskit_dashboard_user_profile', ['user_id' => $m['user_id']])
+				: '';
+
+			$this->template->assign_block_vars('members_list', [
+				'USER_ID'              => $m['user_id'],
+				'USERNAME'             => get_username_string('full', $m['user_id'], $m['username'], $m['user_colour']),
+				'USERNAME_PLAIN'       => $m['username'],
+				'AVATAR'               => $m['avatar_html'],
+				'PRIMARY_GROUP_NAME'   => $m['primary_group_name'],
+				'PRIMARY_GROUP_COLOUR' => $m['primary_group_colour'],
+				'JOINED'               => $this->user->format_date($m['user_regdate']),
+				'LAST_ACTIVE'          => !empty($m['user_lastvisit']) ? $this->user->format_date($m['user_lastvisit']) : 'Never',
+				'POSTS'                => (int) $m['user_posts'],
+				'IS_ONLINE'            => !empty($m['is_online']),
+				'U_VIEW_PROFILE'       => $profile_url,
+				'U_PHPBB_PROFILE'      => append_sid($this->root_path . 'memberlist.' . $this->php_ext, 'mode=viewprofile&u=' . $m['user_id']),
+				'U_SEND_PM'            => append_sid($this->root_path . 'ucp.' . $this->php_ext, 'i=pm&mode=compose&u=' . $m['user_id']),
+			]);
+
+			foreach ($m['user_groups'] as $ug)
+			{
+				$this->template->assign_block_vars('members_list.user_groups', [
+					'GROUP_ID'     => $ug['group_id'],
+					'GROUP_NAME'   => $ug['group_name'],
+					'GROUP_COLOUR' => $ug['group_colour'],
+					'IS_PRIMARY'   => !empty($ug['is_primary']),
+					'IS_MATCHED'   => !empty($ug['is_matched']),
+				]);
+			}
+		}
+
+		// Groups for filter options
+		foreach ($all_phpbb_groups as $g)
+		{
+			$this->template->assign_block_vars('filter_groups', [
+				'GROUP_ID'    => $g['group_id'],
+				'GROUP_NAME'  => $g['group_name'],
+				'IS_INCLUDED' => in_array($g['group_id'], $include_groups),
+				'IS_EXCLUDED' => in_array($g['group_id'], $exclude_groups),
+			]);
+		}
+
+		// Groups map for criteria labels
+		$groups_map = [];
+		foreach ($all_phpbb_groups as $g)
+		{
+			$groups_map[$g['group_id']] = $g['group_name'];
+		}
+
+		$included_group_names = [];
+		foreach ($include_groups as $gid)
+		{
+			if (isset($groups_map[$gid]))
+			{
+				$included_group_names[] = $groups_map[$gid];
+			}
+		}
+
+		$excluded_group_names = [];
+		foreach ($exclude_groups as $gid)
+		{
+			if (isset($groups_map[$gid]))
+			{
+				$excluded_group_names[] = $groups_map[$gid];
+			}
+		}
+
+		$this->template->assign_vars([
+			'S_CUSTOM_MODE'          => $is_custom,
+			'S_HAS_ACTIVE_VIEW'      => ($active_view !== null),
+			'VIEW_ID'                => $view_id,
+			'VIEW_NAME'              => $active_view ? $active_view['view_name'] : ($is_custom ? $this->user->lang['DASHBOARD_CUSTOM_GROUP_QUERY'] : ''),
+			'VIEW_DESC'              => $active_view ? $active_view['view_desc'] : '',
+			'INCLUDE_MODE'           => $include_mode,
+			'INCLUDED_GROUP_NAMES'   => $included_group_names,
+			'EXCLUDED_GROUP_NAMES'   => $excluded_group_names,
+			'TOTAL_MEMBERS'          => $total_members,
+			'SEARCH_QUERY'           => $search_query,
+			'U_SEARCH_ACTION'        => $this->helper->route('booskit_dashboard_group_views'),
+			'U_CUSTOM_FILTER_ACTION' => $this->helper->route('booskit_dashboard_group_views'),
+			'U_CUSTOM_TAB'           => $this->helper->route('booskit_dashboard_group_views', ['custom' => 1]),
+			'U_BACK_DASHBOARD'       => $this->helper->route('booskit_dashboard_home'),
+			'U_ACP_GROUP_VIEWS'      => $is_admin ? append_sid($this->root_path . 'adm/index.' . $this->php_ext, 'i=-booskit-dashboard-acp-main_module&mode=group_views') : '',
+			'IS_ADMIN'               => $is_admin,
+		]);
+
+		return $this->helper->render('group_views.html', $active_view ? $active_view['view_name'] : $this->user->lang['DASHBOARD_GROUP_VIEWS_TITLE']);
 	}
 
 	protected function truncate($text, $length = 120)

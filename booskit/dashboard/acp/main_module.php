@@ -149,6 +149,108 @@ class main_module
 			return;
 		}
 
+		if ($mode === 'group_views')
+		{
+			$this->tpl_name = 'acp_dashboard_group_views';
+			$this->page_title = 'ACP_BOOSKIT_DASHBOARD_GROUP_VIEWS';
+
+			// Delete group view
+			if ($action === 'delete_view')
+			{
+				$view_id = $request->variable('view_id', 0);
+				if ($view_id > 0)
+				{
+					$dashboard_manager->delete_group_view($view_id);
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+			}
+
+			// Toggle active status
+			if ($action === 'toggle_view')
+			{
+				$view_id = $request->variable('view_id', 0);
+				if ($view_id > 0)
+				{
+					$dashboard_manager->toggle_group_view($view_id);
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+			}
+
+			if ($request->is_set_post('submit'))
+			{
+				if (!check_form_key($form_key))
+				{
+					trigger_error('FORM_INVALID');
+				}
+
+				if ($action === 'add_view')
+				{
+					$view_name = $request->variable('new_view_name', '', true);
+					$view_desc = $request->variable('new_view_desc', '', true);
+					$include_groups = $request->variable('new_include_groups', [0]);
+					$include_mode = $request->variable('new_include_mode', 'all');
+					$exclude_groups = $request->variable('new_exclude_groups', [0]);
+					$allowed_groups = $request->variable('new_allowed_groups', [0]);
+					$view_order = $request->variable('new_view_order', 0);
+					$enabled = $request->variable('new_enabled', 1);
+
+					if (!empty($view_name))
+					{
+						$dashboard_manager->add_group_view([
+							'view_name'      => $view_name,
+							'view_desc'      => $view_desc,
+							'include_groups' => $include_groups,
+							'include_mode'   => $include_mode,
+							'exclude_groups' => $exclude_groups,
+							'allowed_groups' => $allowed_groups,
+							'view_order'     => $view_order,
+							'enabled'        => $enabled,
+						]);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+
+				if ($action === 'update_view')
+				{
+					$view_id = $request->variable('view_id', 0);
+					$view_name = $request->variable('view_name', '', true);
+					$view_desc = $request->variable('view_desc', '', true);
+					$include_groups = $request->variable('include_groups', [0]);
+					$include_mode = $request->variable('include_mode', 'all');
+					$exclude_groups = $request->variable('exclude_groups', [0]);
+					$allowed_groups = $request->variable('allowed_groups', [0]);
+					$view_order = $request->variable('view_order', 0);
+					$enabled = $request->variable('enabled', 1);
+
+					if ($view_id > 0 && !empty($view_name))
+					{
+						$dashboard_manager->update_group_view($view_id, [
+							'view_name'      => $view_name,
+							'view_desc'      => $view_desc,
+							'include_groups' => $include_groups,
+							'include_mode'   => $include_mode,
+							'exclude_groups' => $exclude_groups,
+							'allowed_groups' => $allowed_groups,
+							'view_order'     => $view_order,
+							'enabled'        => $enabled,
+						]);
+					}
+					trigger_error($user->lang['DASHBOARD_SETTINGS_SAVED'] . adm_back_link($this->u_action));
+				}
+			}
+
+			$phpbb_groups = $dashboard_manager->get_phpbb_groups();
+			$group_views = $dashboard_manager->get_group_views(false, 0, true);
+
+			$template->assign_vars([
+				'GROUP_VIEWS'   => $group_views,
+				'PHPBB_GROUPS'  => $phpbb_groups,
+				'U_ACTION'      => $this->u_action,
+			]);
+
+			return;
+		}
+
 		// Mode: settings (Default)
 		// Handle permission group deletion
 		if ($action === 'delete_perm_group')
@@ -246,6 +348,7 @@ class main_module
 				$config->set('booskit_dashboard_group_metric_label', $request->variable('booskit_dashboard_group_metric_label', '', true));
 
 				$config->set('booskit_dashboard_include_stats_tab', $request->variable('booskit_dashboard_include_stats_tab', 0));
+				$config->set('booskit_dashboard_include_group_views_tab', $request->variable('booskit_dashboard_include_group_views_tab', 0));
 				$config->set('booskit_dashboard_allowed_groups', $request->variable('booskit_dashboard_allowed_groups', ''));
 				$config->set('booskit_dashboard_include_awards', $request->variable('booskit_dashboard_include_awards', 0));
 				$config->set('booskit_dashboard_include_career', $request->variable('booskit_dashboard_include_career', 0));
@@ -276,6 +379,7 @@ class main_module
 			'BOOSKIT_DASHBOARD_GROUP_METRIC_LABEL'       => isset($config['booskit_dashboard_group_metric_label']) ? $config['booskit_dashboard_group_metric_label'] : '',
 
 			'BOOSKIT_DASHBOARD_INCLUDE_STATS_TAB'        => (int) (isset($config['booskit_dashboard_include_stats_tab']) ? $config['booskit_dashboard_include_stats_tab'] : 1),
+			'BOOSKIT_DASHBOARD_INCLUDE_GROUP_VIEWS_TAB'  => (int) (isset($config['booskit_dashboard_include_group_views_tab']) ? $config['booskit_dashboard_include_group_views_tab'] : 1),
 			'BOOSKIT_DASHBOARD_ALLOWED_GROUPS'           => isset($config['booskit_dashboard_allowed_groups']) ? $config['booskit_dashboard_allowed_groups'] : '',
 			'BOOSKIT_DASHBOARD_INCLUDE_AWARDS'           => (int) (isset($config['booskit_dashboard_include_awards']) ? $config['booskit_dashboard_include_awards'] : 1),
 			'BOOSKIT_DASHBOARD_INCLUDE_CAREER'           => (int) (isset($config['booskit_dashboard_include_career']) ? $config['booskit_dashboard_include_career'] : 1),

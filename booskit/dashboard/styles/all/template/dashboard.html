@@ -14,6 +14,11 @@
 				<i class="icon fa-bar-chart fa-fw"></i> {{ lang('DASHBOARD_COMBINED_STATS_BUTTON') }}
 			</a>
 			{% endif %}
+			{% if S_PERM_VIEW_GROUP_VIEWS and U_GROUP_VIEWS %}
+			<a href="{{ U_GROUP_VIEWS }}" class="dash-btn" style="background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 600;">
+				<i class="icon fa-users fa-fw"></i> {{ lang('DASHBOARD_GROUP_VIEWS_BUTTON') }}
+			</a>
+			{% endif %}
 			{% if S_PERM_SEARCH_USERS %}
 			<form method="get" action="{{ U_BOOSKIT_DASHBOARD }}" class="dashboard-search-form">
 				<input type="text" name="search_user" placeholder="{{ lang('DASHBOARD_SEARCH_USER') }}" required />

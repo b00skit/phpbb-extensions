@@ -32,3 +32,16 @@ booskit_dashboard_combined_statistics:
     defaults:
         _controller: 'booskit.dashboard.controller.main:combined_statistics'
 
+booskit_dashboard_group_views:
+    path: /dashboard/group-views
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:group_views'
+
+booskit_dashboard_group_view_item:
+    path: /dashboard/group-views/{view_id}
+    defaults:
+        _controller: 'booskit.dashboard.controller.main:group_views'
+    requirements:
+        view_id: '\d+'
+
+

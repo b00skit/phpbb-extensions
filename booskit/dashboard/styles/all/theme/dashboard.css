@@ -1102,4 +1102,246 @@
 	}
 }
 
+/* ==========================================================================
+   Group Views Module Styles
+   ========================================================================== */
+
+.dash-views-nav-bar {
+	margin-bottom: 20px;
+}
+
+.dash-views-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.dash-view-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	background: var(--dash-bg-card);
+	border: 1px solid var(--dash-border);
+	padding: 10px 16px;
+	border-radius: 10px;
+	color: var(--dash-text-main);
+	text-decoration: none;
+	font-weight: 600;
+	font-size: 0.95rem;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition: all 0.15s ease;
+}
+
+.dash-view-tab:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+	color: var(--dash-primary);
+	text-decoration: none;
+}
+
+.dash-view-tab.active {
+	background: var(--dash-primary);
+	border-color: var(--dash-primary);
+	color: #ffffff;
+	box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);
+}
+
+.dash-view-pill-count {
+	background: #f1f5f9;
+	color: #475569;
+	font-size: 0.78rem;
+	font-weight: 700;
+	padding: 2px 7px;
+	border-radius: 12px;
+	transition: all 0.15s ease;
+}
+
+.dash-view-tab.active .dash-view-pill-count {
+	background: rgba(255, 255, 255, 0.25);
+	color: #ffffff;
+}
+
+.dash-view-tab-custom {
+	border-style: dashed;
+}
+
+.dash-groups-checklist {
+	max-height: 220px;
+	overflow-y: auto;
+	border: 1px solid var(--dash-border);
+	border-radius: 6px;
+	padding: 8px;
+	background: #ffffff;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.dash-group-checkbox-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	transition: background 0.1s ease;
+}
+
+.dash-group-checkbox-row:hover {
+	background: #f1f5f9;
+}
+
+.dash-inline-search-form {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.dash-input-sm {
+	border: 1px solid var(--dash-border);
+	border-radius: 6px;
+	padding: 5px 10px;
+	font-size: 0.85rem;
+	outline: none;
+	background: #ffffff;
+	color: var(--dash-text-main);
+}
+
+.dash-input-sm:focus {
+	border-color: var(--dash-primary);
+}
+
+/* Members Grid */
+.dash-members-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.dash-member-card {
+	background: var(--dash-bg-card);
+	border: 1px solid var(--dash-border);
+	border-radius: 10px;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dash-member-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+	border-color: #cbd5e1;
+}
+
+.dash-member-card-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.dash-member-avatar-wrap {
+	position: relative;
+	width: 48px;
+	height: 48px;
+	flex-shrink: 0;
+	border-radius: 8px;
+	overflow: visible;
+}
+
+.dash-member-avatar-wrap img,
+.dash-member-avatar-wrap .dash-avatar-placeholder {
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+	object-fit: cover;
+}
+
+.dash-member-card-info {
+	overflow: hidden;
+	flex: 1;
+}
+
+.dash-member-username {
+	font-size: 1rem;
+	font-weight: 700;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dash-member-primary-group {
+	font-size: 0.82rem;
+	color: #64748b;
+	font-weight: 600;
+	margin-top: 2px;
+}
+
+.dash-member-groups-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 12px;
+}
+
+.dash-mini-group-pill {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #475569;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	padding: 2px 7px;
+	border-radius: 12px;
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.dash-mini-group-pill.matched {
+	background: #ecfdf5;
+	color: #065f46;
+	border-color: #a7f3d0;
+	font-weight: 700;
+}
+
+.dash-member-meta-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	gap: 6px;
+	padding: 8px;
+	background: #f8fafc;
+	border-radius: 6px;
+	margin-bottom: 12px;
+	font-size: 0.78rem;
+	text-align: center;
+}
+
+.dash-meta-label {
+	display: block;
+	color: #94a3b8;
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.dash-meta-val {
+	display: block;
+	color: #334155;
+	font-weight: 700;
+	margin-top: 2px;
+}
+
+.dash-member-card-actions {
+	display: flex;
+	gap: 6px;
+	border-top: 1px solid #f1f5f9;
+	padding-top: 10px;
+}
+
+
 

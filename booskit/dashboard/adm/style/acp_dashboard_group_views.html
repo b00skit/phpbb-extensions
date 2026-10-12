@@ -1,0 +1,239 @@
+{% INCLUDE 'overall_header.html' %}
+
+<h1>{{ lang('ACP_BOOSKIT_DASHBOARD_GROUP_VIEWS') }}</h1>
+<p>{{ lang('ACP_DASHBOARD_GROUP_VIEWS_EXPLAIN') }}</p>
+
+<!-- GROUP VIEWS LIST SECTION -->
+<fieldset>
+	<legend>{{ lang('DASHBOARD_GROUP_VIEWS_LIST_TITLE') }}</legend>
+	<p>{{ lang('DASHBOARD_GROUP_VIEWS_LIST_DESC') }}</p>
+
+	{% if GROUP_VIEWS|length %}
+	<table class="table1 zebra-table">
+		<thead>
+			<tr>
+				<th style="width: 22%;">{{ lang('DASHBOARD_GROUP_VIEW_NAME') }}</th>
+				<th style="width: 32%;">{{ lang('DASHBOARD_GROUP_VIEW_CRITERIA') }}</th>
+				<th style="width: 14%; text-align: center;">{{ lang('DASHBOARD_GROUP_VIEW_MEMBERS') }}</th>
+				<th style="width: 8%; text-align: center;">{{ lang('DASHBOARD_ORDER') }}</th>
+				<th style="width: 8%; text-align: center;">{{ lang('DASHBOARD_STATUS') }}</th>
+				<th style="width: 16%; text-align: center;">{{ lang('ACTION') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for view in GROUP_VIEWS %}
+			<tr>
+				<td>
+					<strong>{{ view.view_name }}</strong>
+					{% if view.view_desc %}<br><small style="color: #64748b;">{{ view.view_desc }}</small>{% endif %}
+				</td>
+				<td>
+					<div style="margin-bottom: 4px;">
+						<span style="font-size: 0.85em; font-weight: 700; color: #1e293b;">{{ lang('DASHBOARD_INCLUDED_GROUPS') }}:</span>
+						{% if view.include_mode == 'all' %}
+							<span class="badge" style="background: #0284c7; color: #ffffff; padding: 1px 6px; border-radius: 3px; font-size: 0.75em; font-weight: 700;">{{ lang('DASHBOARD_MATCH_ALL_BADGE') }}</span>
+						{% else %}
+							<span class="badge" style="background: #0d9488; color: #ffffff; padding: 1px 6px; border-radius: 3px; font-size: 0.75em; font-weight: 700;">{{ lang('DASHBOARD_MATCH_ANY_BADGE') }}</span>
+						{% endif %}
+						<div style="margin-top: 3px;">
+							{% if view.include_group_names|length %}
+								{% for gname in view.include_group_names %}
+									<span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; margin: 1px; display: inline-block;">{{ gname }}</span>
+								{% endfor %}
+							{% else %}
+								<em style="color: #94a3b8; font-size: 0.85em;">{{ lang('DASHBOARD_ALL_MEMBERS_NO_FILTER') }}</em>
+							{% endif %}
+						</div>
+					</div>
+
+					{% if view.exclude_group_names|length %}
+					<div style="margin-top: 6px;">
+						<span style="font-size: 0.85em; font-weight: 700; color: #b91c1c;">{{ lang('DASHBOARD_EXCLUDED_GROUPS') }}:</span>
+						<span class="badge" style="background: #ef4444; color: #ffffff; padding: 1px 6px; border-radius: 3px; font-size: 0.75em; font-weight: 700;">{{ lang('DASHBOARD_EXCLUDE_BADGE') }}</span>
+						<div style="margin-top: 3px;">
+							{% for gname in view.exclude_group_names %}
+								<span class="badge" style="background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; margin: 1px; display: inline-block;">&times; {{ gname }}</span>
+							{% endfor %}
+						</div>
+					</div>
+					{% endif %}
+
+					{% if view.allowed_groups_array|length %}
+					<div style="margin-top: 6px;">
+						<small style="color: #64748b;"><strong>{{ lang('DASHBOARD_ALLOWED_VIEWERS') }}:</strong>
+						{% for gid in view.allowed_groups_array %}
+							{% for g in PHPBB_GROUPS %}{% if g.group_id == gid %}<span class="badge" style="background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 0.8em;">{{ g.group_name }}</span>{% endif %}{% endfor %}
+						{% endfor %}
+						</small>
+					</div>
+					{% endif %}
+				</td>
+				<td style="text-align: center;">
+					<span class="badge" style="background: #f1f5f9; color: #1e293b; font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.95em;">
+						{{ view.member_count }} {{ lang('DASHBOARD_MEMBERS') }}
+					</span>
+				</td>
+				<td style="text-align: center;">{{ view.view_order }}</td>
+				<td style="text-align: center;">
+					{% if view.enabled %}
+						<span style="color: #16a34a; font-weight: 700;">&#10004; {{ lang('ACTIVE') }}</span>
+					{% else %}
+						<span style="color: #94a3b8; font-weight: 600;">&#10008; {{ lang('DISABLED') }}</span>
+					{% endif %}
+				</td>
+				<td style="text-align: center;">
+					<a href="{{ U_ACTION }}&amp;action=toggle_view&amp;view_id={{ view.view_id }}" class="button2" style="font-size: 0.85em; margin-bottom: 2px;" title="{{ lang('DASHBOARD_TOGGLE_ACTIVE') }}">
+						{% if view.enabled %}{{ lang('DISABLE') }}{% else %}{{ lang('ENABLE') }}{% endif %}
+					</a>
+					<button type="button" class="button2" style="font-size: 0.85em; margin-bottom: 2px;" onclick="document.getElementById('edit_view_{{ view.view_id }}').style.display = document.getElementById('edit_view_{{ view.view_id }}').style.display === 'none' ? 'table-row' : 'none';">{{ lang('EDIT') }}</button>
+					<a href="{{ U_ACTION }}&amp;action=delete_view&amp;view_id={{ view.view_id }}" class="button2" style="color: #dc2626; font-size: 0.85em; margin-bottom: 2px;" onclick="return confirm('{{ lang('CONFIRM_DELETE_GROUP_VIEW') }}');">{{ lang('DELETE') }}</a>
+				</td>
+			</tr>
+			<!-- Inline Edit Group View Row -->
+			<tr id="edit_view_{{ view.view_id }}" style="display: none; background: #f8fafc;">
+				<td colspan="6">
+					<form method="post" action="{{ U_ACTION }}&amp;action=update_view&amp;view_id={{ view.view_id }}">
+						<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; padding: 12px; align-items: start;">
+							<div>
+								<label><strong>{{ lang('DASHBOARD_GROUP_VIEW_NAME') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="text" name="view_name" value="{{ view.view_name }}" size="35" style="width: 95%;" required />
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_GROUP_VIEW_DESC') }}{{ lang('COLON') }}</strong></label><br>
+								<textarea name="view_desc" rows="3" cols="35" style="width: 95%;">{{ view.view_desc }}</textarea>
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</strong></label><br>
+								<input type="number" name="view_order" value="{{ view.view_order }}" style="width: 80px;" />
+								<br><br>
+								<label><input type="checkbox" name="enabled" value="1" {% if view.enabled %}checked="checked"{% endif %} /> <strong>{{ lang('DASHBOARD_VIEW_ENABLED') }}</strong></label>
+							</div>
+
+							<div>
+								<label><strong>{{ lang('DASHBOARD_INCLUDED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_INCLUDED_GROUPS_EXPLAIN') }}</span><br>
+								<div style="margin: 6px 0;">
+									<label style="margin-right: 12px;"><input type="radio" name="include_mode" value="all" {% if view.include_mode == 'all' %}checked="checked"{% endif %} /> <strong>{{ lang('DASHBOARD_MODE_ALL') }}</strong> (AND)</label>
+									<label><input type="radio" name="include_mode" value="any" {% if view.include_mode == 'any' %}checked="checked"{% endif %} /> <strong>{{ lang('DASHBOARD_MODE_ANY') }}</strong> (OR)</label>
+								</div>
+								<select name="include_groups[]" multiple="multiple" size="5" style="width: 95%;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in view.include_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div>
+								<label><strong style="color: #b91c1c;">{{ lang('DASHBOARD_EXCLUDED_GROUPS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_EXCLUDED_GROUPS_EXPLAIN') }}</span><br>
+								<select name="exclude_groups[]" multiple="multiple" size="4" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in view.exclude_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+								<br><br>
+								<label><strong>{{ lang('DASHBOARD_ALLOWED_VIEWERS') }}{{ lang('COLON') }}</strong></label><br>
+								<span style="font-size: 0.85em; color: #64748b;">{{ lang('DASHBOARD_ALLOWED_VIEWERS_EXPLAIN') }}</span><br>
+								<select name="allowed_groups[]" multiple="multiple" size="3" style="width: 95%; margin-top: 4px;">
+									{% for g in PHPBB_GROUPS %}
+										<option value="{{ g.group_id }}" {% if g.group_id in view.allowed_groups_array %}selected="selected"{% endif %}>{{ g.group_name }}</option>
+									{% endfor %}
+								</select>
+							</div>
+						</div>
+						<div style="padding: 10px; border-top: 1px solid #e2e8f0; text-align: right;">
+							<button type="submit" name="submit" class="button1">{{ lang('UPDATE') }}</button>
+							<button type="button" class="button2" onclick="document.getElementById('edit_view_{{ view.view_id }}').style.display = 'none';">{{ lang('CANCEL') }}</button>
+						</div>
+						{{ S_FORM_TOKEN }}
+					</form>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p><em>{{ lang('DASHBOARD_NO_GROUP_VIEWS') }}</em></p>
+	{% endif %}
+</fieldset>
+
+<br>
+
+<!-- ADD NEW GROUP VIEW SECTION -->
+<fieldset>
+	<legend>{{ lang('DASHBOARD_ADD_GROUP_VIEW') }}</legend>
+	<p>{{ lang('DASHBOARD_ADD_GROUP_VIEW_DESC') }}</p>
+
+	<form method="post" action="{{ U_ACTION }}&amp;action=add_view">
+		<dl>
+			<dt><label for="new_view_name">{{ lang('DASHBOARD_GROUP_VIEW_NAME') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_VIEW_NAME_EXPLAIN') }}</span></dt>
+			<dd><input type="text" id="new_view_name" name="new_view_name" size="45" placeholder="e.g. Senior Officers & Command (Groups 1, 2, 3)" required /></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="new_view_desc">{{ lang('DASHBOARD_GROUP_VIEW_DESC') }}{{ lang('COLON') }}</label><br><span>{{ lang('DASHBOARD_GROUP_VIEW_DESC_EXPLAIN') }}</span></dt>
+			<dd><textarea id="new_view_desc" name="new_view_desc" rows="2" cols="45" style="width: 60%;"></textarea></dd>
+		</dl>
+
+		<dl>
+			<dt>
+				<label for="new_include_groups">{{ lang('DASHBOARD_INCLUDED_GROUPS') }}{{ lang('COLON') }}</label><br>
+				<span>{{ lang('DASHBOARD_INCLUDED_GROUPS_EXPLAIN') }}</span>
+			</dt>
+			<dd>
+				<div style="margin-bottom: 8px;">
+					<label style="margin-right: 15px;"><input type="radio" name="new_include_mode" value="all" checked="checked" /> <strong>{{ lang('DASHBOARD_MODE_ALL') }}</strong> (Members must be in ALL selected groups)</label>
+					<label><input type="radio" name="new_include_mode" value="any" /> <strong>{{ lang('DASHBOARD_MODE_ANY') }}</strong> (Members in AT LEAST ONE of selected groups)</label>
+				</div>
+				<select id="new_include_groups" name="new_include_groups[]" multiple="multiple" size="6" style="width: 60%;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt>
+				<label for="new_exclude_groups"><strong style="color: #b91c1c;">{{ lang('DASHBOARD_EXCLUDED_GROUPS') }}</strong>{{ lang('COLON') }}</label><br>
+				<span>{{ lang('DASHBOARD_EXCLUDED_GROUPS_EXPLAIN') }}</span>
+			</dt>
+			<dd>
+				<select id="new_exclude_groups" name="new_exclude_groups[]" multiple="multiple" size="5" style="width: 60%;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt>
+				<label for="new_allowed_groups">{{ lang('DASHBOARD_ALLOWED_VIEWERS') }}{{ lang('COLON') }}</label><br>
+				<span>{{ lang('DASHBOARD_ALLOWED_VIEWERS_EXPLAIN') }}</span>
+			</dt>
+			<dd>
+				<select id="new_allowed_groups" name="new_allowed_groups[]" multiple="multiple" size="4" style="width: 60%;">
+					{% for g in PHPBB_GROUPS %}
+						<option value="{{ g.group_id }}">{{ g.group_name }}</option>
+					{% endfor %}
+				</select>
+			</dd>
+		</dl>
+
+		<dl>
+			<dt><label for="new_view_order">{{ lang('DASHBOARD_ORDER') }}{{ lang('COLON') }}</label></dt>
+			<dd><input type="number" id="new_view_order" name="new_view_order" value="0" style="width: 80px;" /></dd>
+		</dl>
+
+		<dl>
+			<dt><label for="new_enabled">{{ lang('DASHBOARD_VIEW_ENABLED') }}{{ lang('COLON') }}</label></dt>
+			<dd><label><input type="checkbox" id="new_enabled" name="new_enabled" value="1" checked="checked" /> {{ lang('YES') }}</label></dd>
+		</dl>
+
+		<p class="submit-buttons">
+			<input class="button1" type="submit" name="submit" value="{{ lang('DASHBOARD_ADD_GROUP_VIEW') }}" />
+		</p>
+		{{ S_FORM_TOKEN }}
+	</form>
+</fieldset>
+
+{% INCLUDE 'overall_footer.html' %}

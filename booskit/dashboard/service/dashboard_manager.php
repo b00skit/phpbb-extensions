@@ -21,6 +21,7 @@ class dashboard_manager
 	protected $table_stat_defs;
 	protected $table_stat_posts;
 	protected $table_post_roles;
+	protected $table_group_views;
 	protected $group_avatars_cache = null;
 
 	public function __construct(
@@ -42,6 +43,7 @@ class dashboard_manager
 		$this->table_stat_defs = $this->table_prefix . 'booskit_dashboard_stat_defs';
 		$this->table_stat_posts = $this->table_prefix . 'booskit_dashboard_stat_posts';
 		$this->table_post_roles = $this->table_prefix . 'booskit_dashboard_post_roles';
+		$this->table_group_views = $this->table_prefix . 'booskit_dashboard_group_views';
 	}
 
 	public function is_ext_enabled($ext_name)
@@ -220,6 +222,7 @@ class dashboard_manager
 			'view_statistics'          => false,
 			'view_board_statistics'    => false,
 			'view_profile_statistics'  => false,
+			'view_group_views'         => false,
 			'view_active_users'        => false,
 			'view_hot_topics'          => false,
 			'view_feeds'               => false,
@@ -264,6 +267,7 @@ class dashboard_manager
 				'view_statistics'          => $can_dash,
 				'view_board_statistics'    => $can_dash,
 				'view_profile_statistics'  => $can_dash && $can_prof,
+				'view_group_views'         => $can_dash,
 				'view_active_users'        => $can_dash,
 				'view_hot_topics'          => $can_dash,
 				'view_feeds'               => $can_dash,
@@ -311,7 +315,7 @@ class dashboard_manager
 			$perms = !empty($pg['permissions_array']) ? $pg['permissions_array'] : [];
 
 			// Dashboard General permissions (not target dependent)
-			foreach (['view_dashboard', 'view_stats', 'view_statistics', 'view_board_statistics', 'view_active_users', 'view_hot_topics', 'view_feeds', 'search_users'] as $k)
+			foreach (['view_dashboard', 'view_stats', 'view_statistics', 'view_board_statistics', 'view_group_views', 'view_active_users', 'view_hot_topics', 'view_feeds', 'search_users'] as $k)
 			{
 				if (!empty($perms[$k]))
 				{
@@ -4050,4 +4054,421 @@ class dashboard_manager
 			'month_name'     => isset($months[$current_month]) ? $months[$current_month] : 'Month ' . $current_month,
 		];
 	}
+
+	/* =========================================================================
+	 * GROUP VIEWS MANAGEMENT
+	 * ========================================================================= */
+
+	public function get_group_views($only_visible = false, $viewer_id = 0, $with_counts = false)
+	{
+		$sql = 'SELECT * FROM ' . $this->table_group_views . ' ORDER BY view_order ASC, view_name ASC';
+		$result = @$this->db->sql_query($sql);
+		$views = [];
+		if ($result)
+		{
+			$all_groups = $this->get_phpbb_groups();
+			$groups_map = [];
+			foreach ($all_groups as $g)
+			{
+				$groups_map[$g['group_id']] = $g['group_name'];
+			}
+
+			while ($row = $this->db->sql_fetchrow($result))
+			{
+				$row['include_groups_array'] = !empty($row['include_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['include_groups'])))) : [];
+				$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['exclude_groups'])))) : [];
+				$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['allowed_groups'])))) : [];
+
+				if ($only_visible && !$this->can_view_group_view($viewer_id, $row))
+				{
+					continue;
+				}
+
+				// Format included group names
+				$inc_names = [];
+				foreach ($row['include_groups_array'] as $gid)
+				{
+					if (isset($groups_map[$gid]))
+					{
+						$inc_names[] = $groups_map[$gid];
+					}
+				}
+				$row['include_group_names'] = $inc_names;
+
+				// Format excluded group names
+				$exc_names = [];
+				foreach ($row['exclude_groups_array'] as $gid)
+				{
+					if (isset($groups_map[$gid]))
+					{
+						$exc_names[] = $groups_map[$gid];
+					}
+				}
+				$row['exclude_group_names'] = $exc_names;
+
+				if ($with_counts)
+				{
+					$row['member_count'] = $this->count_group_view_members($row['include_groups_array'], $row['include_mode'], $row['exclude_groups_array']);
+				}
+
+				$views[] = $row;
+			}
+			$this->db->sql_freeresult($result);
+		}
+		return $views;
+	}
+
+	public function get_group_view($view_id)
+	{
+		$view_id = (int) $view_id;
+		if ($view_id <= 0)
+		{
+			return null;
+		}
+
+		$sql = 'SELECT * FROM ' . $this->table_group_views . ' WHERE view_id = ' . $view_id;
+		$result = @$this->db->sql_query($sql);
+		$row = $result ? $this->db->sql_fetchrow($result) : null;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+
+		if (!$row)
+		{
+			return null;
+		}
+
+		$row['include_groups_array'] = !empty($row['include_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['include_groups'])))) : [];
+		$row['exclude_groups_array'] = !empty($row['exclude_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['exclude_groups'])))) : [];
+		$row['allowed_groups_array'] = !empty($row['allowed_groups']) ? array_values(array_filter(array_map('intval', explode(',', $row['allowed_groups'])))) : [];
+
+		$all_groups = $this->get_phpbb_groups();
+		$groups_map = [];
+		foreach ($all_groups as $g)
+		{
+			$groups_map[$g['group_id']] = $g['group_name'];
+		}
+
+		$row['include_group_names'] = [];
+		foreach ($row['include_groups_array'] as $gid)
+		{
+			if (isset($groups_map[$gid]))
+			{
+				$row['include_group_names'][] = $groups_map[$gid];
+			}
+		}
+
+		$row['exclude_group_names'] = [];
+		foreach ($row['exclude_groups_array'] as $gid)
+		{
+			if (isset($groups_map[$gid]))
+			{
+				$row['exclude_group_names'][] = $groups_map[$gid];
+			}
+		}
+
+		return $row;
+	}
+
+	public function add_group_view(array $data)
+	{
+		$include_groups = is_array($data['include_groups']) ? implode(',', array_filter(array_map('intval', $data['include_groups']))) : (string) $data['include_groups'];
+		$exclude_groups = is_array($data['exclude_groups']) ? implode(',', array_filter(array_map('intval', $data['exclude_groups']))) : (string) $data['exclude_groups'];
+		$allowed_groups = is_array($data['allowed_groups']) ? implode(',', array_filter(array_map('intval', $data['allowed_groups']))) : (string) $data['allowed_groups'];
+		$include_mode = (isset($data['include_mode']) && $data['include_mode'] === 'any') ? 'any' : 'all';
+
+		$sql_ary = [
+			'view_name'      => (string) $data['view_name'],
+			'view_desc'      => isset($data['view_desc']) ? (string) $data['view_desc'] : '',
+			'include_groups' => $include_groups,
+			'include_mode'   => $include_mode,
+			'exclude_groups' => $exclude_groups,
+			'allowed_groups' => $allowed_groups,
+			'view_order'     => isset($data['view_order']) ? (int) $data['view_order'] : 0,
+			'enabled'        => isset($data['enabled']) ? (int) $data['enabled'] : 1,
+		];
+
+		$this->db->sql_query('INSERT INTO ' . $this->table_group_views . ' ' . $this->db->sql_build_array('INSERT', $sql_ary));
+		return (int) $this->db->sql_nextid();
+	}
+
+	public function update_group_view($view_id, array $data)
+	{
+		$view_id = (int) $view_id;
+		if ($view_id <= 0)
+		{
+			return false;
+		}
+
+		$include_groups = is_array($data['include_groups']) ? implode(',', array_filter(array_map('intval', $data['include_groups']))) : (string) $data['include_groups'];
+		$exclude_groups = is_array($data['exclude_groups']) ? implode(',', array_filter(array_map('intval', $data['exclude_groups']))) : (string) $data['exclude_groups'];
+		$allowed_groups = is_array($data['allowed_groups']) ? implode(',', array_filter(array_map('intval', $data['allowed_groups']))) : (string) $data['allowed_groups'];
+		$include_mode = (isset($data['include_mode']) && $data['include_mode'] === 'any') ? 'any' : 'all';
+
+		$sql_ary = [
+			'view_name'      => (string) $data['view_name'],
+			'view_desc'      => isset($data['view_desc']) ? (string) $data['view_desc'] : '',
+			'include_groups' => $include_groups,
+			'include_mode'   => $include_mode,
+			'exclude_groups' => $exclude_groups,
+			'allowed_groups' => $allowed_groups,
+			'view_order'     => isset($data['view_order']) ? (int) $data['view_order'] : 0,
+			'enabled'        => isset($data['enabled']) ? (int) $data['enabled'] : 1,
+		];
+
+		$this->db->sql_query('UPDATE ' . $this->table_group_views . ' SET ' . $this->db->sql_build_array('UPDATE', $sql_ary) . ' WHERE view_id = ' . $view_id);
+		return true;
+	}
+
+	public function delete_group_view($view_id)
+	{
+		$view_id = (int) $view_id;
+		if ($view_id <= 0)
+		{
+			return false;
+		}
+
+		$this->db->sql_query('DELETE FROM ' . $this->table_group_views . ' WHERE view_id = ' . $view_id);
+		return true;
+	}
+
+	public function toggle_group_view($view_id)
+	{
+		$view_id = (int) $view_id;
+		if ($view_id <= 0)
+		{
+			return false;
+		}
+
+		$this->db->sql_query('UPDATE ' . $this->table_group_views . ' SET enabled = 1 - enabled WHERE view_id = ' . $view_id);
+		return true;
+	}
+
+	public function can_view_group_view($viewer_id, $view)
+	{
+		$viewer_id = (int) $viewer_id;
+		if ($viewer_id <= 0)
+		{
+			return false;
+		}
+
+		if (empty($view['enabled']))
+		{
+			return false;
+		}
+
+		if (empty($view['allowed_groups']))
+		{
+			return true;
+		}
+
+		$allowed = is_array($view['allowed_groups']) ? $view['allowed_groups'] : array_values(array_filter(array_map('intval', explode(',', $view['allowed_groups']))));
+		if (empty($allowed))
+		{
+			return true;
+		}
+
+		$viewer_groups = $this->get_user_groups($viewer_id);
+		return !empty(array_intersect($viewer_groups, $allowed));
+	}
+
+	public function count_group_view_members($include_groups, $include_mode = 'all', $exclude_groups = [], $search = '')
+	{
+		$where = $this->build_group_view_where($include_groups, $include_mode, $exclude_groups, $search);
+		$sql = 'SELECT COUNT(u.user_id) AS total_count
+				FROM ' . USERS_TABLE . ' u
+				WHERE ' . implode(' AND ', $where);
+		$result = @$this->db->sql_query($sql);
+		$count = $result ? (int) $this->db->sql_fetchfield('total_count') : 0;
+		if ($result)
+		{
+			$this->db->sql_freeresult($result);
+		}
+		return $count;
+	}
+
+	protected function build_group_view_where($include_groups, $include_mode = 'all', $exclude_groups = [], $search = '')
+	{
+		$include_groups = is_array($include_groups) ? array_values(array_filter(array_map('intval', $include_groups))) : array_values(array_filter(array_map('intval', explode(',', (string) $include_groups))));
+		$exclude_groups = is_array($exclude_groups) ? array_values(array_filter(array_map('intval', $exclude_groups))) : array_values(array_filter(array_map('intval', explode(',', (string) $exclude_groups))));
+		$include_mode = ($include_mode === 'any') ? 'any' : 'all';
+
+		$where = [
+			'u.user_type <> ' . USER_IGNORE,
+			'u.user_id <> ' . ANONYMOUS,
+		];
+
+		if (!empty($search))
+		{
+			$clean = utf8_clean_string($search);
+			$where[] = "u.username_clean LIKE '%" . $this->db->sql_escape($clean) . "%'";
+		}
+
+		if (!empty($exclude_groups))
+		{
+			$where[] = 'u.user_id NOT IN (
+				SELECT DISTINCT ug.user_id 
+				FROM ' . USER_GROUP_TABLE . ' ug 
+				WHERE ' . $this->db->sql_in_set('ug.group_id', $exclude_groups) . ' 
+				  AND ug.user_pending = 0
+			)';
+			$where[] = 'u.group_id NOT IN (' . implode(',', $exclude_groups) . ')';
+		}
+
+		if (!empty($include_groups))
+		{
+			if ($include_mode === 'all')
+			{
+				$needed_count = count($include_groups);
+				$where[] = 'u.user_id IN (
+					SELECT ug.user_id 
+					FROM ' . USER_GROUP_TABLE . ' ug 
+					WHERE ' . $this->db->sql_in_set('ug.group_id', $include_groups) . ' 
+					  AND ug.user_pending = 0 
+					GROUP BY ug.user_id 
+					HAVING COUNT(DISTINCT ug.group_id) = ' . $needed_count . '
+				)';
+			}
+			else
+			{
+				$where[] = 'u.user_id IN (
+					SELECT DISTINCT ug.user_id 
+					FROM ' . USER_GROUP_TABLE . ' ug 
+					WHERE ' . $this->db->sql_in_set('ug.group_id', $include_groups) . ' 
+					  AND ug.user_pending = 0
+				)';
+			}
+		}
+
+		return $where;
+	}
+
+	public function get_group_view_members($include_groups, $include_mode = 'all', $exclude_groups = [], $limit = 48, $offset = 0, $search = '')
+	{
+		global $user;
+
+		$include_groups = is_array($include_groups) ? array_values(array_filter(array_map('intval', $include_groups))) : array_values(array_filter(array_map('intval', explode(',', (string) $include_groups))));
+		$exclude_groups = is_array($exclude_groups) ? array_values(array_filter(array_map('intval', $exclude_groups))) : array_values(array_filter(array_map('intval', explode(',', (string) $exclude_groups))));
+
+		$where = $this->build_group_view_where($include_groups, $include_mode, $exclude_groups, $search);
+
+		// Total count
+		$count_sql = 'SELECT COUNT(u.user_id) AS total_count FROM ' . USERS_TABLE . ' u WHERE ' . implode(' AND ', $where);
+		$count_res = @$this->db->sql_query($count_sql);
+		$total = $count_res ? (int) $this->db->sql_fetchfield('total_count') : 0;
+		if ($count_res)
+		{
+			$this->db->sql_freeresult($count_res);
+		}
+
+		if ($total === 0)
+		{
+			return ['total' => 0, 'members' => []];
+		}
+
+		$sql = 'SELECT u.user_id, u.username, u.username_clean, u.user_colour,
+					   u.user_avatar, u.user_avatar_type, u.user_avatar_width, u.user_avatar_height,
+					   u.user_regdate, u.user_lastvisit, u.user_posts, u.group_id,
+					   g.group_name, g.group_colour, g.group_type
+				FROM ' . USERS_TABLE . ' u
+				LEFT JOIN ' . GROUPS_TABLE . ' g ON u.group_id = g.group_id
+				WHERE ' . implode(' AND ', $where) . '
+				ORDER BY u.username_clean ASC';
+
+		if ($limit > 0)
+		{
+			$result = $this->db->sql_query_limit($sql, $limit, $offset);
+		}
+		else
+		{
+			$result = $this->db->sql_query($sql);
+		}
+
+		$members = [];
+		$user_ids = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$uid = (int) $row['user_id'];
+			$user_ids[] = $uid;
+
+			$primary_name = ($row['group_type'] == GROUP_SPECIAL && isset($user->lang['G_' . $row['group_name']])) ? $user->lang['G_' . $row['group_name']] : $row['group_name'];
+
+			$avatar_html = $this->get_user_avatar_or_group_or_initial($row, $row['username'], $row['group_id']);
+
+			$members[$uid] = [
+				'user_id'              => $uid,
+				'username'             => $row['username'],
+				'username_clean'       => $row['username_clean'],
+				'user_colour'          => $row['user_colour'],
+				'primary_group_id'     => (int) $row['group_id'],
+				'primary_group_name'   => $primary_name,
+				'primary_group_colour' => $row['group_colour'],
+				'user_regdate'         => (int) $row['user_regdate'],
+				'user_lastvisit'       => (int) $row['user_lastvisit'],
+				'user_posts'           => (int) $row['user_posts'],
+				'avatar_html'          => $avatar_html,
+				'is_online'            => false,
+				'user_groups'          => [],
+			];
+		}
+		$this->db->sql_freeresult($result);
+
+		if (!empty($user_ids))
+		{
+			// Check online status in bulk
+			$online_window = time() - ((int) (isset($this->config['load_online_time']) ? $this->config['load_online_time'] : 5) * 60);
+			$sql_online = 'SELECT DISTINCT session_user_id FROM ' . SESSIONS_TABLE . '
+						   WHERE ' . $this->db->sql_in_set('session_user_id', $user_ids) . '
+							 AND session_time >= ' . $online_window;
+			$online_res = @$this->db->sql_query($sql_online);
+			if ($online_res)
+			{
+				while ($row_o = $this->db->sql_fetchrow($online_res))
+				{
+					$ouid = (int) $row_o['session_user_id'];
+					if (isset($members[$ouid]))
+					{
+						$members[$ouid]['is_online'] = true;
+					}
+				}
+				$this->db->sql_freeresult($online_res);
+			}
+
+			// Batch load all groups for these users
+			$sql_ug = 'SELECT ug.user_id, g.group_id, g.group_name, g.group_colour, g.group_type
+					   FROM ' . USER_GROUP_TABLE . ' ug
+					   JOIN ' . GROUPS_TABLE . ' g ON ug.group_id = g.group_id
+					   WHERE ' . $this->db->sql_in_set('ug.user_id', $user_ids) . '
+						 AND ug.user_pending = 0
+					   ORDER BY g.group_type DESC, g.group_name ASC';
+			$ug_res = @$this->db->sql_query($sql_ug);
+			if ($ug_res)
+			{
+				while ($ug_row = $this->db->sql_fetchrow($ug_res))
+				{
+					$muid = (int) $ug_row['user_id'];
+					$gid = (int) $ug_row['group_id'];
+					if (isset($members[$muid]))
+					{
+						$gname = ($ug_row['group_type'] == GROUP_SPECIAL && isset($user->lang['G_' . $ug_row['group_name']])) ? $user->lang['G_' . $ug_row['group_name']] : $ug_row['group_name'];
+						$members[$muid]['user_groups'][] = [
+							'group_id'     => $gid,
+							'group_name'   => $gname,
+							'group_colour' => $ug_row['group_colour'],
+							'is_primary'   => ($gid === $members[$muid]['primary_group_id']),
+							'is_matched'   => in_array($gid, $include_groups),
+						];
+					}
+				}
+				$this->db->sql_freeresult($ug_res);
+			}
+		}
+
+		return [
+			'total'   => $total,
+			'members' => array_values($members),
+		];
+	}
 }
+
